@@ -35,9 +35,10 @@ foldsClusterAssignments = lapply(foldsCluster,citrus.calculateCompleteHierarchic
 leftoutClusterAssignments = lapply(1:5,citrus.mapFoldDataToClusterSpace,citrus.dataArray=citrus.dataArray,foldClusterAssignments=foldsClusterAssignments,folds=folds,conditions=conditions,clusterColumns=c(1,2))
 foldLargeEnoughClusters = lapply(1:6,citrus.calculateFoldLargeEnoughClusters,foldsClusterAssignments=foldsClusterAssignments,folds=folds,citrus.dataArray=citrus.dataArray)
 
-#conditions="unstim"
 foldFeatures = lapply(1:6,citrus.buildFoldFeatures,featureTypes=c("densities","medians"),citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,medianColumns=c(1,2))
 leftoutFeatures = lapply(1:5,citrus.buildFoldFeatures,featureTypes=c("densities","medians"),citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,medianColumns=c(1,2),calculateLeaveoutData=T)
+
+citrus.buildFoldFeatures(1,featureTypes=c("densities","medians"),citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,medianColumns=c(1,2))
 
 modelTypes = c("pamr","glmnet")
 regularizationThresholds = citrus.generateRgularizationThresholds(foldFeatures[[6]],labels,modelTypes=modelTypes)
