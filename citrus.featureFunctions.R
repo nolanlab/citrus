@@ -6,19 +6,18 @@ citrus.buildFoldFeatures = function(index,featureTypes=c("densities"),citrus.dat
   } else {
     foldsFileIds=as.vector(citrus.dataArray$fileIds[-folds[[index]],conditions])
   }
-  return(citrus.buildFeatures(clusterAssignments=foldsClusterAssignments[[index]],featureTypes,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],largeEnoughClusters=foldLargeEnoughClusters[[index]],...))
+  return(citrus.buildFeatures(clusterAssignments=foldsClusterAssignments[[index]],featureTypes,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],largeEnoughClusters=foldLargeEnoughClusters[[index]],foldsFileIds=foldsFileIds,...))
 }
 
-#citrus.buildFeatures(clusterAssignments=foldsClusterAssignments[[index]],featureTypes,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],largeEnoughClusters=foldLargeEnoughClusters[[index]])
+#citrus.buildFeatures(clusterAssignments=foldsClusterAssignments[[index]],featureTypes,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],largeEnoughClusters=foldLargeEnoughClusters[[index]],foldsFileIds=foldsFileIds)
 
-citrus.buildFeatures = function(clusterAssignments,featureTypes,data,largeEnoughClusters,...){
+citrus.buildFeatures = function(clusterAssignments,featureTypes,data,largeEnoughClusters,foldsFileIds,...){
   addtlArgs = list(...)
   features = list()
-  foldFileIds = unique(data[,"fileId"])
   if ("densities" %in% featureTypes){
-    cat(paste("Calculating Densities for files:",paste(foldFileIds,collapse=", "),"\n"))
-    densityFeatures = t(sapply(foldFileIds,citrus.calculateFileClusterDensities,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,fileIds=data[,"fileId"]))
-    rownames(densityFeatures) = citrus.dataArray$fileNames[foldFileIds]
+    cat(paste("Calculating Densities for files:",paste(foldsFileIds,collapse=", "),"\n"))
+    densityFeatures = t(sapply(foldsFileIds,citrus.calculateFileClusterDensities,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,fileIds=data[,"fileId"]))
+    rownames(densityFeatures) = citrus.dataArray$fileNames[foldsFileIds]
     colnames(densityFeatures) = paste("cluster",largeEnoughClusters,"density")
     singularClusterDensity = which(apply(densityFeatures==1,2,all))
     if (length(singularClusterDensity)>0){
@@ -30,9 +29,9 @@ citrus.buildFeatures = function(clusterAssignments,featureTypes,data,largeEnough
     if (!("medianColumns" %in% names(addtlArgs))){
       stop("medianColumns argument must be specified to compute cluster medians.")
     }
-    cat(paste("Calculating medians for files:",paste(foldFileIds,collapse=", "),"\n"))
-    medianFeatures = t(sapply(foldFileIds,citrus.calculateFileClusterMedians,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=data,medianColumns=addtlArgs[["medianColumns"]]))
-    rownames(medianFeatures) = citrus.dataArray$fileNames[foldFileIds]
+    cat(paste("Calculating medians for files:",paste(foldsFileIds,collapse=", "),"\n"))
+    medianFeatures = t(sapply(foldsFileIds,citrus.calculateFileClusterMedians,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=data,medianColumns=addtlArgs[["medianColumns"]]))
+    rownames(medianFeatures) = citrus.dataArray$fileNames[foldsFileIds]
     features[["medianFeatures"]]=medianFeatures
   }
   return(do.call("cbind",features))

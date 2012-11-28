@@ -35,10 +35,8 @@ foldsClusterAssignments = lapply(foldsCluster,citrus.calculateCompleteHierarchic
 leftoutClusterAssignments = lapply(1:5,citrus.mapFoldDataToClusterSpace,citrus.dataArray=citrus.dataArray,foldClusterAssignments=foldsClusterAssignments,folds=folds,conditions=conditions,clusterColumns=c(1,2))
 foldLargeEnoughClusters = lapply(1:6,citrus.calculateFoldLargeEnoughClusters,foldsClusterAssignments=foldsClusterAssignments,folds=folds,citrus.dataArray=citrus.dataArray)
 
-foldFeatures = lapply(1:6,citrus.buildFoldFeatures,featureTypes=c("densities","medians"),citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,medianColumns=c(1,2))
-leftoutFeatures = lapply(1:5,citrus.buildFoldFeatures,featureTypes=c("densities","medians"),citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,medianColumns=c(1,2),calculateLeaveoutData=T)
-
-citrus.buildFoldFeatures(1,featureTypes=c("densities","medians"),citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,medianColumns=c(1,2))
+foldFeatures = lapply(1:6,citrus.buildFoldFeatures,featureTypes=c("densities"),citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,medianColumns=c(1,2))
+leftoutFeatures = lapply(1:5,citrus.buildFoldFeatures,featureTypes=c("densities"),citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,medianColumns=c(1,2),calculateLeaveoutData=T)
 
 modelTypes = c("pamr","glmnet")
 regularizationThresholds = citrus.generateRgularizationThresholds(foldFeatures[[6]],labels,modelTypes=modelTypes)
@@ -55,6 +53,6 @@ for (modelType in modelTypes){
 
 pamrFdrCount = pamr.fdr(finalModels[["pamr"]],data=list(x=t(foldFeatures[[6]]),y=labels),nperms=1000)
 
-plot(regularizationThresholds$glmnet,thresholdErrorRates[["glmnet"]],ylim=c(0,.5),type='o')
-plot(regularizationThresholds$pamr,thresholdErrorRates[["pamr"]],ylim=c(0,.5),type='o',col="red")
+plot(log(regularizationThresholds$glmnet),thresholdErrorRates[["glmnet"]],ylim=c(0,1),type='o')
+plot(regularizationThresholds$pamr,thresholdErrorRates[["pamr"]],ylim=c(0,1),type='o',col="red")
 lines(pamrFdrCount$results[,"Threshold"],pamrFdrCount$results[,"Median FDR"],type='o',col="blue")

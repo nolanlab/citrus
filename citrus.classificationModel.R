@@ -14,7 +14,7 @@ citrus.buildFoldModels = function(index,folds,foldFeatures,labels,type,regulariz
   if (!((length(folds[[index]])==1) && (folds[[index]]=="all"))){
     labels = labels[-folds[[index]]]
   }
-  citrus.buildModel(features=foldFeatures[[index]],labels=,labels,type=type,regularizationThresholds=regularizationThresholds)
+  citrus.buildModel(features=foldFeatures[[index]],labels=labels,type=type,regularizationThresholds=regularizationThresholds)
 }
 
 citrus.foldPredict = function(index,models,features,regularizationThresholds){
@@ -29,6 +29,7 @@ citrus.predict = function(model,features,regularizationThresholds){
   if ("glmnet" %in% class(model)){
     predictions = predict(model,newx=features,type="class")
   } else if (class(model)=="pamrtrained"){
+    #predictions = pamr.predictmany(fit=model,newx=t(features),threshold=regularizationThresholds$pamr)
     predictions = sapply(regularizationThresholds$pamr,citrus.pamr.predict,model=model,features=features)
   } else {
     stop(paste("don't know how to predict for class",class(model)));
@@ -59,11 +60,5 @@ citrus.generateRgularizationThresholds = function(features,lables,modelTypes,n=5
   }
   return(regs)
 }
-
-citrus.manualCrossValidate = function(folds,foldsFeatures,foldsModels,leftoutFeatures,labels){
-  
 }
 
-citrus.crossValidateFold = function(index,folds,foldsModels,foldsFeatures,testFeatures,testLables){
-  
-}
