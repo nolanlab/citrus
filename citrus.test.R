@@ -1,21 +1,22 @@
 rm(list = ls())
 library("flowCore")
 library("Rclusterpp")
-library("spade",lib.loc="Desktop/work/R/spade_with_nn/lib")
+library("pamr")
+library("glmnet")
+library("spade",lib.loc="work/R/spade_with_nn/lib")
 
-source("Desktop/work/citrus/citrus.external.R")
-source("Desktop/work/citrus/citrus.cluster.R")
-source("Desktop/work/citrus/citrus.util.R")
-source("Desktop/work/citrus/citrus.featureFunctions.R")
-source("Desktop/work/citrus/citrus.classificationModel.R")
+source("work/citrus/citrus.cluster.R")
+source("work/citrus/citrus.util.R")
+source("work/citrus/citrus.featureFunctions.R")
+source("work/citrus/citrus.classificationModel.R")
 
-dataDir = "/Users/rbruggner/Desktop/work/citrus/syntheticData/unstim/"
-wd = "Desktop/work/citrus/testOutput/"
+dataDir = "work/citrus/syntheticData/unstim/"
+wd = "work/citrus/testOutput/"
 
 clusterCols = c(1:2)
 fileNames = cbind(unstim=list.files(dataDir,pattern="train"))
 
-citrus.dataArray = citrus.readFCSSet(dataDirectory=dataDir,conditionFileList=fileNames,conditionSampleSize=c(100),transformColumns=c(1,2))
+citrus.dataArray = citrus.readFCSSet(dataDirectory=dataDir,conditionFileList=fileNames,conditionSampleSize=c(500),transformColumns=c(1,2))
 
 labels = rep("healthy",20)
 labels[grep("diseased",fileNames[,1])]="diseased"
@@ -35,9 +36,8 @@ leftoutClusterAssignments = lapply(1:5,citrus.mapFoldDataToClusterSpace,citrus.d
 foldLargeEnoughClusters = lapply(1:6,citrus.calculateFoldLargeEnoughClusters,foldsClusterAssignments=foldsClusterAssignments,folds=folds,citrus.dataArray=citrus.dataArray)
 
 #conditions="unstim"
-foldFeatures = lapply(1:6,citrus.buildFoldFeatures,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions)
-leftoutFeatures = lapply(1:5,citrus.buildFoldFeatures,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T)
-
+foldFeatures = lapply(1:6,citrus.buildFoldFeatures,featureTypes=c("densities","medians"),citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,medianColumns=c(1,2))
+leftoutFeatures = lapply(1:5,citrus.buildFoldFeatures,featureTypes=c("densities","medians"),citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,medianColumns=c(1,2),calculateLeaveoutData=T)
 
 modelTypes = c("pamr","glmnet")
 regularizationThresholds = citrus.generateRgularizationThresholds(foldFeatures[[6]],labels,modelTypes=modelTypes)
@@ -54,6 +54,6 @@ for (modelType in modelTypes){
 
 pamrFdrCount = pamr.fdr(finalModels[["pamr"]],data=list(x=t(foldFeatures[[6]]),y=labels),nperms=1000)
 
-plot(regularizationThresholds$glmnet,thresholdErrorRates[["glmnet"]],ylim=c(0,.5))
+plot(regularizationThresholds$glmnet,thresholdErrorRates[["glmnet"]],ylim=c(0,.5),type='o')
 plot(regularizationThresholds$pamr,thresholdErrorRates[["pamr"]],ylim=c(0,.5),type='o',col="red")
 lines(pamrFdrCount$results[,"Threshold"],pamrFdrCount$results[,"Median FDR"],type='o',col="blue")
