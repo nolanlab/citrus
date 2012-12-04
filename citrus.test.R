@@ -3,12 +3,16 @@ library("flowCore")
 library("Rclusterpp")
 library("pamr")
 library("glmnet")
+library("ggplot2")
 library("spade",lib.loc="work/R/spade_with_nn/lib")
 
 source("work/citrus/citrus.cluster.R")
 source("work/citrus/citrus.util.R")
 source("work/citrus/citrus.featureFunctions.R")
 source("work/citrus/citrus.classificationModel.R")
+source("work/citrus/citrus.external.R")
+source("work/citrus/citrus.plot.R")
+
 
 dataDir = "work/citrus/syntheticData/unstim/"
 outputDir = "work/citrus/testOutput/"
@@ -43,89 +47,36 @@ leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=c("densi
 modelTypes = c("glmnet","pamr")
 regularizationThresholds = citrus.generateRgularizationThresholds(foldFeatures[[nAllFolds]],labels,modelTypes=modelTypes)
 
-log(regularizationThresholds$glmnet)
-plot(cv.glmnet(x=foldFeatures[[nAllFolds]],y=labels,family="binomial",type.measure="class"))
-pd = list(x=t(foldFeatures[[nAllFolds]]),y=labels)
-pm = pamr.train(data=pd)
-cv = pamr.cv(pm,pd)
-pamr.plotcv(cv)
+foldModels = lapply(modelTypes,citrus.buildTypeModels,folds=folds,foldFeatures=foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds)
+names(foldModels)=modelTypes
 
-thresholdErrorRates = list();
-thresholdFDRRates = list();
-thresholdSEMs = list();
-foldModels = list();
-for (modelType in modelTypes){
-  foldModels[[modelType]] = lapply(1:nAllFolds,citrus.buildFoldModels,folds=folds,foldFeatures=foldFeatures,labels=labels,type=modelType,regularizationThresholds=regularizationThresholds[[modelType]])
-  leftoutPredictions = lapply(1:nFolds,citrus.foldPredict,model=foldModels[[modelType]],features=leftoutFeatures)
-  predictionSuccess = lapply(1:nFolds,citrus.foldScore,folds=folds,predictions=leftoutPredictions,labels=labels)
-  thresholdSEMs[[modelType]] = citrus.calculateSEM(predictionSuccess)
-  thresholdErrorRates[[modelType]] = 1-(apply(do.call("rbind",predictionSuccess),2,sum)/nrow(do.call("rbind",predictionSuccess)))
-  if (modelType=="pamr"){
-    thresholdFDRRates[[modelType]] = pamr.fdr.new(foldModels[[modelType]][[nAllFolds]],data=list(x=t(foldFeatures[[nAllFolds]]),y=labels),nperms=1000)$results[,"Median FDR"]
-  }    
-}
+leftoutPredictions = lapply(modelTypes,citrus.foldTypePredict,foldModels=foldModels,leftoutFeatures=leftoutFeatures)
+names(leftoutPredictions)=modelTypes
 
-for (modelType in modelTypes){
-  print(paste("Plotting results for model type",modelType)  )
-  modelOutputDir = paste(outputDir,modelType,"_results/",sep="")
-  dir.create(modelOutputDir)
-  thresholds=regularizationThresholds[[modelType]]
-  errorRates=thresholdErrorRates[[modelType]]
-  if (modelType=="glmnet"){
-    thresholds = log(thresholds)
-    xlab="log(Regularization Threshold)"
-  } 
-  if (modelType=="pamr"){
-    xlab="Regularization Threshold"
-  }
-  plot(errorRates,type='o',pch=20,col="red",main=paste(modelType,"model error rate\n"),axes=F,xlab=xlab,ylim=c(0,1),ylab="Percent")
-  #Plot SEM
-  for (i in 1:length(thresholds)){
-    lines(c(i,i),c(errorRates[i]+thresholdSEMs[[modelType]][i],errorRates[i]-thresholdSEMs[[modelType]][i]),col="red",lty=3)
-  }
-  grid()
-  axis(1,at=1:length(errorRates),labels=sapply(thresholds,citrus.formatDecimal))
-  axis(2,at=c(0,.25,.5,.75,1),labels=c(0,25,50,75,100))
-  axis(3,labels=foldModels[[modelType]][[nAllFolds]]$nonzero,at=1:length(errorRates))
-  legendLabels = c("Cross Validation Error Rate")
-  legendColors = c("red")
-  legendPchs = c(20)
-  legendLty = c(1)
-  legendPtCex=c(1)
-  if (modelType %in% names(thresholdFDRRates)){
-    lines(thresholdFDRRates[[modelType]],type='o',pch=1,cex=1.5,col="blue")
-    legendLabels = c(legendLabels,"Feature False Discovery Rate")
-    legendColors = c(legendColors,"blue")
-    legendPchs = c(legendPchs,1)
-    legendLty = c(legendLty,1)
-    legendPtCex=c(legendPtCex,1)
-  }
-  
-  cv.min = min(which(errorRates==min(errorRates)))
-  cv.1se = min(which(errorRates<=(errorRates[cv.min]+thresholdSEMs[[modelType]][cv.min])))
-  points(c(cv.min,cv.min),y=c(errorRates[cv.min],errorRates[cv.min]),col="green",pch=20,cex=2)
-  points(c(cv.1se,cv.1se),y=c(errorRates[cv.1se],errorRates[cv.1se]),col="orange",pch=9,cex=2)
-  
-  
-  legendLabels = c(legendLabels,"CV.min","CV.1se")
-  legendColors = c(legendColors,"green","orange")
-  legendPchs = c(legendPchs,20,9)
-  legendLty = c(legendLty,0,0)
-  legendPtCex=c(legendPtCex,2,1.5)  
-  
-  
-  if (modelType %in% names(thresholdFDRRates)){
-    cv.fdr.constrained = max(intersect(which(thresholdFDRRates[[modelType]]<0.01),which(errorRates==min(errorRates))))
-    points(c(cv.fdr.constrained,cv.fdr.constrained),y=c(errorRates[cv.fdr.constrained],errorRates[cv.fdr.constrained]),col="yellow",pch=17,cex=1.5)
-    points(c(cv.fdr.constrained,cv.fdr.constrained),y=c(errorRates[cv.fdr.constrained],errorRates[cv.fdr.constrained]),col="black",pch=2,cex=1.5)
-    legendLabels = c(legendLabels,"CV.FDR.Constrained")
-    legendColors = c(legendColors,"yellow")
-    legendPchs = c(legendPchs,17)
-    legendLty = c(legendLty,0)
-    legendPtCex=c(legendPtCex,1.5)  
-    
-  }
-  
-  legend(x=1,y=1,legendLabels,col=legendColors,pch=legendPchs,lty=legendLty,pt.cex=legendPtCex,cex=.8)
-}
+predictionSuccess = lapply(as.list(modelTypes),citrus.foldTypeScore,folds=folds,leftoutPredictions=leftoutPredictions,labels=labels)
+names(predictionSuccess)=modelTypes
 
+thresholdSEMs = lapply(modelTypes,citrus.modelTypeSEM)
+names(thresholdSEMs)=modelTypes
+
+thresholdErrorRates = lapply(modelTypes,citrus.calcualteTypeErroRate,predictionSuccess=predictionSuccess)
+names(thresholdErrorRates)=modelTypes
+
+thresholdFDRRates = lapply(modelTypes,citrus.calculateTypeFDRRate,foldModels=foldModels,foldFeatures=foldFeatures,labels=labels)
+names(thresholdFDRRates)=modelTypes
+
+cvMinima = lapply(modelTypes,citrus.getCVMinima,thresholdErrorRates=thresholdErrorRates,thresholdSEMs=thresholdSEMs,thresholdFDRRates=thresholdFDRRates)
+names(cvMinima)=modelTypes
+
+# Plot
+sapply(modelTypes,citrus.plotTypeErrorRate,outputDir=outputDir,regularizationThresholds=regularizationThresholds,thresholdErrorRates=thresholdErrorRates,thresholdFDRRates=thresholdFDRRates,cvMinima=cvMinima)
+
+# Extract Features
+differentialFeatures = lapply(modelTypes,citrus.extractModelFeatures,cvMinima=cvMinima,foldModels=foldModels,foldFeatures=foldFeatures,regularizationThresholds=regularizationThresholds)
+names(differentialFeatures) = modelTypes
+
+# Plot Features
+lapply(modelTypes,citrus.plotDifferentialFeatures,differentialFeatures=differentialFeatures,foldFeatures=foldFeatures,outputDir=outputDir,labels=labels)
+
+# Plot Clusters
+lapply(modelTypes,citrus.plotClusters,differentialFeatures=differentialFeatures,outputDir=outputDir,clusterChildren=foldsClusterAssignments,citrus.dataArray=citrus.dataArray,conditions=conditions,clusterCols=clusterCols)
