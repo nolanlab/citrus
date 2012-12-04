@@ -46,3 +46,7 @@ citrus.leavoutFold = function(x,y,leaveoutSize){
   }
   return(as.vector(unlist(leaveout)))
 }
+
+citrus.formatDecimal = function(x){
+  sprintf("%1.2f", x)
+}

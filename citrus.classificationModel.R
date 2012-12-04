@@ -17,20 +17,19 @@ citrus.buildFoldModels = function(index,folds,foldFeatures,labels,type,regulariz
   citrus.buildModel(features=foldFeatures[[index]],labels=labels,type=type,regularizationThresholds=regularizationThresholds)
 }
 
-citrus.foldPredict = function(index,models,features,regularizationThresholds){
-  citrus.predict(models[[index]],features[[index]],regularizationThresholds)
+citrus.foldPredict = function(index,models,features){
+  citrus.predict(models[[index]],features[[index]])
 }
 
 citrus.foldScore = function(index,folds,predictions,labels){
   return(predictions[[index]]==labels[folds[[index]]])
 }
 
-citrus.predict = function(model,features,regularizationThresholds){
+citrus.predict = function(model,features){
   if ("glmnet" %in% class(model)){
     predictions = predict(model,newx=features,type="class")
   } else if (class(model)=="pamrtrained"){
-    #predictions = pamr.predictmany(fit=model,newx=t(features),threshold=regularizationThresholds$pamr)
-    predictions = sapply(regularizationThresholds$pamr,citrus.pamr.predict,model=model,features=features)
+    predictions = pamr.predictmany(fit=model,newx=t(features))$predclass
   } else {
     stop(paste("don't know how to predict for class",class(model)));
   }
@@ -38,9 +37,6 @@ citrus.predict = function(model,features,regularizationThresholds){
   return(predictions)
 }
 
-citrus.pamr.predict = function(threshold,model,features){
-  pamr.predict(model,newx=t(features),type="class",threshold=threshold)
-}
 
 citrus.generateRgularizationThresholds = function(features,lables,modelTypes,n=50,alpha=1){
   if (length(modelTypes)<1){
@@ -48,7 +44,7 @@ citrus.generateRgularizationThresholds = function(features,lables,modelTypes,n=5
   }
   regs = list()
   if ("pamr" %in% modelTypes){
-    regs$pamr = pamr.train(data=list(x=t(features),y=labels),n.threshold=n)$threshold
+    regs$pamr = rev(pamr.train(data=list(x=t(features),y=labels),n.threshold=n)$threshold)
   }
   if ("glmnet" %in% modelTypes){
     if (length(unique(labels))==2){
@@ -56,9 +52,18 @@ citrus.generateRgularizationThresholds = function(features,lables,modelTypes,n=5
     } else {
       family="multinomial"
     }
-    regs$glmnet = glmnet(x=features,y=labels,family=family,alpha=alpha,nlambda=n)$lambda
+    regs$glmnet = rev(glmnet(x=features,y=labels,family=family,alpha=alpha,nlambda=n)$lambda)
   }
   return(regs)
 }
+
+citrus.calculateSEM = function(predictionSuccess){
+  nfolds = length(predictionSuccess)
+  apply(do.call("rbind",lapply(predictionSuccess,citrus.getFoldErrorRate)),2,mean)/sqrt(nfolds)
 }
+
+citrus.getFoldErrorRate = function(foldErrorRate){
+  apply(!foldErrorRate,2,sum)/nrow(foldErrorRate)
+}
+
 
