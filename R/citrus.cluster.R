@@ -28,7 +28,7 @@ citrus.mapFoldDataToClusterSpace = function(index,citrus.dataArray,foldClusterAs
 }
 
 citrus.mapDataToClusterSpace = function(data,clusterAssignments,newData){  
-  nnMap = SPADE.assignToCluster(tbl=newData,cluster_data=data,cluster_assign=rep(1,nrow(data)))
+  nnMap = citrus.assignToCluster(tbl=newData,cluster_data=data,cluster_assign=rep(1,nrow(data)))
   return(lapply(clusterAssignments,citrus.mapNeighborsToCluster,nearestNeighborMap=nnMap))
 }  
 

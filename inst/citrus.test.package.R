@@ -1,7 +1,5 @@
 rm(list = ls())
-library("citrus",lib.loc="work/tmp/")
-library("spade",lib.loc="work/R/spade_with_nn/lib")
-
+library("citrus",lib.loc="work/tmp2/")
 
 dataDir = "work/citrus/data/syntheticData/train/unstim/"
 outputDir = "work/citrus/data/testOutput/"

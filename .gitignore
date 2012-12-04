@@ -2,3 +2,5 @@
 .Rhistory
 .RData
 data/testOutput/
+src/*.o
+src/*.so
