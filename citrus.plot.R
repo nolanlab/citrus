@@ -1,4 +1,5 @@
-citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds,thresholdErrorRates,thresholdFDRRates=NULL,cvMinima){  
+citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds,thresholdErrorRates,foldModels,cvMinima,thresholdSEMs,thresholdFDRRates=NULL){  
+    nAllFolds = length(foldModels[[modelType]])
     print(paste("Plotting results for model type",modelType))
     modelOutputDir = paste(outputDir,modelType,"_results/",sep="")
     dir.create(modelOutputDir)
@@ -50,6 +51,7 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
     legendPtCex=c(legendPtCex,2,1.5)  
        
     if ( "cv.fdr.constrained" %in% names(cvMinima[[modelType]])) {
+      
       cv.fdr.constrained = cvMinima[[modelType]]$cv.fdr.constrained
       points(c(cv.fdr.constrained,cv.fdr.constrained),y=c(errorRates[cv.fdr.constrained],errorRates[cv.fdr.constrained]),col="yellow",pch=17,cex=1.5)
       points(c(cv.fdr.constrained,cv.fdr.constrained),y=c(errorRates[cv.fdr.constrained],errorRates[cv.fdr.constrained]),col="black",pch=2,cex=1.5)

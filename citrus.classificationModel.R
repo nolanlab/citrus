@@ -78,7 +78,7 @@ citrus.foldTypeScore = function(modelType,folds,leftoutPredictions,labels){
   lapply(1:length(leftoutPredictions[[modelType]]),citrus.foldScore,folds=folds,predictions=leftoutPredictions[[modelType]],labels=labels)
 }
 
-citrus.modelTypeSEM = function(modelType,predictionSucces){
+citrus.modelTypeSEM = function(modelType,predictionSuccess){
   citrus.calculateSEM(predictionSuccess[[modelType]])
 }
 

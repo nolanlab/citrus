@@ -18,13 +18,13 @@ citrus.calculateCompleteHierarchicalMembership = function(clustering){
     return(lapply(as.list(1:nrow(mergeOrder)),citrus.traverseMergeOrder,mergeOrder=mergeOrder))
 }
 
-citrus.mapFoldDataToClusterSpace = function(index,citrus.dataArray,foldClusterAssignments,folds,conditions,clusterColumns){
+citrus.mapFoldDataToClusterSpace = function(index,citrus.dataArray,foldClusterAssignments,folds,conditions,clusterCols){
   if ((length(folds[[index]])==1) && (folds[[index]]=="all")){
     return(NULL)
   }
   foldFileIds = as.vector(citrus.dataArray$fileIds[-folds[[index]],conditions])
   leftoutFileIds = as.vector(citrus.dataArray$fileIds[folds[[index]],conditions])
-  return(citrus.mapDataToClusterSpace(data=citrus.dataArray$data[citrus.dataArray$data[,"fileId"]%in%foldFileIds,clusterColumns],clusterAssignments=foldClusterAssignments[[index]],newData=citrus.dataArray$data[citrus.dataArray$data[,"fileId"]%in%leftoutFileIds,clusterColumns]))  
+  return(citrus.mapDataToClusterSpace(data=citrus.dataArray$data[citrus.dataArray$data[,"fileId"]%in%foldFileIds,clusterCols],clusterAssignments=foldClusterAssignments[[index]],newData=citrus.dataArray$data[citrus.dataArray$data[,"fileId"]%in%leftoutFileIds,clusterCols]))  
 }
 
 citrus.mapDataToClusterSpace = function(data,clusterAssignments,newData){  

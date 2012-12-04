@@ -1,11 +1,12 @@
-citrus.readFCSSet = function(dataDirectory,conditionFileList,conditionSampleSize=NULL,transformColumns=NULL){
+citrus.readFCSSet = function(dataDirectory,fileList,conditions,conditionSampleSize=NULL,transformColumns=NULL){
   data = list();
   fileCounter = 1;
-  conditions = colnames(conditionFileList)
+  fileNames = c();
   for (i in 1:length(conditions)){
     cat(paste("Reading Condition ",conditions[i],"\n"));
     conditionData = list();
-    for (fileName in conditionFileList[,i]){
+    for (fileName in fileList[,conditions[i]]){
+      fileNames[fileCounter]=fileName
       filePath = paste(dataDirectory,fileName,sep="");
       if (!file.exists(filePath)){
         stop(paste("File",filePath,"not found."));
@@ -28,7 +29,7 @@ citrus.readFCSSet = function(dataDirectory,conditionFileList,conditionSampleSize
     gc();
   }
   
-  results = list(data=do.call("rbind",data),fileIds=matrix(1:(fileCounter-1),ncol=ncol(conditionFileList),dimnames=list(c(),conditions)),fileNames=fileNames)
+  results = list(data=do.call("rbind",data),fileIds=matrix(1:(fileCounter-1),ncol=length(conditions),dimnames=list(c(),conditions)),fileNames=fileNames)
   class(results) = "citrusDataObject"
   # HOW DO I MAKE IT PRINT OUT SUMMARIES? 
   return(results);
