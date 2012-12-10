@@ -23,23 +23,39 @@ shinyUI(pageWithSidebar(
   headerPanel("Citrus GUI v0.01"),
   
   sidebarPanel(
-    h4("Runtime Summary:"),
+    tags$head(tags$link(rel="stylesheet",type="text/css",href="citrus.css")),
+    h4("Citrus Runtime Summary:"),
+    tags$hr(),
+    tags$em("Working Directory:"),
+    uiOutput("workingDirectorySummary"),
+    tags$em("Groups Summary:"),
+    uiOutput("groupSummary"),
+    tags$em("Clustering Summary:"),
+    uiOutput("clusteringSummary"),
+    tags$em("Cluster Characterization Summary:"),
+    uiOutput("featureSummary"),
+    tags$em("Classification Summary"),
+    tags$hr(),
     tableOutput("sampleGroupsTable")
   ),
   
   mainPanel(
     tabsetPanel(
-      
       tabPanel("Sample Group Setup",
-               numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2,min=2),
-               uiOutput("groupNameInput")
-               ), 
-      
-      tabPanel("Sample Group Assignment", 
-               uiOutput("sampleGroupSelector")
-               ),
-      
-      tabPanel("Clustering Configuration",
+               tags$table(class="sampleGroupTable",
+                 tags$tr(tagList(
+                   tags$td(tagList(
+                     numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2,min=2),
+                     uiOutput("groupNameInput"))
+                   ),
+                   tags$td(
+                     uiOutput("sampleGroupSelector")
+                   )
+                 ))
+                )
+      ),
+               
+      tabPanel("Clustering Setup",
                numericInput(inputId="fileSampleSize","Events Sampled Per File",min=1,value=1000),
                uiOutput("clusterCols"),
                uiOutput("transformCols")
@@ -47,19 +63,21 @@ shinyUI(pageWithSidebar(
       
       tabPanel("Cluster Characterization",
                 sliderInput("minClusterSize",label="Minimum Cluster Size as a percentage of aggregate data",min=0.01,max=1,step=0.01,value=0.05),
-                wellPanel(
-                tags$b("Computed Cluster Features:"),
                 tags$hr(),
-                checkboxInput(inputId="calcDensityFeatures",label="Calculate Cluster Densities"),
-                checkboxInput(inputId="calcMedianFeatures",label="Calculate Cluster Medians"),
+                checkboxGroupInput(inputId="computedFeatures",label="Computed Cluster Features:",choices=c("Cluster Densities","Cluster Medians"),selected="Cluster Densities"),
                 uiOutput("medianCols")
-                )
+               ),
+      
+      tabPanel("Classification Setup",
+               uiOutput("crossValidationRange"),
+               checkboxInput(inputId="buildPAMRModel",label="Construct PAMR Model",value=T),
+               checkboxInput(inputId="buildGLMModel",label="Construct GLMNet Model",value=T)
                )
+      )
       
-        
-      
+    # End Main Panel
     )
-  )
+  
 ))
 
 
