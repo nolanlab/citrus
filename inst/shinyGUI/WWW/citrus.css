@@ -11,8 +11,12 @@ input{
   padding-right:40px;
 }
 
-.red {
+.red-error {
   color:red;
   font-style:italic;
   font-weight:bold;
+}
+
+.disabled{
+  color:#AAAAAA;
 }

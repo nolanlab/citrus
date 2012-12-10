@@ -4,12 +4,12 @@ serialGroupSummary = function(groupName,selectedFiles){
   if (is.null(groupName)){
     return(tags$b(""))
   }
-  countTag=tags$span("0",class="red")
+  countTag=tags$span("0",class="red-error")
   if ((length(selectedFiles)>0) && (groupName %in% names(selectedFiles))){
     if (length(selectedFiles[[groupName]])>1){
       countTag = tags$span(length(selectedFiles[[groupName]]))  
     } else {
-      countTag = tags$span(length(selectedFiles[[groupName]]),class="red")
+      countTag = tags$span(length(selectedFiles[[groupName]]),class="red-error")
     }
     
   }
@@ -48,10 +48,6 @@ getAssignmentsTable = function(input,fileList){
   return(data.frame("File"=fileList,"Group"=fileGroupAssignments));
 }
 
-getClusterCols = function(fileName,dataDir){
-  colnames(read.FCS(paste(dataDir,fileName,sep=""),which.lines=1))
-}
-
 getSelectedFiles = function(input){
   sf = list();
   for (groupName in getGroupNames(input)){
@@ -64,11 +60,6 @@ getParameterIntersections = function(input,fileList,fileCols){
   selectedFiles = unlist(getSelectedFiles(input))
   return(Reduce(intersect,fileCols[which(fileList %in% selectedFiles)]))
 }
-
-dataDir = "/Users/rbruggner/Desktop/work/citrus/data/syntheticData/train/unstim/"
-fileList = list.files(dataDir)
-fileGroupAssignments = rep("",length(fileList))  
-fileCols = lapply(fileList,getClusterCols,dataDir=dataDir)
 
 shinyServer(function(input, output) {
   
@@ -102,18 +93,17 @@ shinyServer(function(input, output) {
   output$transformCols = reactiveUI(function(){
     choices = getParameterIntersections(input,fileList,fileCols);
     if (is.null(choices)){
-      return(tagList(tags$b("Assign files to groups to enable selection of transform parameters.")))
+      return(tagList(tags$b("Assign samples to groups to enable selection of transform parameters.")))
     } else {
       return(selectInput("transformCols",label="Transform Parameters",choices=choices,multiple=T))  
     }
   })
   
   output$medianCols = reactiveUI(function(){
-    cat(paste(input$computedFeatures,"\n"));
     if ("Cluster Medians" %in% input$computedFeatures){
       choices = getParameterIntersections(input,fileList,fileCols);
       if (is.null(choices)){
-        return(tagList(tags$b("Assign files to groups to enable selection of median parameters.")))
+        return(tagList(tags$b("Assign samples to groups to enable selection of median parameters.")))
       } else {
         return(selectInput("medianCols",label="Cluster Median Parameters",choices=choices,multiple=T))  
       }
@@ -127,7 +117,7 @@ shinyServer(function(input, output) {
     nFiles = length(unlist(selectedFiles))
     
     if ((length(names(selectedFiles))<2)||(!all(unlist(lapply(selectedFiles,length))>1))){
-      return(tagList(tags$b("Need at least 2 samples assigned to each group")))
+      return(tagList(tags$b("Assign samples to groups to enable specification of cross-validation folds")))
     } else {
       return(tagList(numericInput(inputId="crossValidationFolds",label="Cross Validation Folds",value=min(5,nFiles),min=2,max=nFiles)))
     }
@@ -145,7 +135,7 @@ shinyServer(function(input, output) {
   
   output$clusteringSummary = reactiveUI(function(){
     if (is.null(input$clusterCols)){
-      ccTag = tags$li(tagList(tags$span("Clustering Parameters:"),tags$span("None Selected",class="red")))
+      ccTag = tags$li(tagList(tags$span("Clustering Parameters:"),tags$span("None Selected",class="red-error")))
     } else {
       ccTag = tags$li(tagList(tags$span("Clustering Parameters:"),tags$span(paste(input$clusterCols,collapse=", "))))
     }
@@ -162,7 +152,53 @@ shinyServer(function(input, output) {
   })
   
   output$featureSummary = reactiveUI(function(){
-    return(tags$ul(tagList(tags$li(paste("Minimum Cluster Size: ",as.numeric(input$minClusterSize)*100,"%",sep="")))))
+    featureSetTags = tags$span("None",class="red-error")
+    if (length(input$computedFeatures)>0){
+      featureTags = list();
+      for (featureSet in input$computedFeatures){
+        if (featureSet=="Cluster Densities"){
+          featureTags[["Cluster Densities"]] = tags$li("Cluster Densities")
+        }
+        if (featureSet=="Cluster Medians"){
+          medianCols = input$medianCols
+          medianVals = tags$span("None",class="red-error");
+          if (length(input$medianCols)>0){
+            medianVals = tags$span(paste(input$medianCols,collapse=", "))
+          }
+          featureTags[["Cluster Medians"]]=tags$li(tagList(tags$span("Cluster Median Parameters:"),medianVals))
+        }
+      }
+      featureSetTags = tags$ul(do.call("tagList",featureTags))
+    }
+    featureSetTags = tagList(tags$span("Computed Cluster Features:"),featureSetTags)
+    return(
+      tags$ul(
+        tagList(
+          tags$li(paste("Minimum Cluster Size: ",input$minClusterSize,"%",sep="")),
+          tags$li(featureSetTags)
+          )
+        )
+    )
+  })
+  
+  output$classificationSummary = reactiveUI(function(){
+    if (is.null(input$crossValidationFolds)){
+      cvTag = tagList(tags$span("Cross Validation Folds:"),tags$span("None",class="red-error"))
+    } else {
+      cvTag = tagList(tags$span("Cross Validation Folds:"),tags$span(input$crossValidationFolds))
+    }
+    if (is.null(input$classificationModelTypes)){
+      mTag = tagList(tags$span("Classification Models:"),tags$span("None",class="red-error"))
+    } else {
+      mTag = tags$span(paste("Classification Models:",paste(input$classificationModelTypes,collapse=", ")))
+    }
+    return(tags$ul(tagList(tags$li(cvTag),tags$li(mTag))))
+    
+  })
+  
+  output$quitAndRun = reactiveUI(function(){
+    cat(paste("QAR:",input$runCitrus,"\n"));
+    return(checkboxInput(inputId="runCitrus",label="Quit UI and run Citrus"))
   })
   
 })

@@ -1,21 +1,14 @@
 library(shiny)
 
-actionButton <- function(inputId, label) {
+
+disabledCheckbox = function(inputId,label){
   tagList(
-    singleton(tags$head(tags$script(src = "js/actionbutton.js"))),
-    tags$button(id=inputId, type="button", class="btn action-button", label)
+    tags$input(type="checkbox",id=inputId,disabled="disabled"),
+    tags$span(label,class="disabled"),
+    tags$br()
   )
 }
 
-eventButton <- function(inputId, value) {
-  tagList(
-    singleton(tags$head(tags$script(src = "js/eventbutton.js"))),
-    tags$button(id = inputId,
-                class = "eventbutton btn",
-                type = "button",
-                as.character(value))
-  )
-}
 
 
 shinyUI(pageWithSidebar(
@@ -34,8 +27,10 @@ shinyUI(pageWithSidebar(
     uiOutput("clusteringSummary"),
     tags$em("Cluster Characterization Summary:"),
     uiOutput("featureSummary"),
-    tags$em("Classification Summary"),
+    tags$em("Classification Summary:"),
+    uiOutput("classificationSummary"),
     tags$hr(),
+    tags$em("Sample Summary:"),
     tableOutput("sampleGroupsTable")
   ),
   
@@ -62,7 +57,7 @@ shinyUI(pageWithSidebar(
                ),
       
       tabPanel("Cluster Characterization",
-                sliderInput("minClusterSize",label="Minimum Cluster Size as a percentage of aggregate data",min=0.01,max=1,step=0.01,value=0.05),
+                tags$div(sliderInput("minClusterSize",label="Minimum Cluster Size: A percentage of aggregate data size",min=1,max=100,step=1,value=5),style="width:300px;"),
                 tags$hr(),
                 checkboxGroupInput(inputId="computedFeatures",label="Computed Cluster Features:",choices=c("Cluster Densities","Cluster Medians"),selected="Cluster Densities"),
                 uiOutput("medianCols")
@@ -70,8 +65,14 @@ shinyUI(pageWithSidebar(
       
       tabPanel("Classification Setup",
                uiOutput("crossValidationRange"),
-               checkboxInput(inputId="buildPAMRModel",label="Construct PAMR Model",value=T),
-               checkboxInput(inputId="buildGLMModel",label="Construct GLMNet Model",value=T)
+               checkboxGroupInput(inputId="classificationModelTypes",label="Classification Models:",choices=c("PAMR","GLMNET"),selected=c("PAMR","GLMNET"))
+               ),
+      
+      tabPanel("Run!",
+               disabledCheckbox(inputId="multithread",label="Run Multithreaded"),
+               disabledCheckbox(inputId="exportClusters",label="Export Identified Clusters"),
+               disabledCheckbox(inputId="optimisticMode",label="Run in Naive Mode"),
+               uiOutput("quitAndRun")
                )
       )
       

@@ -1,3 +1,7 @@
+citrus.getFeatureSetNames = function(){
+  return(c("densities","medians"))
+}
+
 citrus.buildFoldFeatures = function(index,featureTypes=c("densities"),folds,citrus.dataArray,foldsClusterAssignments,foldLargeEnoughClusters,conditions,calculateLeaveoutData=F,...){
   if ((length(folds[[index]])==1) && (folds[[index]]=="all")){
     foldsFileIds=as.vector(citrus.dataArray$fileIds[,conditions])
