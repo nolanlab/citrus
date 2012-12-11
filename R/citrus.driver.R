@@ -1,4 +1,4 @@
-citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,transformCols,fileList,nFolds){
+citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,transformCols=NULL){
   
   labelCol = which(colnames(fileList)=="labels")
   conditions=colnames(fileList)[-labelCol]

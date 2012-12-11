@@ -8,7 +8,7 @@ library("citrus",lib.loc=<% if (is.null(templateData[["library"]])){
 dataDir = <%cat(stringQuote(templateData[["dataDir"]]))%>
 outputDir = <%cat(stringQuote(paste(templateData[["dataDir"]],"citrusOutput/",sep="")))%>
 clusterCols = c(<%cat(paste(sapply(templateData[["clusterCols"]],stringQuote),collapse=","))%>)
-tansformCols = c(<%cat(paste(sapply(templateData[["transformCols"]],stringQuote),collapse=","))%>)
+transformCols = c(<%cat(paste(sapply(templateData[["transformCols"]],stringQuote),collapse=","))%>)
 
 fileSampleSize = <% cat(templateData[["fileSampleSize"]]) %>
 nFolds = <% cat(templateData[["crossValidationFolds"]]) %>
@@ -19,4 +19,10 @@ fileList = data.frame(<%
                         cat(paste(sapply(colnames(labelAssignments),convertColToDefinition,df=labelAssignments),collapse=",\n"))
                       %>)
 
-citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,transformCols,fileList,nFolds)
+citrus.full(dataDir=dataDir,
+            outputDir=outputDir,
+            clusterCols=clusterCols,
+            fileSampleSize=fileSampleSize,
+            fileList=fileList,
+            nFolds=nFolds,
+            transformCols=transformCols)

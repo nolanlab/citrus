@@ -8,7 +8,7 @@ options(shiny.trace=FALSE)
 guiPath = "/Users/rbruggner/Desktop/work/citrus/inst/shinyGUI/"
 sapply(list.files(paste(guiPath,"guiFunctions",sep=""),pattern=".R",full.names=T),source)
 
-dataDir = "/Users/rbruggner/Desktop/work/citrus/data/syntheticData/train/unstim/"
+dataDir = "/Users/rbruggner/Desktop/notime/citrusTestRun/"
 fileList = list.files(dataDir)
 fileGroupAssignments = rep("",length(fileList))  
 fileCols = lapply(fileList,getClusterCols,dataDir=dataDir)

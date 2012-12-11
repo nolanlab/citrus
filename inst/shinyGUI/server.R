@@ -135,7 +135,7 @@ shinyServer(function(input, output) {
   output$quitAndRun = reactiveUI(function(){
     if ((!is.null(input$runCitrus))&&(input$runCitrus)){
       writeRunCitrusFile(input)
-      #q();
+      q();
     }
     return(checkboxInput(inputId="runCitrus",label="Quit UI and run Citrus"))
   })

@@ -8,3 +8,4 @@ Maintainer: Robert Bruggner <bruggner@stanford.edu>
 Description: Automated identification of clusters whose behavior differs between sample groups.
 License: GPL-2
 Depends: Rclusterpp,pamr,glmnet,ggplot2,flowCore
+Suggests: shiny,brew

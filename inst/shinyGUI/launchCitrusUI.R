@@ -3,11 +3,11 @@
 # To launch UI from a command line,type:
 # >R -f /path/to/launchCitrusUI.R /path/to/fcs/files/
 ###########################################################
-
 rm(list=ls())
 LIBRARY_PATH=NULL
 library("citrus",lib.loc=LIBRARY_PATH)
 library("shiny",lib.locLIBRARY_PATH)
+library("brew")
 
 # Load functions to retreive initial variables
 initFunctionPath = system.file(paste(c("shinyGUI","guiFunctions","launcherInitFunctions.R"),collapse=.Platform$file.sep), package = "citrus")
@@ -23,7 +23,7 @@ if (!file.exists(dataDir)){
 }
 
 # Get list of sample files
-fileList = list.files(dataDir)
+fileList = list.files(dataDir,pattern=".fcs",ignore.case=T)
 
 # This should get fixed...
 fileGroupAssignments = rep("",length(fileList))  
