@@ -1,4 +1,4 @@
 
 getClusterCols = function(fileName,dataDir){
-  colnames(read.FCS(paste(dataDir,fileName,sep=""),which.lines=1))
+  colnames(read.FCS(file.path(dataDir,fileName),which.lines=1))
 }

@@ -7,8 +7,8 @@ writeRunCitrusFile = function(input,templateFile=NULL){
     dir.create(file.path(dataDir,"citrusOutput"),showWarnings=F)
   }
   brew(
-    file="/Users/rbruggner/Desktop/work/citrus/inst/shinyGUI/guiFunctions/runCitrus.template",
-    output=paste(outputDir,"runCitrus.R",sep=.Platform$file.sep)
+    file=file.path(system.file(package="citrus"),"shinyGUI","guiFunctions","runCitrus.template"),
+    output=file.path(outputDir,"runCitrus.R")
     )
 }
 

@@ -1,7 +1,6 @@
 library(shiny)
 
-sapply(list.files(system.file(paste(c("shinyGUI","guiFunctions"),collapse=.Platform$file.sep), package = "citrus"),pattern=".R",full.names=T),source)
-source("/Users/rbruggner/Desktop/work/citrus/inst/shinyGUI/guiFunctions/templateFunctions.R")
+sapply(list.files(file.path(system.file(package = "citrus"),"shinyGUI","guiFunctions"),pattern=".R",full.names=T),source)
 
 shinyServer(function(input, output) {
   
