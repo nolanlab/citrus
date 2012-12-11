@@ -8,7 +8,7 @@ citrus.readFCSSet = function(dataDirectory,fileList,conditions,fileSampleSize=NU
     conditionData = list();
     for (fileName in fileList[,conditions[i]]){
       fileNames[fileCounter]=fileName
-      filePath = paste(dataDirectory,fileName,sep="");
+      filePath = file.path(dataDirectory,fileName);
       if (!file.exists(filePath)){
         stop(paste("File",filePath,"not found."));
       }

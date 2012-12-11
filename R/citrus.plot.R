@@ -1,9 +1,9 @@
 citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds,thresholdErrorRates,foldModels,cvMinima,thresholdSEMs,thresholdFDRRates=NULL){  
     nAllFolds = length(foldModels[[modelType]])
     print(paste("Plotting results for model type",modelType))
-    modelOutputDir = paste(outputDir,modelType,"_results/",sep="")
+    modelOutputDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
     dir.create(modelOutputDir)
-    pdf(paste(modelOutputDir,"ModelErrorRate.pdf",sep=""),width=8,height=8)
+    pdf(file.path(modelOutputDir,"ModelErrorRate.pdf"),width=8,height=8)
     thresholds=regularizationThresholds[[modelType]]
     errorRates=thresholdErrorRates[[modelType]]
     if (modelType=="glmnet"){
@@ -87,7 +87,7 @@ citrus.plotDifferentialFeatures = function(modelType,differentialFeatures,foldFe
       ncol=length(nonzeroFeatureNames)
     }
     
-    pdf(paste(modelTypeDir,"features-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep=""),width=(ncol*4),height=(nrow*1.5))
+    pdf(file.path(modelTypeDir,paste("features-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=(ncol*4),height=(nrow*1.5))
     p <- ggplot(combinedDf[,], aes(labels, value)) 
     p = p + facet_wrap(~featureName,ncol=4) + geom_boxplot(outlier.colour=rgb(0,0,0,0),colour=rgb(0,0,0,.3)) + geom_point(aes(color=labels),alpha=I(0.25),shape=19,size=I(2)) + scale_colour_manual(values = c("red","blue")) + coord_flip() +  theme_bw() + ylab("") + xlab("") + opts(legend.position = "none") 
     print(p)
@@ -164,7 +164,7 @@ citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterC
   clusterChildren = clusterChildren[[length(clusterChildren)]]
   for (cvPoint in names(differentialFeatures[[modelType]])){
     nonzeroClusters = as.numeric(differentialFeatures[[modelType]][[cvPoint]][["clusters"]])
-    pdf(file=paste(outputDir,modelType,"_results/clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep=""),width=(2*length(clusterCols)+2),height=(2*length(nonzeroClusters)+2))
+    pdf(file=file.path(outputDir,paste(modelType,"_results/clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=(2*length(clusterCols)+2),height=(2*length(nonzeroClusters)+2))
     clusterDataList=list();
     for (nonzeroCluster in sort(nonzeroClusters)){
       clusterDataList[[as.character(nonzeroCluster)]]=data[clusterChildren[[nonzeroCluster]],clusterCols]
