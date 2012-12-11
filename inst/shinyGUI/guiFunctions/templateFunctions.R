@@ -2,7 +2,7 @@
 writeRunCitrusFile = function(input,templateFile=NULL){
   templateData = as.list(input)
   templateData[["dataDir"]]=dataDir
-  outputDir = paste(dataDir,"citrusOutput",sep="")
+  outputDir = file.path(dataDir,"citrusOutput")
   if (!file.exists(outputDir)){
     dir.create(file.path(dataDir,"citrusOutput"),showWarnings=F)
   }

@@ -71,7 +71,7 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
 citrus.plotDifferentialFeatures = function(modelType,differentialFeatures,foldFeatures,outputDir,labels){
   features = foldFeatures[[length(foldFeatures)]]
   for (cvPoint in names(differentialFeatures[[modelType]])){
-    modelTypeDir = paste(outputDir,modelType,"_results/",sep="")
+    modelTypeDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
     nonzeroFeatureNames = differentialFeatures[[modelType]][[cvPoint]][["features"]]
     for (nonzeroFeatureName in nonzeroFeatureNames){
       df = data.frame(value=features[,nonzeroFeatureName],labels,featureName=nonzeroFeatureName)

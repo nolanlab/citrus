@@ -33,6 +33,8 @@ fileGroupAssignments = rep("",length(fileList))
 # Pre-read list of columns measured in each file
 fileCols = lapply(fileList,getClusterCols,dataDir=dataDir)
 
+
+#runApp(appDir=file.path(system.file(package = "citrus"),"shinyGUI"),launch.browser=T)
 # Launch Shiny UI in SNOW thread so we can quit it with out shutting down all of R.
 guiThread = makeCluster(1,type="SOCK")
 clusterEvalQ(guiThread,library("brew"))

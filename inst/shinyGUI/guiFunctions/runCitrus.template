@@ -6,7 +6,7 @@ library("citrus",lib.loc=<% if (is.null(templateData[["library"]])){
                             } %>)
 
 dataDir = <%cat(stringQuote(templateData[["dataDir"]]))%>
-outputDir = <%cat(stringQuote(paste(templateData[["dataDir"]],"citrusOutput/",sep="")))%>
+outputDir = <%cat("file.path(dataDir,\"citrusOutput\"))")%>
 clusterCols = c(<%cat(paste(sapply(templateData[["clusterCols"]],stringQuote),collapse=","))%>)
 transformCols = c(<%cat(paste(sapply(templateData[["transformCols"]],stringQuote),collapse=","))%>)
 
