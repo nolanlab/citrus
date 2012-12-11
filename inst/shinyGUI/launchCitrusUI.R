@@ -10,7 +10,7 @@ library("citrus",lib.loc=LIBRARY_PATH)
 library("shiny",lib.locLIBRARY_PATH)
 
 # Load functions to retreive initial variables
-initFunctionPath = system.file(paste("shinyGUI","initFunctions.R",sep=.Platform$file.sep), package = "citrus")
+initFunctionPath = system.file(paste(c("shinyGUI","guiFunctions","launcherInitFunctions.R"),collapse=.Platform$file.sep), package = "citrus")
 source(initFunctionPath)
 
 # Comment to True to debug

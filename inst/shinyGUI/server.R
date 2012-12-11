@@ -1,80 +1,16 @@
 library(shiny)
 
-serialGroupSummary = function(groupName,selectedFiles){
-  if (is.null(groupName)){
-    return(tags$b(""))
-  }
-  countTag=tags$span("0",class="red-error")
-  if ((length(selectedFiles)>0) && (groupName %in% names(selectedFiles))){
-    if (length(selectedFiles[[groupName]])>1){
-      countTag = tags$span(length(selectedFiles[[groupName]]))  
-    } else {
-      countTag = tags$span(length(selectedFiles[[groupName]]),class="red-error")
-    }
-    
-  }
-  return(tags$li(tagList(tags$span(paste(groupName,"Samples: ")),countTag)))
-}
-
-serialGroupNameInput = function(x){
-  textInput(inputId=paste("Group",x,"name",sep="_"),label=paste("Group",x,"name",sep=" "),value=paste("Group",x,sep=" "))  
-}
-
-getGroupNames = function(input){
-  inputList = as.list(input)
-  vals = c()
-  for (i in 1:input$numberOfGroups){
-    name = paste("Group",i,"name",sep="_");
-    if (name %in% names(inputList)){
-      vals[i]=inputList[[name]]  
-    } else {
-      vals[i] = "EmptyGroup";
-    }
-    
-  }
-  names(vals) = vals
-  return(vals)
-}
-
-serialGroupSelectors = function(groupName,fileList){
-  selectInput(paste(groupName,"files",sep=""),label=paste(groupName,"samples"),selected=fileList[grep(groupName,fileList,ignore.case=T)],choices=fileList,multiple=T)
-}
-
-getAssignmentsTable = function(input,fileList){
-  fileGroupAssignments = rep("",length(fileList))
-  for (groupName in getGroupNames(input)){
-    fileGroupAssignments[fileList %in% as.list(input)[[paste(groupName,"files",sep="")]]]=groupName
-  }
-  return(data.frame("File"=fileList,"Group"=fileGroupAssignments));
-}
-
-getSelectedFiles = function(input){
-  sf = list();
-  for (groupName in getGroupNames(input)){
-    sf[[groupName]] = as.list(input)[[paste(groupName,"files",sep="")]]
-  }
-  return(sf)
-}
-
-getParameterIntersections = function(input,fileList,fileCols){
-  selectedFiles = unlist(getSelectedFiles(input))
-  return(Reduce(intersect,fileCols[which(fileList %in% selectedFiles)]))
-}
+sapply(list.files(system.file(paste(c("shinyGUI","guiFunctions"),collapse=.Platform$file.sep), package = "citrus"),pattern=".R",full.names=T),source)
+source("/Users/rbruggner/Desktop/work/citrus/inst/shinyGUI/guiFunctions/templateFunctions.R")
 
 shinyServer(function(input, output) {
   
   output$groupNameInput = reactiveUI(function() {
-    return( 
-        tagList(
-          sapply(1:input$numberOfGroups,serialGroupNameInput)
-        )
-    )
+    return(tagList(sapply(1:input$numberOfGroups,serialGroupNameInput)))
   })
   
   output$sampleGroupSelector = reactiveUI(function(){
-    return(
-      tagList(sapply(getGroupNames(input),serialGroupSelectors,fileList=fileList))
-    )
+    return(tagList(sapply(getGroupNames(input),serialGroupSelectors,fileList=fileList)))
   })
 
   output$sampleGroupsTable = reactiveTable(function(){
@@ -197,7 +133,10 @@ shinyServer(function(input, output) {
   })
   
   output$quitAndRun = reactiveUI(function(){
-    cat(paste("QAR:",input$runCitrus,"\n"));
+    if ((!is.null(input$runCitrus))&&(input$runCitrus)){
+      writeRunCitrusFile(input)
+      #q();
+    }
     return(checkboxInput(inputId="runCitrus",label="Quit UI and run Citrus"))
   })
   

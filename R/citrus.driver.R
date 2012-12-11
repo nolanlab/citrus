@@ -1,8 +1,8 @@
-citrus.full = function(dataDir,outputDir,clusterCols,conditionSampleSize,transformCols,fileList,nFolds){
+citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,transformCols,fileList,nFolds){
   
   labelCol = which(colnames(fileList)=="labels")
   conditions=colnames(fileList)[-labelCol]
-  citrus.dataArray = citrus.readFCSSet(dataDirectory=dataDir,fileList=fileList,conditions=conditions,transformCols=transformCols,conditionSampleSize=conditionSampleSize)
+  citrus.dataArray = citrus.readFCSSet(dataDirectory=dataDir,fileList=fileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize)
   
   
   nAllFolds = nFolds+1

@@ -1,4 +1,5 @@
-citrus.readFCSSet = function(dataDirectory,fileList,conditions,conditionSampleSize=NULL,transformCols=NULL){
+# FILE SAMPLE SIZE SHOULD BE A NAMED VECTOR OR LIST OR SOMETHING THAT'S EASY TO EXTRACT BY NAME
+citrus.readFCSSet = function(dataDirectory,fileList,conditions,fileSampleSize=NULL,transformCols=NULL){
   data = list();
   fileCounter = 1;
   fileNames = c();
@@ -18,9 +19,9 @@ citrus.readFCSSet = function(dataDirectory,fileList,conditions,conditionSampleSi
       if (!is.null(transformCols)){
         fcsData[,transformCols] = asinh(fcsData[,transformCols]/5);
       }
-      if ((!is.null(conditionSampleSize))&&(conditionSampleSize[i]<nrow(fcsData))){
-        cat(paste("\tSampling",conditionSampleSize[i],"events.\n"))
-        fcsData = fcsData[sort(sample(1:nrow(fcsData),conditionSampleSize[i])),] 
+      if ((!is.null(fileSampleSize))&&(fileSampleSize[i]<nrow(fcsData))){
+        cat(paste("\tSampling",fileSampleSize[i],"events.\n"))
+        fcsData = fcsData[sort(sample(1:nrow(fcsData),fileSampleSize[i])),] 
       }
       conditionData[[fileName]] = fcsData
     }
