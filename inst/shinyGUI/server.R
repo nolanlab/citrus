@@ -1,17 +1,14 @@
-library(shiny)
-
-sapply(list.files(file.path(system.file(package = "citrus"),"shinyGUI","guiFunctions"),pattern=".R",full.names=T),source)
-
 shinyServer(function(input, output) {
   
   output$groupNameInput = reactiveUI(function() {
-    return(tagList(sapply(1:input$numberOfGroups,serialGroupNameInput)))
+    return(tagList(lapply(1:input$numberOfGroups,serialGroupNameInput)))
   })
   
   output$sampleGroupSelector = reactiveUI(function(){
-    return(tagList(sapply(getGroupNames(input),serialGroupSelectors,fileList=fileList)))
+    return(tagList(lapply(getGroupNames(input),serialGroupSelectors,fileList=fileList)))
   })
-
+  
+  
   output$sampleGroupsTable = reactiveTable(function(){
     return(getAssignmentsTable(input,fileList))
   })
@@ -134,7 +131,7 @@ shinyServer(function(input, output) {
   output$quitAndRun = reactiveUI(function(){
     if ((!is.null(input$runCitrus))&&(input$runCitrus)){
       writeRunCitrusFile(input)
-      q();
+      stop(simpleWarning("GUI Setup Complete"))
     }
     return(checkboxInput(inputId="runCitrus",label="Quit UI and run Citrus"))
   })

@@ -13,7 +13,7 @@ citrus.readFCSSet = function(dataDirectory,fileList,conditions,fileSampleSize=NU
         stop(paste("File",filePath,"not found."));
       }
       cat(paste("\tReading file ",fileName,"\n"));
-      fcsData = exprs(read.FCS(filePath));
+      suppressWarnings((fcsData =exprs(read.FCS(filePath))));
       fcsData = cbind(fcsData,fileEventNumber=1:nrow(fcsData),fileId=fileCounter);
       fileCounter=fileCounter+1;
       if (!is.null(transformCols)){

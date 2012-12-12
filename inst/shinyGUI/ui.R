@@ -35,17 +35,12 @@ shinyUI(pageWithSidebar(
   mainPanel(
     tabsetPanel(
       tabPanel("Sample Group Setup",
+               numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2,min=2),
                tags$table(class="sampleGroupTable",
-                 tags$tr(tagList(
-                   tags$td(tagList(
-                     numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2,min=2),
-                     uiOutput("groupNameInput"))
-                   ),
-                   tags$td(
-                     uiOutput("sampleGroupSelector")
-                   )
-                 ))
-                )
+                          tagList(
+                            tags$tr(uiOutput("groupNameInput")),
+                            tags$tr(uiOutput("sampleGroupSelector"))
+                          ))
       ),
                
       tabPanel("Clustering Setup",

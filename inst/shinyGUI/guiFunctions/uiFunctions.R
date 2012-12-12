@@ -16,9 +16,9 @@ serialGroupSummary = function(groupName,selectedFiles){
 }
 
 serialGroupNameInput = function(x){
-  textInput(inputId=paste("Group",x,"name",sep="_"),label=paste("Group",x,"name",sep=" "),value=paste("Group",x,sep=" "))  
+  tags$td(textInput(inputId=paste("Group",x,"name",sep="_"),label=paste("Group",x,"name",sep=" "),value=paste("Group",x,sep=" ")))
 }
 
 serialGroupSelectors = function(groupName,fileList){
-  selectInput(paste(groupName,"files",sep=""),label=paste(groupName,"samples"),selected=fileList[grep(groupName,fileList,ignore.case=T)],choices=fileList,multiple=T)
+  tags$td(selectInput(paste(groupName,"files",sep=""),label=paste(groupName,"samples"),selected=fileList[grep(groupName,fileList,ignore.case=T)],choices=fileList,multiple=T))
 }
