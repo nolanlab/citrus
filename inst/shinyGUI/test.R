@@ -6,8 +6,7 @@ library("Rclusterpp")
 
 
 dataDir = "/Users/rbruggner/Desktop/notime/citrusTestRun/"
-
-#source("/Users/rbruggner/Desktop/work/citrus/R/citrus.launchUI.R")
+source("/Users/rbruggner/Desktop/work/citrus/R/citrus.launchUI.R")
 
 #fileList = list.files(dataDir,pattern=".fcs",ignore.case=T)
 #fileGroupAssignments = rep("",length(fileList))  

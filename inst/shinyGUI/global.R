@@ -1,3 +1,4 @@
+runCitrus = FALSE;
 
 # Choose any file from the appropriate directory
 if (!exists("dataDir")){

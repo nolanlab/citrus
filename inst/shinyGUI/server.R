@@ -33,7 +33,7 @@ shinyServer(function(input, output) {
   
   output$calculatedFeatures = reactiveUI(function(){
     return(tagList(
-                    tags$span("Calculated Cluster Features:"),
+                    tags$span("Calculated Cluster Features:",class="control-label"),
                     tags$br(),
                     checkboxInput(inputId="computeDensities",label="Cluster Densities",value=T),
                     checkboxInput(inputId="computeMedians",label="Cluster Medians",value=F)
@@ -137,16 +137,35 @@ shinyServer(function(input, output) {
   })
   
   output$run = reactiveUI(function(){
-    if ((!is.null(input$runCitrus))&&(input$runCitrus)){
-      writeRunCitrusFile(input)
-      stop(simpleWarning("GUI Setup Complete"))
-    }
     errors = errorCheckInput(input)
-    if (length(errors)==0){
-      return(tagList(checkboxInput(inputId="runCitrus",label="<- Check to run Citrus"),tags$em("Checkbox to be replaced by button when input-specific reactivity becomes avaialble.")))  
+    if ((!is.null(input$runCitrus))&&(input$runCitrus)){
+      if (length(errors)==0){
+        writeRunCitrusFile(input)  
+      } else {
+        stop(simpleError("Can't write runCitrus.R with errors."))
+      }
+      if (input$citrusRunAction %in% c("wrc","qar")){
+        runCitrus<<-FALSE
+        if (input$citrusRunAction=="qar"){
+          runCitrus<<-TRUE
+        } 
+        stop(simpleWarning("GUI Setup Complete"))    
+      } else {
+        # Do something fancy
+      }
+      
     } else {
-      return(tagList(tags$em("The following problems must be corrected before running citrus:"),tags$ul(tagList(lapply(errors,tags$li)))))
-    }
+      if (length(errors)==0){
+        return(tagList(checkboxInput(inputId="runCitrus",label="<- Check to run Citrus"),tags$em("Checkbox to be replaced by button when input-specific reactivity becomes avaialble.")))  
+      } else {
+        return(tagList(tags$em("The following problems must be corrected before running citrus:"),tags$ul(tagList(lapply(errors,tags$li)))))
+      }  
+    } 
+      
+      
+    
+    
+    
   })
   
 })

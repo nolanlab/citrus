@@ -3,7 +3,7 @@ library(shiny)
 
 disabledCheckbox = function(inputId,label){
   tagList(
-    tags$input(type="checkbox",id=inputId,disabled="disabled"),
+    tags$input(type="checkbox",id=inputId,disabled="disabled",class="checkbox"),
     tags$span(label,class="disabled"),
     tags$br()
   )
@@ -64,14 +64,13 @@ shinyUI(pageWithSidebar(
       
       tabPanel("Run!",
                
-               radioButtons("action", "Citrus Execution Options:",
+               radioButtons("citrusRunAction", "Citrus Execution Options:",
                             list("Write runCitrus.R file to data directory only" = "wrc",
-                                 "Quit GUI and run Citrus in R" = "qar",
-                                 "Run Citrus now and return results to GUI" = "rig")),
+                                 "Quit GUI and run Citrus in R" = "qar")),
                tags$hr(),
                uiOutput("run"),
                tags$hr(),
-               tags$em("TBD Runtime Options:"),
+               tags$em("TBD Runtime Options:",class="control-label"),
                tags$br(),
                disabledCheckbox(inputId="multithread",label="Run Multithreaded"),
                disabledCheckbox(inputId="exportClusters",label="Export Identified Clusters"),
