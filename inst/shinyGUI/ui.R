@@ -62,9 +62,9 @@ shinyUI(pageWithSidebar(
                ),
       
       tabPanel("Run!",
-               disabledCheckbox(inputId="multithread",label="Run Multithreaded"),
-               disabledCheckbox(inputId="exportClusters",label="Export Identified Clusters"),
-               disabledCheckbox(inputId="optimisticMode",label="Run in Naive Mode"),
+               disabledCheckbox(inputId="multithread",label="Run Multithreaded (TODO)"),
+               disabledCheckbox(inputId="exportClusters",label="Export Identified Clusters (TODO)"),
+               disabledCheckbox(inputId="optimisticMode",label="Run in Naive Mode  (TODO)"),
                uiOutput("quitAndRun")
                )
       )

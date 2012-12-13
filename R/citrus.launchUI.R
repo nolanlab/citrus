@@ -1,14 +1,18 @@
-citrus.launchUI = function(){  
+citrus.launchUI = function(dataDirectory=NULL){  
   
   library("shiny")
   library("brew")
+  
+  if (!is.null(dataDirectory)){
+    dataDir <<-dataDirectory
+  }
   
   sapply(list.files(file.path(system.file(package = "citrus"),"shinyGUI","guiFunctions"),pattern=".R",full.names=T),source)
   
   res = tryCatch({
     runApp(appDir=file.path(system.file(package = "citrus"),"shinyGUI"),launch.browser=T)  
   }, warning = function(w){
-    cat(paste("Unexpected Warning:",w,"\n"));
+    cat(paste(w,"\n"));
   },error = function(e){
     stop(print(paste("Unexpected Error:",e)))
   }, finally = {
