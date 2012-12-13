@@ -39,7 +39,22 @@ stringQuote = function(x){
   return(paste("\"",x,"\"",sep=""));  
 }
 
-checkMissingInput = function(input){
+getComputedFeatures = function(input){
+  features = list();
+  if (!is.null(input$computeDensities)&&input$computeDensities){
+    features[["densities"]] = TRUE
+  } else {
+    features[["densities"]] = FALSE
+  }
+  if (!is.null(input$computeMedians)&&input$computeMedians){
+    features[["medians"]] = TRUE
+  } else {
+    features[["medians"]] = FALSE
+  }
+  return(features)
+}
+
+errorCheckInput = function(input){
   errors = c();
   if (is.null(input$clusterCols)){
     errors = c(errors,"No clustering parameters selected");
@@ -47,5 +62,19 @@ checkMissingInput = function(input){
   if (is.null(input$crossValidationFolds)){
     errors = c(errors,"Number of cross validation folds not specified");
   }
+  computedFeatures = getComputedFeatures(input)
+  if (all(!unlist(computedFeatures))){
+    errors = c(errors,"No computed cluster features selected")
+  } else {
+    if (computedFeatures[["medians"]]&&(length(input$medianCols)==0)){
+      errors = c(errors,"No cluster median parameters selected")
+    }
+  }
+  selectedFiles = getSelectedFiles(input)
+  counts = unlist(lapply(selectedFiles,length))
+  if ((length(counts)<2)||any(counts<2)){
+    errors = c(errors,"2 or more samples must be assigned to each group")
+  }
+  
   return(errors);
 }

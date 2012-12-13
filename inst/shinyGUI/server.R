@@ -141,7 +141,7 @@ shinyServer(function(input, output) {
       writeRunCitrusFile(input)
       stop(simpleWarning("GUI Setup Complete"))
     }
-    errors = checkMissingInput(input)
+    errors = errorCheckInput(input)
     if (length(errors)==0){
       return(tagList(checkboxInput(inputId="runCitrus",label="<- Check to run Citrus"),tags$em("Checkbox to be replaced by button when input-specific reactivity becomes avaialble.")))  
     } else {
