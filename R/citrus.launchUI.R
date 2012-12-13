@@ -19,12 +19,37 @@ citrus.launchUI = function(dataDirectory=NULL){
     
   })
   runFile = file.path(dataDir,"citrusOutput","runCitrus.R")
+  
   cat(paste("Running Citrus File:",runFile,"\n"))
+  logFilePath = file.path(dataDir,"citrusOutput","citrusOutput.log")
+  cat(paste("Logging output to:",logFilePath,"\n"))
+  logFile = .logOn(logFilePath)
+  
   source(runFile)
+  
+  .logOff(logFile)
+  
   return(paste("Citrus Output in:",file.path(dataDir,"citrusOutput")))
 }
 
 citrus.getClusterCols = function(fileName,dataDir){
   fcsFile = suppressWarnings(read.FCS(file.path(dataDir,fileName),which.lines=1))
   return(flowCore::colnames(fcsFile))
+}
+
+.logOn = function(filePath,messages=F){
+  logFile = file(filePath,open = "wt")
+  sink(logFile)
+  if (messages){
+    sink(logFile,type="message")
+  }
+  return(logFile)
+}
+
+.logOff = function(logFile,messages=F){
+  if (messages){
+    sink(type="messsage")
+  }
+  sink()
+  close(logFile)
 }
