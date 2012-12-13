@@ -52,7 +52,7 @@ shinyUI(pageWithSidebar(
       tabPanel("Cluster Characterization",
                 tags$div(sliderInput("minClusterSize",label="Minimum Cluster Size: A percentage of aggregate data size",min=1,max=100,step=1,value=5),style="width:300px;"),
                 tags$hr(),
-                checkboxGroupInput(inputId="computedFeatures",label="Computed Cluster Features:",choices=c("Cluster Densities","Cluster Medians"),selected="Cluster Densities"),
+                uiOutput("calculatedFeatures"),
                 uiOutput("medianCols")
                ),
       
@@ -62,10 +62,19 @@ shinyUI(pageWithSidebar(
                ),
       
       tabPanel("Run!",
-               disabledCheckbox(inputId="multithread",label="Run Multithreaded (TODO)"),
-               disabledCheckbox(inputId="exportClusters",label="Export Identified Clusters (TODO)"),
-               disabledCheckbox(inputId="optimisticMode",label="Run in Naive Mode  (TODO)"),
-               uiOutput("quitAndRun")
+               
+               radioButtons("action", "Citrus Execution Options:",
+                            list("Write runCitrus.R file to data directory only" = "wrc",
+                                 "Quit GUI and run Citrus in R" = "qar",
+                                 "Run Citrus now and return results to GUI" = "rig")),
+               tags$hr(),
+               uiOutput("run"),
+               tags$hr(),
+               tags$em("Upcoming Runtime Options:"),
+               tags$br(),
+               disabledCheckbox(inputId="multithread",label="Run Multithreaded"),
+               disabledCheckbox(inputId="exportClusters",label="Export Identified Clusters"),
+               disabledCheckbox(inputId="optimisticMode",label="Run in Naive Mode")
                )
       )
       

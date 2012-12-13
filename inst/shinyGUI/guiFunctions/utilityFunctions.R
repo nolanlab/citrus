@@ -38,3 +38,14 @@ getParameterIntersections = function(input,fileList,fileCols){
 stringQuote = function(x){
   return(paste("\"",x,"\"",sep=""));  
 }
+
+checkMissingInput = function(input){
+  errors = c();
+  if (is.null(input$clusterCols)){
+    errors = c(errors,"No clustering parameters selected");
+  }
+  if (is.null(input$crossValidationFolds)){
+    errors = c(errors,"Number of cross validation folds not specified");
+  }
+  return(errors);
+}

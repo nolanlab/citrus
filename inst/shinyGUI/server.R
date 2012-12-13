@@ -31,8 +31,17 @@ shinyServer(function(input, output) {
     }
   })
   
+  output$calculatedFeatures = reactiveUI(function(){
+    return(tagList(
+                    tags$span("Calculated Cluster Features:"),
+                    tags$br(),
+                    checkboxInput(inputId="computeDensities",label="Cluster Densities",value=T),
+                    checkboxInput(inputId="computeMedians",label="Cluster Medians",value=F)
+    ))
+  })
+  
   output$medianCols = reactiveUI(function(){
-    if ("Cluster Medians" %in% input$computedFeatures){
+    if ((!is.null(input$computeMedians))&&(input$computeMedians)){
       choices = getParameterIntersections(input,fileList,fileCols);
       if (is.null(choices)){
         return(tagList(tags$b("Assign samples to groups to enable selection of median parameters.")))
@@ -85,24 +94,23 @@ shinyServer(function(input, output) {
   
   output$featureSummary = reactiveUI(function(){
     featureSetTags = tags$span("None",class="red-error")
-    if (length(input$computedFeatures)>0){
-      featureTags = list();
-      for (featureSet in input$computedFeatures){
-        if (featureSet=="Cluster Densities"){
-          featureTags[["Cluster Densities"]] = tags$li("Cluster Densities")
-        }
-        if (featureSet=="Cluster Medians"){
-          medianCols = input$medianCols
-          medianVals = tags$span("None",class="red-error");
-          if (length(input$medianCols)>0){
-            medianVals = tags$span(paste(input$medianCols,collapse=", "))
-          }
-          featureTags[["Cluster Medians"]]=tags$li(tagList(tags$span("Cluster Median Parameters:"),medianVals))
-        }
-      }
-      featureSetTags = tags$ul(do.call("tagList",featureTags))
+    features=list();
+    if (!is.null(input$computeDensities)&&input$computeDensities){
+      features[["Densities"]] = tags$li("Cluster Densities")
     }
+    if (!is.null(input$computeMedians)&&input$computeMedians){
+        medianCols = input$medianCols
+        medianVals = tags$span("No Median Parameters Selected",class="red-error");
+        if (length(input$medianCols)>0){
+          medianVals = tags$span(paste(input$medianCols,collapse=", "))
+        }
+        features[["Medians"]] = tags$li(tagList(tags$span("Cluster Medians:"),medianVals))
+    }
+    if (length(features)>0){
+      featureSetTags = tags$ul(tagList(features))
+    } 
     featureSetTags = tagList(tags$span("Computed Cluster Features:"),featureSetTags)
+    
     return(
       tags$ul(
         tagList(
@@ -128,12 +136,17 @@ shinyServer(function(input, output) {
     
   })
   
-  output$quitAndRun = reactiveUI(function(){
+  output$run = reactiveUI(function(){
     if ((!is.null(input$runCitrus))&&(input$runCitrus)){
       writeRunCitrusFile(input)
       stop(simpleWarning("GUI Setup Complete"))
     }
-    return(checkboxInput(inputId="runCitrus",label="Quit UI and run Citrus"))
+    errors = checkMissingInput(input)
+    if (length(errors)==0){
+      return(tagList(checkboxInput(inputId="runCitrus",label="<- Check to run Citrus"),tags$em("Checkbox to be replaced by button when input-specific reactivity becomes avaialble.")))  
+    } else {
+      return(tagList(tags$em("The following problems must be corrected before running citrus:"),tags$ul(tagList(lapply(errors,tags$li)))))
+    }
   })
   
 })
