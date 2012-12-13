@@ -9,6 +9,7 @@ disabledCheckbox = function(inputId,label){
   )
 }
 
+
 shinyUI(pageWithSidebar(
   
   headerPanel("Citrus GUI v0.01"),
@@ -70,7 +71,7 @@ shinyUI(pageWithSidebar(
                tags$hr(),
                uiOutput("run"),
                tags$hr(),
-               tags$em("Upcoming Runtime Options:"),
+               tags$em("TBD Runtime Options:"),
                tags$br(),
                disabledCheckbox(inputId="multithread",label="Run Multithreaded"),
                disabledCheckbox(inputId="exportClusters",label="Export Identified Clusters"),

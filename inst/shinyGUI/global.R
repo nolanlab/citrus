@@ -1,6 +1,4 @@
 
-sapply(list.files(file.path(system.file(package = "citrus"),"shinyGUI","guiFunctions"),pattern=".R",full.names=T),source)
-
 # Choose any file from the appropriate directory
 if (!exists("dataDir")){
   dataDirFile = file.choose()

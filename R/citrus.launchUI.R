@@ -27,7 +27,7 @@ citrus.launchUI = function(dataDirectory=NULL){
   
   source(runFile)
   
-  .logOff(logFile)
+  .logOff(logFile=logFile)
   
   return(paste("Citrus Output in:",file.path(dataDir,"citrusOutput")))
 }
@@ -39,10 +39,11 @@ citrus.getClusterCols = function(fileName,dataDir){
 
 .logOn = function(filePath,messages=F){
   logFile = file(filePath,open = "wt")
-  sink(logFile)
+  sink(logFile,split=T)
   if (messages){
     sink(logFile,type="message")
   }
+  file.symlink(from=file.path(system.file(package="citrus"),"shinyGUI","WWW","tmpLogs",basename(filePath)),to=filePath)
   return(logFile)
 }
 

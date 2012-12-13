@@ -6,12 +6,12 @@ library("Rclusterpp")
 
 
 dataDir = "/Users/rbruggner/Desktop/notime/citrusTestRun/"
-sapply(list.files("/Users/rbruggner/Desktop/work/citrus/inst/shinyGUI/guiFunctions/",pattern=".R",full.names=T),source)
-source("/Users/rbruggner/Desktop/work/citrus/R/citrus.launchUI.R")
 
-fileList = list.files(dataDir,pattern=".fcs",ignore.case=T)
-fileGroupAssignments = rep("",length(fileList))  
-fileCols = lapply(fileList,getClusterCols,dataDir=dataDir)
+#source("/Users/rbruggner/Desktop/work/citrus/R/citrus.launchUI.R")
+
+#fileList = list.files(dataDir,pattern=".fcs",ignore.case=T)
+#fileGroupAssignments = rep("",length(fileList))  
+#fileCols = lapply(fileList,citrus.getClusterCols,dataDir=dataDir)
 
 
 result = tryCatch({
