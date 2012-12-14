@@ -8,11 +8,14 @@ library("citrus",lib.loc=<% if (is.null(templateData[["library"]])){
 dataDir = <%cat(stringQuote(templateData[["dataDir"]]))%>
 outputDir = <%cat("file.path(dataDir,\"citrusOutput\")")%>
 clusterCols = c(<%cat(paste(sapply(templateData[["clusterCols"]],stringQuote),collapse=","))%>)
+<% if ("medianCols" %in% names(templateData)) {
+cat(paste("medianColumns=c(",paste(sapply(templateData[["medianCols"]],stringQuote),collapse=","),")\n",sep=""))
+}%>
 transformCols = c(<%cat(paste(sapply(templateData[["transformCols"]],stringQuote),collapse=","))%>)
 
 fileSampleSize = <% cat(templateData[["fileSampleSize"]]) %>
 nFolds = <% cat(templateData[["crossValidationFolds"]]) %>
-
+featureTypes = c(<%cat(paste(sapply(templateData[["computedFeatures"]],stringQuote),collapse=","))%>)
 fileList = data.frame(<%
                         selectedFiles = getSelectedFiles(input)
                         labelAssignments = convertToLabeledFileList(selectedFiles)
@@ -25,4 +28,6 @@ citrus.full(dataDir=dataDir,
             fileSampleSize=fileSampleSize,
             fileList=fileList,
             nFolds=nFolds,
-            transformCols=transformCols)
+            featureTypes=featureTypes,
+            transformCols=transformCols 
+            <% if ("medianCols" %in% names(templateData)){cat(",medianColumns=medianColumns")} %>)

@@ -6,13 +6,7 @@ library("glmnet")
 library("ggplot2")
 library("spade",lib.loc="work/R/spade_with_nn/lib")
 
-source("work/citrus/R/citrus.cluster.R")
-source("work/citrus/R/citrus.util.R")
-source("work/citrus/R/citrus.featureFunctions.R")
-source("work/citrus/R/citrus.classificationModel.R")
-source("work/citrus/R/citrus.external.R")
-source("work/citrus/R/citrus.plot.R")
-source("work/citrus/R/citrus.driver.R")
+source("Desktop/work/citrus/R/citrus.cluster.R")
 
 
 dataDir = "work/citrus_old/syntheticData/train/unstim/"

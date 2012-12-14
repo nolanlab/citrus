@@ -35,13 +35,12 @@ shinyServer(function(input, output) {
     return(tagList(
                     tags$span("Calculated Cluster Features:",class="control-label"),
                     tags$br(),
-                    checkboxInput(inputId="computeDensities",label="Cluster Densities",value=T),
-                    checkboxInput(inputId="computeMedians",label="Cluster Medians",value=F)
+                    tagList(lapply(citrus.getFeatureTypes(),serialFeaturesInput))
     ))
   })
   
   output$medianCols = reactiveUI(function(){
-    if ((!is.null(input$computeMedians))&&(input$computeMedians)){
+    if ((!is.null(input$computemedians))&&(input$computemedians)){
       choices = getParameterIntersections(input,fileList,fileCols);
       if (is.null(choices)){
         return(tagList(tags$b("Assign samples to groups to enable selection of median parameters.")))
@@ -95,10 +94,10 @@ shinyServer(function(input, output) {
   output$featureSummary = reactiveUI(function(){
     featureSetTags = tags$span("None",class="red-error")
     features=list();
-    if (!is.null(input$computeDensities)&&input$computeDensities){
+    if (!is.null(input$computedensities)&&input$computedensities){
       features[["Densities"]] = tags$li("Cluster Densities")
     }
-    if (!is.null(input$computeMedians)&&input$computeMedians){
+    if (!is.null(input$computemedians)&&input$computemedians){
         medianCols = input$medianCols
         medianVals = tags$span("No Median Parameters Selected",class="red-error");
         if (length(input$medianCols)>0){
@@ -161,10 +160,6 @@ shinyServer(function(input, output) {
         return(tagList(tags$em("The following problems must be corrected before running citrus:"),tags$ul(tagList(lapply(errors,tags$li)))))
       }  
     } 
-      
-      
-    
-    
     
   })
   
@@ -189,6 +184,14 @@ serialGroupSummary = function(groupName,selectedFiles){
   return(tags$li(tagList(tags$span(paste(groupName,"Samples: ")),countTag)))
 }
 
+serialFeaturesInput = function(featureType){
+  value = F
+  if (featureType=="densities"){
+    value=T
+  }
+  checkboxInput(inputId=paste("compute",featureType,sep=""),label=paste("Cluster",featureType),value=value)
+}
+
 serialGroupNameInput = function(x){
   tags$td(textInput(inputId=paste("Group",x,"name",sep="_"),label=paste("Group",x,"name",sep=" "),value=paste("Group",x,sep=" ")))
 }
@@ -197,9 +200,15 @@ serialGroupSelectors = function(groupName,fileList){
   tags$td(selectInput(paste(groupName,"files",sep=""),label=paste(groupName,"samples"),selected=fileList[grep(groupName,fileList,ignore.case=T)],choices=fileList,multiple=T))
 }
 
+#############################################
+#
+# TEMPLATE CONTROLS
+#
+#############################################
 writeRunCitrusFile = function(input,templateFile=NULL){
   templateData = as.list(input)
   templateData[["dataDir"]]=dataDir
+  templateData[["computedFeatures"]] = names(getComputedFeatures(input))
   outputDir = file.path(dataDir,"citrusOutput")
   if (!file.exists(outputDir)){
     dir.create(file.path(dataDir,"citrusOutput"),showWarnings=F)
@@ -266,15 +275,13 @@ stringQuote = function(x){
 
 getComputedFeatures = function(input){
   features = list();
-  if (!is.null(input$computeDensities)&&input$computeDensities){
-    features[["densities"]] = TRUE
-  } else {
-    features[["densities"]] = FALSE
-  }
-  if (!is.null(input$computeMedians)&&input$computeMedians){
-    features[["medians"]] = TRUE
-  } else {
-    features[["medians"]] = FALSE
+  featureSelections = as.list(input)
+  for (type in citrus.getFeatureTypes()){
+    if ((paste("compute",type,sep="") %in% names(featureSelections))&&(featureSelections[[paste("compute",type,sep="")]])){
+      features[[type]]=T
+    } else {
+      features[[type]]=F
+    }
   }
   return(features)
 }
