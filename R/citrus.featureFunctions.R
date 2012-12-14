@@ -13,8 +13,6 @@ citrus.buildFoldFeatures = function(index,featureTypes=c("densities"),folds,citr
   return(citrus.buildFeatures(clusterAssignments=foldsClusterAssignments[[index]],featureTypes,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],largeEnoughClusters=foldLargeEnoughClusters[[index]],foldsFileIds=foldsFileIds,foldFileNames=citrus.dataArray$fileNames[foldsFileIds],...))
 }
 
-#citrus.buildFeatures(clusterAssignments=foldsClusterAssignments[[index]],featureTypes,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],largeEnoughClusters=foldLargeEnoughClusters[[index]],foldsFileIds=foldsFileIds)
-
 citrus.buildFeatures = function(clusterAssignments,featureTypes,data,largeEnoughClusters,foldsFileIds,foldFileNames,...){
   addtlArgs = list(...)
   features = list()
@@ -56,16 +54,24 @@ citrus.calculateFileClusterMedians = function(fileId,clusterIds,clusterAssignmen
 citrus.calculateFileClusterMedian = function(clusterId,clusterAssignments,fileId,data,medianColumns){
   include = data[clusterAssignments[[clusterId]],]
   include = include[include[,"fileId"]==fileId,medianColumns]
-  if (is.null(nrow(include))){
+  if ((length(medianColumns)>1)&&(is.null(nrow(include)))){
     if (length(include)>0){
-      return(include)
+      medians = include
     } else {
       # Assume empty clusters have 0 values. Maybe a bad assumption. 
-      return(rep(0,length(medianColumns)))
+      medians = (rep(0,length(medianColumns)))
     }
+  } else if (length(medianColumns)==1){
+    if (length(include)>0){
+      medians = median(include)
+    } else {
+      medians=0
+    }
+  } else {
+    medians = apply(include,2,median)  
   }
-  medians = apply(include,2,median)
-  names(medians) = paste(paste(paste("cluster",clusterId),colnames(data)[medianColumns]),"median")
+  
+  names(medians) = paste(paste(paste("cluster",clusterId),medianColumns),"median")
   return(medians)
 }
 
@@ -89,4 +95,8 @@ citrus.calculateFoldLargeEnoughClusters = function(index,foldsClusterAssignments
 citrus.calculateLargeEnoughClusters = function(clusters,minimumClusterSize){
   clusterLengths = lapply(clusters,length)
   return(which(clusterLengths >= minimumClusterSize))
+}
+
+citrus.getFeatureTypes = function(){
+  return(c("densities","medians"))
 }
