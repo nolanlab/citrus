@@ -1,4 +1,8 @@
-citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,transformCols=NULL){
+citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,featureTypes=c("densities"),transformCols=NULL,...){
+  
+  if ((!all(featureTypes %in% citrus.getFeatureTypes()))||(length(featureTypes)<1)){
+    stop(paste("featureTypes must be 1 or more of the following:",paste(citrus.getFeatureTypes(),collapse=", "),"\n"))
+  }
   
   labelCol = which(colnames(fileList)=="labels")
   conditions=colnames(fileList)[-labelCol]
@@ -9,6 +13,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
   folds = pamr:::balanced.folds(y=fileList[,"labels"],nfolds=nAllFolds)
   folds[[nAllFolds]]="all"
     
+  
   cat("Clustering\n")
   foldsCluster = lapply(folds,citrus.foldCluster,citrus.dataArray=citrus.dataArray,clusterCols=clusterCols,conditions=conditions)
   cat("Assigning Events to Clusters\n")
@@ -18,8 +23,8 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
   cat("Calculating Fold Large Enough Clusters\n")
   foldLargeEnoughClusters = lapply(1:nAllFolds,citrus.calculateFoldLargeEnoughClusters,foldsClusterAssignments=foldsClusterAssignments,folds=folds,citrus.dataArray=citrus.dataArray)
     
-  foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=c("densities"),folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions)
-  leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=c("densities"),folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T)
+  foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,...)
+  leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,...)
   
   modelTypes = c("glmnet","pamr")
   regularizationThresholds = citrus.generateRgularizationThresholds(foldFeatures[[nAllFolds]],labels=fileList[,"labels"],modelTypes=modelTypes)
