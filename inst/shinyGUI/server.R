@@ -126,13 +126,17 @@ shinyServer(function(input, output) {
     } else {
       cvTag = tagList(tags$span("Cross Validation Folds:"),tags$span(input$crossValidationFolds))
     }
-    if (is.null(input$classificationModelTypes)){
+    if (sum(getSelectedModels(input))==0){
       mTag = tagList(tags$span("Classification Models:"),tags$span("None",class="red-error"))
     } else {
-      mTag = tags$span(paste("Classification Models:",paste(input$classificationModelTypes,collapse=", ")))
+      mTag = tags$span(paste("Classification Models:",paste(citrus.getModelTypes()[getSelectedModels(input)],collapse=", ")))
     }
     return(tags$ul(tagList(tags$li(cvTag),tags$li(mTag))))
     
+  })
+  
+  output$classificationModels = reactiveUI(function(){
+    tagList(tags$span("Classification Models:"),lapply(citrus.getModelTypes(),serialClassificationModel))  
   })
   
   output$run = reactiveUI(function(){
@@ -168,6 +172,10 @@ shinyServer(function(input, output) {
 ##############################
 # UI OUTPUT CONTROLS 
 ##############################
+serialClassificationModel = function(modelName){
+  checkboxInput(modelName,modelName,value=T)
+}
+
 serialGroupSummary = function(groupName,selectedFiles){
   if (is.null(groupName)){
     return(tags$b(""))
@@ -286,6 +294,18 @@ getComputedFeatures = function(input){
   return(features)
 }
 
+getSelectedModels = function(input){
+  selectedModels = rep(FALSE,length(citrus.getModelTypes()))
+  names(selectedModels) = citrus.getModelTypes();
+  input = as.list(input)
+  for (modelType in citrus.getModelTypes()){
+    if ((modelType %in% names(input))&&(input[[modelType]])){
+      selectedModels[[modelType]]=T
+    }
+  }
+  return(selectedModels)
+}
+
 errorCheckInput = function(input){
   errors = c();
   if (is.null(input$clusterCols)){
@@ -307,6 +327,10 @@ errorCheckInput = function(input){
   if ((length(counts)<2)||any(counts<2)){
     errors = c(errors,"2 or more samples must be assigned to each group")
   }
+  if (!any(getSelectedModels(input))){
+    errors = c(errors,"At least one classification model must be selected")
+  }
+  
   
   return(errors);
 }

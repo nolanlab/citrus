@@ -59,7 +59,8 @@ shinyUI(pageWithSidebar(
       
       tabPanel("Classification Setup",
                uiOutput("crossValidationRange"),
-               checkboxGroupInput(inputId="classificationModelTypes",label="Classification Models:",choices=c("PAMR","GLMNET"),selected=c("PAMR","GLMNET"))
+               tags$hr(),
+               uiOutput("classificationModels")
                ),
       
       tabPanel("Run!",
