@@ -130,5 +130,5 @@ citrus.extractModelFeatures = function(modelType,cvMinima,foldModels,foldFeature
 }
 
 citrus.getModelTypes = function(){
-  return(c("PAMR","GLMNET"))
+  return(c("pamr","glmnet"))
 }

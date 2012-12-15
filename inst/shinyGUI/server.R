@@ -217,6 +217,7 @@ writeRunCitrusFile = function(input,templateFile=NULL){
   templateData = as.list(input)
   templateData[["dataDir"]]=dataDir
   templateData[["computedFeatures"]] = names(getComputedFeatures(input))[unlist(getComputedFeatures(input))]
+  templateData[["classificationModels"]] = citrus.getModelTypes()[getSelectedModels(input)]
   outputDir = file.path(dataDir,"citrusOutput")
   if (!file.exists(outputDir)){
     dir.create(file.path(dataDir,"citrusOutput"),showWarnings=F)

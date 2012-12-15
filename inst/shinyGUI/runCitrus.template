@@ -13,6 +13,7 @@ cat(paste("medianColumns=c(",paste(sapply(templateData[["medianCols"]],stringQuo
 }%>
 transformCols = c(<%cat(paste(sapply(templateData[["transformCols"]],stringQuote),collapse=","))%>)
 
+modelTypes = c(<% cat(paste(sapply(templateData[["classificationModels"]],stringQuote),collapse=",")) %>)
 fileSampleSize = <% cat(templateData[["fileSampleSize"]]) %>
 nFolds = <% cat(templateData[["crossValidationFolds"]]) %>
 featureTypes = c(<%cat(paste(sapply(templateData[["computedFeatures"]],stringQuote),collapse=","))%>)
@@ -29,5 +30,6 @@ citrus.full(dataDir=dataDir,
             fileList=fileList,
             nFolds=nFolds,
             featureTypes=featureTypes,
-            transformCols=transformCols 
+            transformCols=transformCols,
+            modelTypes=modelTypes
             <% if ("medianCols" %in% names(templateData)){cat(",medianColumns=medianColumns")} %>)
