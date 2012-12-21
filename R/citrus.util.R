@@ -19,9 +19,9 @@ citrus.readFCSSet = function(dataDirectory,fileList,conditions,fileSampleSize=NU
       if (!is.null(transformCols)){
         fcsData[,transformCols] = asinh(fcsData[,transformCols]/5);
       }
-      if ((!is.null(fileSampleSize))&&(fileSampleSize[i]<nrow(fcsData))){
-        cat(paste("\tSampling",fileSampleSize[i],"events.\n"))
-        fcsData = fcsData[sort(sample(1:nrow(fcsData),fileSampleSize[i])),] 
+      if ((!is.null(fileSampleSize))&&(fileSampleSize<nrow(fcsData))){
+        cat(paste("\tSampling",fileSampleSize,"events.\n"))
+        fcsData = fcsData[sort(sample(1:nrow(fcsData),fileSampleSize)),] 
       }
       conditionData[[fileName]] = fcsData
     }
@@ -51,4 +51,16 @@ citrus.leavoutFold = function(x,y,leaveoutSize){
 
 citrus.formatDecimal = function(x){
   sprintf("%1.2f", x)
+}
+
+citrus.convertConditionMatrix = function(conditionMatrix){
+  conditions = list();
+  for (i in 1:nrow(conditionMatrix)){
+    for (j in 1:ncol(conditionMatrix)){
+      if (conditionMatrix[i,j]){
+        conditions = append(conditions,list(unique(c(rownames(conditionMatrix)[i],colnames(conditionMatrix)[j]))))
+      }
+    }
+  }
+  return(conditions)
 }

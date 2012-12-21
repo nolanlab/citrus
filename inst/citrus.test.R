@@ -5,20 +5,22 @@ library("pamr")
 library("glmnet")
 library("ggplot2")
 library("spade",lib.loc="work/R/spade_with_nn/lib")
+library("citrus")
 
-source("Desktop/work/citrus/R/citrus.cluster.R")
+Rclusterpp.setThreads(1)
 
-
-dataDir = "work/citrus_old/syntheticData/train/unstim/"
-outputDir = "work/citrus_old/testOutput/"
+dataDir = "Desktop/work/citrus/data/syntheticData/example2"
+outputDir = file.path(dataDir,"output")
 clusterCols = c(1:2)
-conditionSampleSize=c(500)
+fileSampleSize=500
 transformCols = c(1,2)
-
-labels = rep("healthy",20)
-labels[seq(1,20,by=2)]="diseased"
-labels = as.factor(labels)
 nFolds=5
-fileList = data.frame(unstim=list.files(dataDir,pattern=".fcs",ignore.case=T),labels=labels)
+sapply(list.files("Desktop/work/citrus/R/",pattern=".R",full.names=T),source)
 
-citrus.full(dataDir,outputDir,clusterCols,conditionSampleSize,transformCols,fileList,nFolds)
+fileList = cbind(unstim=list.files(dataDir,pattern="unstim"),stim1=list.files(dataDir,pattern="stim1"),labels=c(rep("healthy",10),rep("diseased",10)))
+conditionComparaMatrix=matrix(T,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
+conditionComparaMatrix[2]=F
+
+
+citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,fileList=fileList,nFolds=nFolds)
+
