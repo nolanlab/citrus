@@ -17,6 +17,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
   labelCol = which(colnames(fileList)=="labels")
   
   if ("conditionComparaMatrix" %in% names(list(...))){
+    #allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 
     allConditions = citrus.convertConditionMatrix(list(...)[["conditionComparaMatrix"]]) 
   } else {
     allConditions = as.list(colnames(fileList)[-labelCol])
@@ -25,7 +26,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
   for (conditions in allConditions){
     cat(paste("Analyzing Condition",paste(conditions,collapse=" vs "),"\n"))
     
-    conditionOutputDir = file.path(outputDir,paste(conditions,collapse="_"))
+    conditionOutputDir = file.path(outputDir,paste(conditions,collapse="_vs_"))
     
     citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize)
     
@@ -45,7 +46,14 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     foldLargeEnoughClusters = lapply(1:nAllFolds,citrus.calculateFoldLargeEnoughClusters,foldsClusterAssignments=foldsClusterAssignments,folds=folds,citrus.dataArray=citrus.dataArray)
       
     foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,...)
+    #foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,medianColumns=medianColumns)
     leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,...)
+    #leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,medianColumns=medianColumns)
+    
+    if (length(conditions)==2){
+      foldFeatures = lapply(1:length(folds),citrus.buildFoldFeatureDifferences,features=foldFeatures,conditions=conditions,citrus.dataArray=citrus.dataArray,folds=folds)
+      leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatureDifferences,features=leftoutFeatures,conditions=conditions,citrus.dataArray=citrus.dataArray,folds=folds,calculateLeaveoutData=T)
+    }
     
     regularizationThresholds = citrus.generateRgularizationThresholds(foldFeatures[[nAllFolds]],labels=fileList[,"labels"],modelTypes=modelTypes)
     
@@ -89,3 +97,17 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
   }
 }
 
+
+citrus.buildFoldFeatureDifferences = function(index,features,conditions,citrus.dataArray,folds,calculateLeaveoutData=F){
+  
+  if (folds[[index]]=="all"){
+    includeRowIds=1:nrow(citrus.dataArray$fileIds)
+  } else if (!calculateLeaveoutData){
+    includeRowIds=setdiff(1:nrow(citrus.dataArray$fileIds),folds[[index]])
+  } else {
+    includeRowIds = folds[[index]]
+  }
+  diffFeatures = features[[index]][citrus.dataArray$fileNames[citrus.dataArray$fileIds[includeRowIds,conditions[2]]],] - features[[index]][citrus.dataArray$fileNames[citrus.dataArray$fileIds[includeRowIds,conditions[1]]],] 
+  colnames(diffFeatures) = paste(colnames(diffFeatures),"difference")
+  return(diffFeatures)
+}

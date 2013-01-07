@@ -1,6 +1,6 @@
 library("flowCore")
 
-dataDir = "Desktop/work/citrus/data/syntheticData/example2/"
+dataDir = "Desktop/work/citrus/data/syntheticData/example3/"
 
 
 genBasePop = function(x){
