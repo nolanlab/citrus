@@ -1,5 +1,5 @@
 # FILE SAMPLE SIZE SHOULD BE A NAMED VECTOR OR LIST OR SOMETHING THAT'S EASY TO EXTRACT BY NAME
-citrus.readFCSSet = function(dataDirectory,fileList,conditions,fileSampleSize=NULL,transformCols=NULL){
+citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,transformCols=NULL){
   data = list();
   fileCounter = 1;
   fileNames = c();
@@ -8,7 +8,7 @@ citrus.readFCSSet = function(dataDirectory,fileList,conditions,fileSampleSize=NU
     conditionData = list();
     for (fileName in fileList[,conditions[i]]){
       fileNames[fileCounter]=fileName
-      filePath = file.path(dataDirectory,fileName);
+      filePath = file.path(dataDir,fileName);
       if (!file.exists(filePath)){
         stop(paste("File",filePath,"not found."));
       }
