@@ -53,12 +53,12 @@ labels = c(rep("healthy",10),rep("diseased",10))
 labels = as.factor(labels)
 nFolds=5
 fileList = cbind(unstim=list.files(dataDir,pattern="unstim"),stim1=list.files(dataDir,pattern="stim1"),labels=c(rep("healthy",10),rep("diseased",10)))
-fileSampleSize=1000
+fileSampleSize=2000
 
 nFolds=5
 fileList = cbind(unstim=list.files(dataDir,pattern="unstim"),stim1=list.files(dataDir,pattern="stim1"),labels=c(rep("healthy",10),rep("diseased",10)))
-conditionComparaMatrix=matrix(T,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
-conditionComparaMatrix[2]=F
+conditionComparaMatrix=matrix(F,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
+conditionComparaMatrix[2]=T
 featureTypes=c("densities","medians")
 citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,fileList=fileList,nFolds=nFolds,conditionComparaMatrix=conditionComparaMatrix,featureTypes=c("densities","medians"),medianColumns=c("FunctionalMarker1","FunctionalMarker2"))
 
