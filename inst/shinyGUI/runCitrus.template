@@ -19,7 +19,7 @@ clusterCols = c(<%cat(paste(sapply(templateData[["clusterCols"]],stringQuote),co
 cat(paste("medianColumns=c(",paste(sapply(templateData[["medianCols"]],stringQuote),collapse=","),")\n",sep=""))
 }%>
 transformCols = c(<%cat(paste(sapply(templateData[["transformCols"]],stringQuote),collapse=","))%>)
-
+minimumClusterSizePercent = <%cat(templateData[["minimumClusterSizePercent"]])%>
 modelTypes = c(<% cat(paste(sapply(templateData[["classificationModels"]],stringQuote),collapse=",")) %>)
 fileSampleSize = <% cat(templateData[["fileSampleSize"]]) %>
 nFolds = <% cat(templateData[["crossValidationFolds"]]) %>
@@ -60,6 +60,7 @@ citrus.full(dataDir=dataDir,
             nFolds=nFolds,
             featureTypes=featureTypes,
             transformCols=transformCols,
+            minimumClusterSizePercent=minimumClusterSizePercent,
             modelTypes=modelTypes
             <% if ("medianCols" %in% names(templateData)){cat(",medianColumns=medianColumns")} %>
             <% if ("conditionComparaMatrix" %in% names(templateData)){cat(",conditionComparaMatrix=conditionComparaMatrix")} %>)

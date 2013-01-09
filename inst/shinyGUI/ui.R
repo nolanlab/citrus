@@ -64,7 +64,7 @@ shinyUI(pageWithSidebar(
                ),
       
       tabPanel("Cluster Characterization",
-                tags$div(sliderInput("minClusterSize",label="Minimum Cluster Size: A percentage of aggregate data size",min=1,max=100,step=1,value=5),style="width:300px;"),
+                tags$div(sliderInput("minimumClusterSizePercent",label="Minimum Cluster Size: A percentage of aggregate data size",min=1,max=100,step=1,value=5),style="width:300px;"),
                 tags$hr(),
                 uiOutput("calculatedFeatures"),
                 uiOutput("medianCols")

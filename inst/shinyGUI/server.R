@@ -17,30 +17,33 @@ shinyServer(function(input, output) {
   })
   
   output$conditionComparaMatrixInput = reactiveUI(function(){
-    conditions = c("index",colnames(keyFile[,-labelCol]))
-    rowList = list()
-    for (row in conditions){
-      colList = list()
-      for (col in conditions){
-        if ((col=="index")&&(row=="index")){
-          colList[[col]] = tags$td(tags$b("Condition",class="blank"))  
-        } else if (col=="index"){
-          colList[[col]] = tags$th(row)  
-        } else if (row=="index"){
-          colList[[col]] = tags$th(col)  
-        } else {
-          if (col==row){
-            colList[[col]] = tags$td(checkboxInput(inputId=paste(row,col,sep="_vs_"),label="",value=T))
+    if (preload){
+      conditions = c("index",colnames(keyFile[,-labelCol]))
+      rowList = list()
+      for (row in conditions){
+        colList = list()
+        for (col in conditions){
+          if ((col=="index")&&(row=="index")){
+            colList[[col]] = tags$td(tags$b("Condition",class="blank"))  
+          } else if (col=="index"){
+            colList[[col]] = tags$th(row)  
+          } else if (row=="index"){
+            colList[[col]] = tags$th(col)  
           } else {
-            colList[[col]] = tags$td(checkboxInput(inputId=paste(row,col,sep="_vs_"),label="",value=F))  
+            if (col==row){
+              colList[[col]] = tags$td(checkboxInput(inputId=paste(row,col,sep="_vs_"),label="",value=T))
+            } else {
+              colList[[col]] = tags$td(checkboxInput(inputId=paste(row,col,sep="_vs_"),label="",value=F))  
+            }
+            
           }
-          
         }
+        rowList[[row]] = tags$tr(tagList(colList))
       }
-      rowList[[row]] = tags$tr(tagList(colList))
+      tagList(rowList)
+      return(tags$table(tagList(rowList),class="comparaTable"))  
     }
-    tagList(rowList)
-    return(tags$table(tagList(rowList),class="comparaTable"))
+    return("SHOULD NOT BE USED");
   })
   
   output$clusterCols = reactiveUI(function(){
@@ -243,9 +246,12 @@ serialFeaturesInput = function(featureType){
 }
 
 serialGroupNameInput = function(x){
-  inputTag = textInput(inputId=paste("Group",x,"name",sep="_"),value=unique(keyFile[,labelCol])[x],label=paste("Group",x,sep=" "))
+  
   if (preload){
+    inputTag = textInput(inputId=paste("Group",x,"name",sep="_"),value=unique(keyFile[,labelCol])[x],label=paste("Group",x,sep=" "))
     inputTag = disableInput(inputTag)
+  } else {
+    inputTag = textInput(inputId=paste("Group",x,"name",sep="_"),value=paste("Group",x,sep=" "),label=paste("Group",x,sep=" "))
   }
   tags$td(inputTag)
 }
@@ -266,6 +272,7 @@ serialGroupSelectors = function(groupName,fileList){
 #############################################
 writeRunCitrusFile = function(input,templateFile=NULL){
   templateData = as.list(input)
+  templateData[["minimumClusterSizePercent"]] = templateData[["minimumClusterSizePercent"]]/100;
   templateData[["citrusVersion"]] = citrus.version();
   templateData[["preload"]]=preload
   templateData[["dataDir"]]=dataDir
