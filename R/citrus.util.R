@@ -64,3 +64,7 @@ citrus.convertConditionMatrix = function(conditionMatrix){
   }
   return(conditions)
 }
+
+citrus.version = function(){
+  return("0.02")
+}

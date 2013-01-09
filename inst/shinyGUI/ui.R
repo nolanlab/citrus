@@ -22,6 +22,8 @@ shinyUI(pageWithSidebar(
     uiOutput("workingDirectorySummary"),
     tags$em("Groups Summary:"),
     uiOutput("groupSummary"),
+    tags$em("Condition Summary:"),
+    uiOutput("conditionSummary"),
     tags$em("Clustering Summary:"),
     uiOutput("clusteringSummary"),
     tags$em("Cluster Characterization Summary:"),
@@ -35,14 +37,25 @@ shinyUI(pageWithSidebar(
   
   mainPanel(
     tabsetPanel(
-      tabPanel("Sample Group Setup",
-               numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2,min=2),
-               tags$table(class="sampleGroupTable",
-                          tagList(
-                            tags$tr(uiOutput("groupNameInput")),
-                            tags$tr(uiOutput("sampleGroupSelector"))
-                          ))
-      ),
+      
+        tabPanel("Sample Group Setup",
+                 if (preload){
+                    disableInput(numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=length(keyFile[,-labelCol]),min=2))
+                 } else {
+                   numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2,min=2)
+                 },
+                 tags$table(class="sampleGroupTable",
+                            tagList(
+                              tags$tr(uiOutput("groupNameInput")),
+                              tags$tr(uiOutput("sampleGroupSelector"))
+                            )),
+                 if (preload){
+                   tagList(tags$hr(),tags$label("Condition Comparisons"),uiOutput("conditionComparaMatrixInput"))
+                 } else {
+                   tags$br()
+                 }
+                 
+        ),
                
       tabPanel("Clustering Setup",
                numericInput(inputId="fileSampleSize","Events Sampled Per File",min=1,value=1000),

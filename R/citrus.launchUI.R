@@ -7,7 +7,7 @@ citrus.launchUI = function(dataDirectory=NULL){
     dataDir <<-dataDirectory
   }
   
-  sapply(list.files(file.path(system.file(package = "citrus"),"shinyGUI","guiFunctions"),pattern=".R",full.names=T),source)
+  #sapply(list.files(file.path(system.file(package = "citrus"),"shinyGUI","guiFunctions"),pattern=".R",full.names=T),source)
   
   res = tryCatch({
     runApp(appDir=file.path(system.file(package = "citrus"),"shinyGUI"),launch.browser=T)  

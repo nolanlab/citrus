@@ -8,9 +8,39 @@ shinyServer(function(input, output) {
     return(tagList(lapply(getGroupNames(input),serialGroupSelectors,fileList=fileList)))
   })
   
-  
   output$sampleGroupsTable = reactiveTable(function(){
-    return(getAssignmentsTable(input,fileList))
+    if (preload){
+      return(keyFile)
+    } else {
+      return(getAssignmentsTable(input,fileList))  
+    }
+  })
+  
+  output$conditionComparaMatrixInput = reactiveUI(function(){
+    conditions = c("index",colnames(keyFile[,-labelCol]))
+    rowList = list()
+    for (row in conditions){
+      colList = list()
+      for (col in conditions){
+        if ((col=="index")&&(row=="index")){
+          colList[[col]] = tags$td(tags$b("Condition",class="blank"))  
+        } else if (col=="index"){
+          colList[[col]] = tags$th(row)  
+        } else if (row=="index"){
+          colList[[col]] = tags$th(col)  
+        } else {
+          if (col==row){
+            colList[[col]] = tags$td(checkboxInput(inputId=paste(row,col,sep="_vs_"),label="",value=T))
+          } else {
+            colList[[col]] = tags$td(checkboxInput(inputId=paste(row,col,sep="_vs_"),label="",value=F))  
+          }
+          
+        }
+      }
+      rowList[[row]] = tags$tr(tagList(colList))
+    }
+    tagList(rowList)
+    return(tags$table(tagList(rowList),class="comparaTable"))
   })
   
   output$clusterCols = reactiveUI(function(){
@@ -71,6 +101,18 @@ shinyServer(function(input, output) {
         tags$ul(lapply(groupNames,serialGroupSummary,selectedFiles=selectedFiles))
       )
     )
+  })
+  
+  output$conditionSummary = reactiveUI(function(){
+    if (preload){
+      comparaConditions = getComparaConditions(input,conditions=colnames(keyFile[,-labelCol]))
+      if (length(comparaConditions)==0){
+        return(tags$ul(tags$li(tags$span("None Conditions Selected",class="red-error"))))
+      }
+      return(tags$ul(lapply(comparaConditions,tags$li)))
+    } else {
+      return(tags$ul(tags$li("Default Condition")))
+    }
   })
   
   output$clusteringSummary = reactiveUI(function(){
@@ -201,11 +243,20 @@ serialFeaturesInput = function(featureType){
 }
 
 serialGroupNameInput = function(x){
-  tags$td(textInput(inputId=paste("Group",x,"name",sep="_"),label=paste("Group",x,"name",sep=" "),value=paste("Group",x,sep=" ")))
+  inputTag = textInput(inputId=paste("Group",x,"name",sep="_"),value=unique(keyFile[,labelCol])[x],label=paste("Group",x,sep=" "))
+  if (preload){
+    inputTag = disableInput(inputTag)
+  }
+  tags$td(inputTag)
 }
 
+
 serialGroupSelectors = function(groupName,fileList){
-  tags$td(selectInput(paste(groupName,"files",sep=""),label=paste(groupName,"samples"),selected=fileList[grep(groupName,fileList,ignore.case=T)],choices=fileList,multiple=T))
+  inputTag = selectInput(paste(groupName,"files",sep=""),label=paste(groupName,"samples"),selected=fileList[grep(groupName,fileList,ignore.case=T)],choices=fileList,multiple=T)
+  if (preload){
+    inputTag = disableInput(inputTag)
+  }
+  tags$td(inputTag)
 }
 
 #############################################
@@ -215,14 +266,22 @@ serialGroupSelectors = function(groupName,fileList){
 #############################################
 writeRunCitrusFile = function(input,templateFile=NULL){
   templateData = as.list(input)
+  templateData[["citrusVersion"]] = citrus.version();
+  templateData[["preload"]]=preload
   templateData[["dataDir"]]=dataDir
   templateData[["computedFeatures"]] = names(getComputedFeatures(input))[unlist(getComputedFeatures(input))]
   templateData[["classificationModels"]] = citrus.getModelTypes()[getSelectedModels(input)]
+  if (preload){
+    templateData[["keyFile"]]=keyFile
+    templateData[["conditionComparaMatrix"]]=getConditionComparaMatrix(input,conditions=colnames(keyFile[,-labelCol]))
+    templateData[["conditions"]]=colnames(keyFile[,-labelCol])
+  }
   outputDir = file.path(dataDir,"citrusOutput")
   if (!file.exists(outputDir)){
     dir.create(file.path(dataDir,"citrusOutput"),showWarnings=F)
   }
   brew(
+    #file = "/Users/rbruggner/Desktop/work/citrus/inst/shinyGUI/runCitrus.template",
     file=file.path(system.file(package="citrus"),"shinyGUI","runCitrus.template"),
     output=file.path(outputDir,"runCitrus.R")
   )
@@ -250,6 +309,11 @@ getAssignmentsTable = function(input,fileList){
 }
 
 getGroupNames = function(input){
+  
+  if (preload){
+    return(unique(keyFile[,labelCol]))
+  }
+  
   inputList = as.list(input)
   vals = c()
   for (i in 1:input$numberOfGroups){
@@ -282,6 +346,8 @@ stringQuote = function(x){
   return(paste("\"",x,"\"",sep=""));  
 }
 
+
+
 getComputedFeatures = function(input){
   features = list();
   featureSelections = as.list(input)
@@ -309,6 +375,11 @@ getSelectedModels = function(input){
 
 errorCheckInput = function(input){
   errors = c();
+  if (preload){
+    if (length(getComparaConditions(input,conditions=colnames(keyFile[,-labelCol])))==0){
+      errors = c(errors,"No conditions selected for analysis")
+    }
+  }
   if (is.null(input$clusterCols)){
     errors = c(errors,"No clustering parameters selected");
   }
@@ -333,5 +404,39 @@ errorCheckInput = function(input){
   }
   
   
+  
   return(errors);
+}
+
+getComparaConditions = function(input,conditions){
+  input = as.list(input)
+  comparaConditions = c()
+  for (condition1 in conditions){
+    for (condition2 in conditions){
+      inputName = paste(condition1,condition2,sep="_vs_")
+      if (inputName %in% names(input)&&(input[[inputName]])){
+        if (condition1==condition2){
+          comparaConditions = c(comparaConditions,condition1)
+        } else {
+          comparaConditions = c(comparaConditions,paste(condition2,condition1,sep=" vs. "))  
+        }
+        
+      }
+    }
+  }
+  return(comparaConditions)
+}
+
+getConditionComparaMatrix = function(input,conditions){
+  input = as.list(input)
+  comparaMatrix = matrix(F,nrow=length(conditions),ncol=length(conditions),dimnames=list(conditions,conditions))
+  for (condition1 in conditions){
+    for (condition2 in conditions){
+      inputName = paste(condition1,condition2,sep="_vs_")
+      if (inputName %in% names(input)&&(input[[inputName]])){
+        comparaMatrix[condition1,condition2]=T 
+      }
+    }
+  }
+  return(comparaMatrix)
 }

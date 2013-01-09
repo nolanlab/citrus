@@ -15,6 +15,9 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
   
   
   labelCol = which(colnames(fileList)=="labels")
+  if (length(labelCol)==0){
+    stop("'labels' column not found in file list.")
+  }
   
   if ("conditionComparaMatrix" %in% names(list(...))){
     #allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 

@@ -20,3 +20,31 @@ input{
 .disabled{
   color:#AAAAAA;
 }
+
+.comparaTable {
+  border-collapse:collapse;
+  vertical-align:center;
+  text-align:center;
+}
+
+.comparaTable th {
+  background-color:#DDDDDD;
+  border-width:1px;
+  padding-left:10px;
+  padding-right:10px;
+  padding-top:5px;
+  padding-bottom:5px;
+  border-style: inset;
+  border-color: #AAAAAA;
+}
+.comparaTable td {
+  text-align:center;
+  border-width:1px;
+  border-style: inset;
+  border-color: #AAAAAA;
+  background-color:#EEEEEE;
+  padding-left:10px;
+  padding-right:10px;
+  padding-top:5px;
+  padding-bottom:5px;
+}
