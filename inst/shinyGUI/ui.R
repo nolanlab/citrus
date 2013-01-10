@@ -12,7 +12,7 @@ disabledCheckbox = function(inputId,label){
 
 shinyUI(pageWithSidebar(
   
-  headerPanel("Citrus GUI v0.01"),
+  headerPanel(paste("Citrus UI v",citrus.version(),sep=""),windowTitle="Citrus UI"),
   
   sidebarPanel(
     tags$head(tags$link(rel="stylesheet",type="text/css",href="citrus.css")),
