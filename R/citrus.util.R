@@ -68,3 +68,12 @@ citrus.convertConditionMatrix = function(conditionMatrix){
 citrus.version = function(){
   return("0.02")
 }
+
+citrus.fileEventCount = function(dataDir){
+  lengths = list();
+  for (fcsFile in list.files(dataDir,pattern=".fcs",ignore.case=T)){
+    print(paste("Reading",fcsFile))
+    lengths[[fcsFile]] = suppressWarnings(dim(read.FCS(file.path(dataDir,fcsFile))))
+  }
+  return(do.call("rbind",lengths))
+}
