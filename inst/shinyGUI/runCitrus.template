@@ -12,8 +12,11 @@ library("citrus",lib.loc=<% if (is.null(templateData[["library"]])){
 # Uncomment this next line if the clustering step crashes on Mac OS X (i.e. abort trap 6)
 # Rclusterpp.setThreads(1);
 
-dataDir = <%cat(stringQuote(templateData[["dataDir"]]))%>
-outputDir = <%cat("file.path(dataDir,\"citrusOutput\")")%>
+
+dataDirectory = "../"
+# dataDirectory = <%cat(stringQuote(templateData[["dataDir"]]))%>
+
+outputDir = <%cat("file.path(dataDirectory,\"citrusOutput\")")%>
 clusterCols = c(<%cat(paste(sapply(templateData[["clusterCols"]],stringQuote),collapse=","))%>)
 <% if ("medianCols" %in% names(templateData)) {
 cat(paste("medianColumns=c(",paste(sapply(templateData[["medianCols"]],stringQuote),collapse=","),")\n",sep=""))
@@ -52,7 +55,7 @@ fileList = data.frame(<%
                                 sep=""))
 }%>
 
-citrus.full(dataDir=dataDir,
+citrus.full(dataDir=dataDirectory,
             outputDir=outputDir,
             clusterCols=clusterCols,
             fileSampleSize=fileSampleSize,

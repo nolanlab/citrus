@@ -20,10 +20,11 @@ citrus.launchUI = function(dataDirectory=NULL){
   })
   
   if (runCitrus){
-    runFile = file.path(dataDir,"citrusOutput","runCitrus.R")
-    
+    outputPath = file.path(dataDir,"citrusOutput")
+    setwd(outputPath)
+    runFile = file.path(outputPath,"runCitrus.R")
     cat(paste("Running Citrus File:",runFile,"\n"))
-    logFilePath = file.path(dataDir,"citrusOutput","citrusOutput.log")
+    logFilePath = file.path(outputPath,"citrusOutput.log")
     cat(paste("Logging output to:",logFilePath,"\n"))
     logFile = .logOn(logFilePath)
     
@@ -31,7 +32,7 @@ citrus.launchUI = function(dataDirectory=NULL){
     
     .logOff(logFile=logFile)
   }
-  return(paste("Citrus Output in:",file.path(dataDir,"citrusOutput")))  
+  return(paste("Citrus Output in:",file.path(outputPath,"citrusOutput")))  
 }
 
 citrus.getClusterCols = function(fileName,dataDir){
