@@ -1,15 +1,51 @@
-citrus.buildModel = function(features,labels,type,regularizationThresholds){
+citrus.buildModel = function(features,labels,type,regularizationThresholds,cv=F,nFolds=NULL,ncvRuns=10){
+  
+  if ((cv)&&(is.null(nFolds))){
+    stop("nfolds not specififed for cross validation.")
+  }
+  
   if (type=="pamr"){
-    model = pamr.train(list(x=t(features),y=labels),threshold=regularizationThresholds,remove.zeros=F)
+    pamrData = list(x=t(features),y=labels)
+    pamrModel = pamr.train(data=pamrData,threshold=regularizationThresholds,remove.zeros=F)
+    if (cv){
+      errorRates = sapply(1:ncvRuns,citrus.cvIteration,modelType="pamr",features=pamrData,labels=NULL,regularizationThresholds=regularizationThresholds,nFolds=nFolds,pamrModel=pamrModel)  
+      model=list();
+      model$model=pamrModel;
+      model$errorRates=apply(errorRates,1,mean)
+      model$se = apply(errorRates,1,sd)/sqrt(ncvRuns)
+      model$cvmin = min(which(model$errorRates==min(model$errorRates)))
+    } else {
+      model = pamrModel
+    }
   } else if (type=="glmnet") {
     # NOTE THAT THIS IS BINOMIAL EXPLICITLY. DOES MULTINOMIAL WORK THE SAME, IF ONLY 2 CLASSES PROVIDED?
-    model = glmnet(x=features,y=labels,family="binomial",lambda=regularizationThresholds)
+    glmmodel = glmnet(x=features,y=labels,family="binomial",lambda=regularizationThresholds)
+    if (cv){
+      errorRates = sapply(1:ncvRuns,citrus.cvIteration,modelType="glmnet",features=features,labels=labels,regularizationThresholds=regularizationThresholds,nFolds=nFolds)  
+      model=list();
+      model$model=glmmodel;
+      model$errorRates=apply(errorRates,1,mean)
+      model$se = apply(errorRates,1,sd)/sqrt(ncvRuns)
+      model$cvmin = min(which(model$errorRates==min(model$errorRates)))
+    } else {
+      model = glmmodel
+    }
   } else {
     stop(paste("Type:",type,"not yet implemented"));
   }
   return(model)
 }
 
+citrus.cvIteration = function(i,modelType,features,labels,regularizationThresholds,nFolds,pamrModel=NULL){
+  if (modelType == "pamr"){
+    return(pamr.cv(fit=pamrModel,data=features,nfold=nFolds)$error)
+  } else if (modelType=="glmnet"){
+    return(cv.glmnet(x=features,y=labels,family="binomial",lambda=regularizationThresholds,type.measure="class",nfolds=nFolds)$cvm)
+  } else {
+    stop(paste("Model Type",modelType,"unknown."));
+  }
+}
+  
 citrus.buildFoldModels = function(index,folds,foldFeatures,labels,type,regularizationThresholds){
   if (!((length(folds[[index]])==1) && (folds[[index]]=="all"))){
     labels = labels[-folds[[index]]]

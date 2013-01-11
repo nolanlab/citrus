@@ -32,7 +32,7 @@ citrus.launchUI = function(dataDirectory=NULL){
     
     .logOff(logFile=logFile)
   }
-  return(paste("Citrus Output in:",file.path(outputPath,"citrusOutput")))  
+  return(paste("Citrus Output in:",outputPath))  
 }
 
 citrus.getClusterCols = function(fileName,dataDir){

@@ -29,7 +29,7 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
     legendPchs = c(20)
     legendLty = c(1)
     legendPtCex=c(1)
-    if (modelType %in% names(thresholdFDRRates)){
+    if (!is.null(thresholdFDRRates)&&(modelType %in% names(thresholdFDRRates))){
       lines(thresholdFDRRates[[modelType]],type='o',pch=1,cex=1.5,col="blue")
       legendLabels = c(legendLabels,"Feature False Discovery Rate")
       legendColors = c(legendColors,"blue")
@@ -40,8 +40,13 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
     
     cv.min = cvMinima[[modelType]]$cv.min
     cv.1se = cvMinima[[modelType]]$cv.1se
-    points(c(cv.min,cv.min),y=c(errorRates[cv.min],errorRates[cv.min]),col="green",pch=20,cex=2)
-    points(c(cv.1se,cv.1se),y=c(errorRates[cv.1se],errorRates[cv.1se]),col="orange",pch=9,cex=2)
+    if (!is.null(cv.min)){
+      points(c(cv.min,cv.min),y=c(errorRates[cv.min],errorRates[cv.min]),col="green",pch=20,cex=2)  
+    }
+    if (!is.null(cv.1se)){
+      points(c(cv.1se,cv.1se),y=c(errorRates[cv.1se],errorRates[cv.1se]),col="orange",pch=9,cex=2)  
+    }
+    
     
     
     legendLabels = c(legendLabels,"cv.min","cv.1se")
