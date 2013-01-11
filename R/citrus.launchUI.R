@@ -19,8 +19,8 @@ citrus.launchUI = function(dataDirectory=NULL){
     
   })
   
+  outputPath = file.path(dataDir,"citrusOutput")
   if (runCitrus){
-    outputPath = file.path(dataDir,"citrusOutput")
     setwd(outputPath)
     runFile = file.path(outputPath,"runCitrus.R")
     cat(paste("Running Citrus File:",runFile,"\n"))

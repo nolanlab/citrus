@@ -1,15 +1,5 @@
 library(shiny)
 
-
-disabledCheckbox = function(inputId,label){
-  tagList(
-    tags$input(type="checkbox",id=inputId,disabled="disabled",class="checkbox"),
-    tags$span(label,class="disabled"),
-    tags$br()
-  )
-}
-
-
 shinyUI(pageWithSidebar(
   
   headerPanel(paste("Citrus UI v",citrus.version(),sep=""),windowTitle="Citrus UI"),
@@ -84,11 +74,15 @@ shinyUI(pageWithSidebar(
                tags$hr(),
                uiOutput("run"),
                tags$hr(),
+               tags$em("Additional Runtime Options:",class="control-label"),
+               tags$br(),
+               checkboxInput(inputId="quickMode",label="Quick Estimation Mode"),
+               tags$hr(),
                tags$em("TBD Runtime Options:",class="control-label"),
                tags$br(),
-               disabledCheckbox(inputId="multithread",label="Run Multithreaded"),
-               disabledCheckbox(inputId="exportClusters",label="Export Identified Clusters"),
-               disabledCheckbox(inputId="optimisticMode",label="Run in Naive Mode")
+               disableInput(checkboxInput(inputId="multithread",label="Run Multithreaded")),
+               disableInput(checkboxInput(inputId="exportClusters",label="Export Identified Clusters")),
+               disableInput(checkboxInput(inputId="optimisticMode",label="Run in Naive Mode"))
                )
       )
       

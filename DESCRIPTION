@@ -1,7 +1,7 @@
 Package: citrus
 Type: Package
 Title: CITRUS -- An analysis package for flow cytometry data.
-Version: 0.02
+Version: 0.03
 Date: 2012-12-04
 Author: Robert Bruggner
 Maintainer: Robert Bruggner <bruggner@stanford.edu>

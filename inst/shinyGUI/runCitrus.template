@@ -55,7 +55,12 @@ fileList = data.frame(<%
                                 sep=""))
 }%>
 
-citrus.full(dataDir=dataDirectory,
+<% if (templateData[["quickMode"]]){
+cat("citrus.quick(\n");
+} else {
+cat("citrus.full(\n");
+}%>
+            dataDir=dataDirectory,
             outputDir=outputDir,
             clusterCols=clusterCols,
             fileSampleSize=fileSampleSize,
