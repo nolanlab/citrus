@@ -1,4 +1,4 @@
-#' Driver to run a full citrus analysis
+#' Run a full citrus analysis
 #' 
 #' \code{citrus.full} runs a full Citrus analysis, including clustering, feature extraction and regularized classification. Plots are generated that show classification cross validation error rates, informative classifier features, and phenotype plots for informative clusters.
 #' @param dataDir The path to the data directory containing the FCS files to be analyzed.
@@ -117,7 +117,23 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
   }
 }
 
-
+#' Run a quick citrus analysis
+#' 
+#' \code{citrus.quick} runs a single clustering and estimates model error rates using cross validation of features. This should be used to quickly look for signal in new data sets.
+#' @param dataDir The path to the data directory containing the FCS files to be analyzed.
+#' @param outputDir Path to a directory where the citrus output will be placed.
+#' @param clusterCols A vector of integers or parameter names that should be used for clustering of the data
+#' @param fileSampleSize Number of events to be sampled from each analyzed file. Files with fewer events contribute all of their events. 
+#' @param fileList A matrix containing file names, conditions, and group assignments. See details. 
+#' @param nFolds Number of cross validation folds used to assess model accuracy
+#' @param modelTypes A vector of classification models to construct. Valid arguments are \code{pamr} and \code{glmnet}.
+#' @param featureTypes A vector of descriptive feature types to be calculated for each cluster. Valid arguments are \code{densities} and \code{medians}. See details.
+#' @param minimumClusterSizePercent Specifies the minimum cluster size to be analyzed as a percentage of the total aggregate datasize. A value etween \code{0} and \code{1}.
+#' @param transformCols A vector of integer or parameter names to be transformed before analysis. 
+#' @param ... Further arguments to be passed to Citrus subcomponents. 
+#' @details Details about the cluster conditions matrix, fold features, etc.
+#' @author Robert Bruggner
+#' @references http://github.com/nolanlab/citrus/
 citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,...){
   
   # Error check before we actually start the work.
@@ -203,7 +219,17 @@ citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nF
   }
 }
 
-
+#' Calculate differences in feature values between two conditions
+#' 
+#' \code{citrus.buildFoldFeatureDifferences} takes feature values from two conditions and returns the difference. Essentially it is simple array subtraction using names for indices.
+#' @param index The fold index of files to be subtracted
+#' @param features An array of features from two conditions
+#' @param conditions A vector of 2 conditions to calculate feature differences between. 
+#' @param citrus.daataArray A citrus.dataArray object containing the data used to calculate he features
+#' @param folds A list of fold indices 
+#' @param calculateLeaveoutData A logical value indicating whether or not the difference should be calulated for files in the fold. If TRUE, then calculates differences for files in the fold. If FALSE, caluclates differences for files not in the fold.
+#' @author Robert Bruggner
+#' @references http://github.com/nolanlab/citrus/
 citrus.buildFoldFeatureDifferences = function(index,features,conditions,citrus.dataArray,folds,calculateLeaveoutData=F){
   
   if (folds[[index]]=="all"){

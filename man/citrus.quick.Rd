@@ -1,8 +1,8 @@
-\name{citrus.full}
-\alias{citrus.full}
-\title{Run a full citrus analysis}
+\name{citrus.quick}
+\alias{citrus.quick}
+\title{Run a quick citrus analysis}
 \usage{
-  citrus.full(dataDir, outputDir, clusterCols,
+  citrus.quick(dataDir, outputDir, clusterCols,
     fileSampleSize, fileList, nFolds,
     modelTypes = c("pamr", "glmnet"),
     featureTypes = c("densities"),
@@ -49,12 +49,10 @@
   subcomponents.}
 }
 \description{
-  \code{citrus.full} runs a full Citrus analysis, including
-  clustering, feature extraction and regularized
-  classification. Plots are generated that show
-  classification cross validation error rates, informative
-  classifier features, and phenotype plots for informative
-  clusters.
+  \code{citrus.quick} runs a single clustering and
+  estimates model error rates using cross validation of
+  features. This should be used to quickly look for signal
+  in new data sets.
 }
 \details{
   Details about the cluster conditions matrix, fold
