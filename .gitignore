@@ -1,7 +1,8 @@
 .Rproj.user
 .Rhistory
 .RData
-data/testOutput/
 src/*.o
 src/*.so
 src-*
+..Rcheck
+.Rbuildignore
