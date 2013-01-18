@@ -16,7 +16,7 @@
 #' @author Robert Bruggner
 #' @references http://github.com/nolanlab/citrus/
 citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,...){
-  
+  res = list()
   # Error check before we actually start the work.
   if ((!all(featureTypes %in% citrus.getFeatureTypes()))||(length(featureTypes)<1)){
     stop(paste("featureTypes must be 1 or more of the following:",paste(citrus.getFeatureTypes(),collapse=", "),"\n"))
@@ -114,7 +114,10 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     
     # Plot Clusters
     lapply(modelTypes,citrus.plotClusters,differentialFeatures=differentialFeatures,outputDir=conditionOutputDir,clusterChildren=foldsClusterAssignments,citrus.dataArray=citrus.dataArray,conditions=conditions,clusterCols=clusterCols)
+    
+    res[[paste(conditions,collapse=" vs ")]] = list(foldsCluster=foldsCluster,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,differentialFeatures=differentialFeatures)
   }
+  return(res)
 }
 
 #' Run a quick citrus analysis
@@ -135,7 +138,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
 #' @author Robert Bruggner
 #' @references http://github.com/nolanlab/citrus/
 citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,...){
-  
+  res = list()
   # Error check before we actually start the work.
   if ((!all(featureTypes %in% citrus.getFeatureTypes()))||(length(featureTypes)<1)){
     stop(paste("featureTypes must be 1 or more of the following:",paste(citrus.getFeatureTypes(),collapse=", "),"\n"))
@@ -170,9 +173,9 @@ citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nF
     
     conditionData = citrus.dataArray$data[citrus.dataArray$data[,"fileId"]%in%citrus.dataArray$fileIds[,conditions],]
     cat("Clustering\n")
-    clustering = citrus.cluster(data=conditionData[,clusterCols])
+    cluster = citrus.cluster(data=conditionData[,clusterCols])
     cat("Assigning Events to Clusters\n")
-    clusterAssignments = citrus.calculateCompleteHierarchicalMembership(clustering)
+    clusterAssignments = citrus.calculateCompleteHierarchicalMembership(cluster)
     cat("Calculating Large Enough Clusters\n")
     minimumClusterSize=sum(citrus.dataArray$data[,"fileId"]%in%citrus.dataArray$fileIds[,conditions])*minimumClusterSizePercent
     largeEnoughClusters = citrus.calculateLargeEnoughClusters(clusterAssignments,minimumClusterSize)
@@ -216,7 +219,10 @@ citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nF
     
     # Plot Clusters
     lapply(modelTypes,citrus.plotClusters,differentialFeatures=differentialFeatures,outputDir=conditionOutputDir,clusterChildren=list(clusterAssignments),citrus.dataArray=citrus.dataArray,conditions=conditions,clusterCols=clusterCols)
+    
+    res[[paste(conditions,collapse=" vs ")]] = list(citrus.dataArray=citrus.dataArray,features=features,cluster=cluster,clusterAssignments=clusterAssignments,largeEnoughClusters=largeEnoughClusters)
   }
+  return(res)
 }
 
 #' Calculate differences in feature values between two conditions
