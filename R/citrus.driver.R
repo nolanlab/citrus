@@ -16,6 +16,9 @@
 #' @author Robert Bruggner
 #' @references http://github.com/nolanlab/citrus/
 citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,...){
+
+  addtlArgs = list(...)
+
   res = list()
   # Error check before we actually start the work.
   if ((!all(featureTypes %in% citrus.getFeatureTypes()))||(length(featureTypes)<1)){
@@ -36,9 +39,9 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     stop("'labels' column not found in file list.")
   }
   
-  if ("conditionComparaMatrix" %in% names(list(...))){
+  if ("conditionComparaMatrix" %in% names(addtlArgs)){
     #allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 
-    allConditions = citrus.convertConditionMatrix(list(...)[["conditionComparaMatrix"]]) 
+    allConditions = citrus.convertConditionMatrix(addtlArgs[["conditionComparaMatrix"]]) 
   } else {
     allConditions = as.list(colnames(fileList)[-labelCol])
   }
@@ -48,7 +51,12 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     
     conditionOutputDir = file.path(outputDir,paste(conditions,collapse="_vs_"))
     
-    citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize)
+    if ("transformFactor" %in% names(addtlArgs)){
+	transformFactor=addtlArgs[["transformFactor"]]
+    }  else {
+	transformFactor=5
+    }
+    citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize,transformFactor=transformFactor)
     
     
     nAllFolds = nFolds+1
