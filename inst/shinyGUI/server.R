@@ -271,7 +271,7 @@ serialGroupSelectors = function(groupName,fileList){
 #
 #############################################
 writeRunCitrusFile = function(input,templateFile=NULL){
-  templateData = as.list(input)
+  templateData = reactiveValuesToList(input)
   templateData[["minimumClusterSizePercent"]] = templateData[["minimumClusterSizePercent"]]/100;
   templateData[["citrusVersion"]] = citrus.version();
   templateData[["preload"]]=preload
@@ -310,7 +310,7 @@ convertColToDefinition = function(colname,df){
 getAssignmentsTable = function(input,fileList){
   fileGroupAssignments = rep("",length(fileList))
   for (groupName in getGroupNames(input)){
-    fileGroupAssignments[fileList %in% as.list(input)[[paste(groupName,"files",sep="")]]]=groupName
+    fileGroupAssignments[fileList %in% reactiveValuesToList(input)[[paste(groupName,"files",sep="")]]]=groupName
   }
   return(data.frame("File"=fileList,"Group"=fileGroupAssignments));
 }
@@ -321,7 +321,7 @@ getGroupNames = function(input){
     return(unique(keyFile[,labelCol]))
   }
   
-  inputList = as.list(input)
+  inputList = reactiveValuesToList(input)
   vals = c()
   for (i in 1:input$numberOfGroups){
     name = paste("Group",i,"name",sep="_");
@@ -339,7 +339,7 @@ getGroupNames = function(input){
 getSelectedFiles = function(input){
   sf = list();
   for (groupName in getGroupNames(input)){
-    sf[[groupName]] = as.list(input)[[paste(groupName,"files",sep="")]]
+    sf[[groupName]] = reactiveValuesToList(input)[[paste(groupName,"files",sep="")]]
   }
   return(sf)
 }
@@ -357,7 +357,7 @@ stringQuote = function(x){
 
 getComputedFeatures = function(input){
   features = list();
-  featureSelections = as.list(input)
+  featureSelections = reactiveValuesToList(input)
   for (type in citrus.getFeatureTypes()){
     if ((paste("compute",type,sep="") %in% names(featureSelections))&&(featureSelections[[paste("compute",type,sep="")]])){
       features[[type]]=T
@@ -371,7 +371,7 @@ getComputedFeatures = function(input){
 getSelectedModels = function(input){
   selectedModels = rep(FALSE,length(citrus.getModelTypes()))
   names(selectedModels) = citrus.getModelTypes();
-  input = as.list(input)
+  input = reactiveValuesToList(input)
   for (modelType in citrus.getModelTypes()){
     if ((modelType %in% names(input))&&(input[[modelType]])){
       selectedModels[[modelType]]=T
@@ -416,7 +416,7 @@ errorCheckInput = function(input){
 }
 
 getComparaConditions = function(input,conditions){
-  input = as.list(input)
+  input = reactiveValuesToList(input)
   comparaConditions = c()
   for (condition1 in conditions){
     for (condition2 in conditions){
@@ -435,7 +435,7 @@ getComparaConditions = function(input,conditions){
 }
 
 getConditionComparaMatrix = function(input,conditions){
-  input = as.list(input)
+  input = reactiveValuesToList(input)
   comparaMatrix = matrix(F,nrow=length(conditions),ncol=length(conditions),dimnames=list(conditions,conditions))
   for (condition1 in conditions){
     for (condition2 in conditions){
