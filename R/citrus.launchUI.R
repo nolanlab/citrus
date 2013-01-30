@@ -36,7 +36,7 @@ citrus.launchUI = function(dataDirectory=NULL){
 }
 
 citrus.getFileCols = function(fileName,dataDir){
-  fcsFile = suppressWarnings(read.FCS(file.path(dataDir,fileName),which.lines=1))
+  fcsFile = suppressWarnings(read.FCS(file.path(dataDir,fileName),which.lines=1,emptyValue=F))
   return(flowCore::colnames(fcsFile))
 }
 
