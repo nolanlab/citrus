@@ -13,7 +13,7 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
         stop(paste("File",filePath,"not found."));
       }
       cat(paste("\tReading file ",fileName,"\n"));
-      suppressWarnings((fcsData =exprs(read.FCS(filePath))));
+      suppressWarnings((fcsData =exprs(read.FCS(filePath,emptyValue=F))));
       fcsData = cbind(fcsData,fileEventNumber=1:nrow(fcsData),fileId=fileCounter);
       fileCounter=fileCounter+1;
       if (!is.null(transformCols)){
@@ -73,7 +73,7 @@ citrus.fileEventCount = function(dataDir){
   lengths = list();
   for (fcsFile in list.files(dataDir,pattern=".fcs",ignore.case=T)){
     print(paste("Reading",fcsFile))
-    lengths[[fcsFile]] = suppressWarnings(dim(read.FCS(file.path(dataDir,fcsFile))))
+    lengths[[fcsFile]] = suppressWarnings(dim(read.FCS(file.path(dataDir,fcsFile),emptyValue=F)))
   }
   return(do.call("rbind",lengths))
 }
