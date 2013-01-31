@@ -179,7 +179,7 @@ citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nF
   for (conditions in allConditions){
     cat(paste("Analyzing Condition",paste(conditions,collapse=" vs "),"\n"))
     
-    conditionOutputDir = file.path(outputDir,paste(conditions,collapse="_vs_"))
+    
     
     citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize)
     
@@ -224,6 +224,7 @@ citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nF
     
     if (plot){
       # Make condition output directoy
+      conditionOutputDir = file.path(outputDir,paste(conditions,collapse="_vs_"))
       dir.create(conditionOutputDir,showWarnings=T,recursive=T)
       
       # Plot

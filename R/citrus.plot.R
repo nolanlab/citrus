@@ -111,7 +111,17 @@ scaleToRange =function(x,scale){
   return(x)
 }
 
-citrus.overlapDensityPlot = function(data,backgroundRef=NULL,scaleUp=.8){
+citrus.overlapDensityPlot = function(clusterDataList,backgroundData){
+  combined = data.frame()
+  for (clusterName in names(clusterDataList)){
+    combined=rbind(combined,data.frame(value=as.vector(clusterDataList[[clusterName]]),marker=as.vector(sapply(colnames(clusterDataList[[clusterName]]),rep,nrow(clusterDataList[[clusterName]]))),clusterId=clusterName,dplot="cluster"))
+    combined=rbind(combined,data.frame(value=as.vector(backgroundData),marker=as.vector(sapply(colnames(clusterDataList[[clusterName]]),rep,nrow(backgroundData))),clusterId=clusterName,dplot="background"))
+  }
+  p = ggplot(combined) + geom_density(aes(x=value,fill=dplot),alpha=.3) + facet_grid(clusterId~marker)
+  print(p)
+}
+
+citrus.overlapDensityPlotOLD = function(data,backgroundRef=NULL,scaleUp=.8){
   samples = names(data)
   ncol=ncol(data[[samples[1]]])
   nrow=length(names(data))
@@ -162,7 +172,6 @@ citrus.overlapDensityPlot = function(data,backgroundRef=NULL,scaleUp=.8){
   print(paste("Range: ",sprintf("%1.1f",dMin),"-",sprintf("%1.1f",dMax)))
 }
 
-
 citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterChildren,citrus.dataArray,conditions,clusterCols){
   data = citrus.dataArray$data[citrus.dataArray$data[,"fileId"] %in% citrus.dataArray$fileIds[,conditions],]
   clusterChildren = clusterChildren[[length(clusterChildren)]]
@@ -173,7 +182,7 @@ citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterC
     for (nonzeroCluster in sort(nonzeroClusters)){
       clusterDataList[[as.character(nonzeroCluster)]]=data[clusterChildren[[nonzeroCluster]],clusterCols]
     }
-    citrus.overlapDensityPlot(clusterDataList,backgroundRef=data[,clusterCols])
+    citrus.overlapDensityPlot(clusterDataList=clusterDataList,backgroundData=data[,clusterCols])
     dev.off()
   }
 }

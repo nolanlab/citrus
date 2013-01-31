@@ -5,7 +5,7 @@ Rclusterpp.setThreads(1)
 
 # Example 1: Diseased patients have a differing proportion of cells in clusters 2 & 3.
 dataDir = file.path(system.file(package="citrus"),"extdata","example1")
-outputDir = "Desktop/notime/citrusTestRun/"
+outputDir = "~/tmp/"
 clusterCols = c(1:2)
 fileSampleSize=1000
 
