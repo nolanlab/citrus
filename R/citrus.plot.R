@@ -94,7 +94,7 @@ citrus.plotDifferentialFeatures = function(modelType,differentialFeatures,foldFe
     
     pdf(file.path(modelTypeDir,paste("features-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=(ncol*4),height=(nrow*1.5))
     p <- ggplot(combinedDf[,], aes(labels, value)) 
-    p = p + facet_wrap(~featureName,ncol=4) + geom_boxplot(outlier.colour=rgb(0,0,0,0),colour=rgb(0,0,0,.3)) + geom_point(aes(color=labels),alpha=I(0.25),shape=19,size=I(2)) + scale_colour_manual(values = c("red","blue")) + coord_flip() +  theme_bw() + ylab("") + xlab("") + opts(legend.position = "none") 
+    p = p + facet_wrap(~featureName,ncol=4) + geom_boxplot(outlier.colour=rgb(0,0,0,0),colour=rgb(0,0,0,.3)) + geom_point(aes(color=labels),alpha=I(0.25),shape=19,size=I(2)) + scale_colour_manual(values = c("red","blue")) + coord_flip() +  theme_bw() + ylab("") + xlab("") + theme(legend.position = "none") 
     print(p)
     dev.off()
   }
@@ -121,63 +121,12 @@ citrus.overlapDensityPlot = function(clusterDataList,backgroundData){
   print(p)
 }
 
-citrus.overlapDensityPlotOLD = function(data,backgroundRef=NULL,scaleUp=.8){
-  samples = names(data)
-  ncol=ncol(data[[samples[1]]])
-  nrow=length(names(data))
-  
-  dMax = max(unlist(lapply(data,max)))
-  dMin = min(unlist(lapply(data,min)))
-  if (!is.null(backgroundRef)){
-    dAll = apply(backgroundRef,2,density,from=dMin,to=dMax)  
-  }
-  par(mar=c(1,5,0,0),oma=c(0,0,0,0))
-  
-  
-  plot(1, type="n", axes=F, xlab="", ylab="",xlim=c(1,ncol+1),ylim=c(1,nrow+1+scaleUp))
-  axis(side=2,labels=names(data),at=c(1:nrow),lwd=0,lwd.ticks=1,las=1,line=-1,cex.axis=1.3)
-  #text(x=ncol/2,y=0,labels=paste("Range: ",sprintf("%1.1f",dMin),"-",sprintf("%1.1f",dMax)))
-  for (i in 1:nrow){
-    for (j in 1:ncol){
-      d = density(data[[samples[i]]][,j],from=dMin,to=dMax)  
-      range = scaleToRange(dAll[[j]]$x,scale=c(j,j+.8))
-      x0 = range[which(abs(dAll[[j]]$x)==(min(abs(dAll[[j]]$x))))]
-      xMin = range[which(dAll[[j]]$x==min(dAll[[j]]$x))]
-      xMax = range[which(dAll[[j]]$x==max(dAll[[j]]$x))]
-      
-      lines(x=c(x0,x0),y=c(0,(nrow+scaleUp)),col=rgb(0,0,1,0.3),lty=3,lwd=1)
-      
-      if (!is.null(backgroundRef)){
-        lines(scaleToRange(dAll[[j]]$x,scale=c(j,(j+.8))),scaleToRange(dAll[[j]]$y,scale=c(i,(i+scaleUp))),type='l',col=rgb(0,0,0,.3),lty=1,lwd=2)
-        lines(scaleToRange(dAll[[j]]$x,scale=c(j,(j+.8))),scaleToRange(dAll[[j]]$y,scale=c(i,(i+scaleUp))),type='l',col=rgb(0,0,0,1),lty=5,lwd=2)
-        
-      }
-      lines(scaleToRange(d$x,scale=c(j,(j+.8))),scaleToRange(d$y,scale=c(i,(i+scaleUp))),type='l',col="red",lwd=2)
-      
-    }
-  }
-  for (j in 1:ncol){
-    range = scaleToRange(dAll[[j]]$x,scale=c(j,j+.8))
-    x0 = range[which(abs(dAll[[j]]$x)==(min(abs(dAll[[j]]$x))))]
-    xMin = range[which(dAll[[j]]$x==min(dAll[[j]]$x))]
-    xMax = range[which(dAll[[j]]$x==max(dAll[[j]]$x))]
-    
-    #lines(x=c(x0,x0),y=c(0,(nrow+scaleUp)),col=rgb(0,0,1,0.5),lty=1,lwd=2)
-    lines(x=c(xMin,xMin),y=c(0,(nrow+scaleUp)),col="grey",lty=2,lwd=2)
-    lines(x=c(xMax,xMax),y=c(0,(nrow+scaleUp)),col="grey",lty=2,lwd=2)
-  }
-  
-  text(x=(1:ncol)-.2,y=nrow+scaleUp+.4,labels=colnames(data[[samples[1]]]),cex=1.2,pos=4)
-  #text(x=(1:ncol)+.2,y=nrow+scaleUp+.4,labels=colnames(data[[samples[1]]]))
-  print(paste("Range: ",sprintf("%1.1f",dMin),"-",sprintf("%1.1f",dMax)))
-}
-
 citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterChildren,citrus.dataArray,conditions,clusterCols){
   data = citrus.dataArray$data[citrus.dataArray$data[,"fileId"] %in% citrus.dataArray$fileIds[,conditions],]
   clusterChildren = clusterChildren[[length(clusterChildren)]]
   for (cvPoint in names(differentialFeatures[[modelType]])){
     nonzeroClusters = as.numeric(differentialFeatures[[modelType]][[cvPoint]][["clusters"]])
-    pdf(file=file.path(outputDir,paste(modelType,"_results/clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=(2*length(clusterCols)+2),height=(2*length(nonzeroClusters)+2))
+    pdf(file=file.path(outputDir,paste(modelType,"_results/clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=(2*length(clusterCols)+2),height=(1.8*length(nonzeroClusters)))
     clusterDataList=list();
     for (nonzeroCluster in sort(nonzeroClusters)){
       clusterDataList[[as.character(nonzeroCluster)]]=data[clusterChildren[[nonzeroCluster]],clusterCols]

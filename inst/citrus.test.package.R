@@ -5,7 +5,7 @@ Rclusterpp.setThreads(1)
 
 # Example 1: Diseased patients have a differing proportion of cells in clusters 2 & 3.
 dataDir = file.path(system.file(package="citrus"),"extdata","example1")
-outputDir = "~/tmp/"
+outputDir = "~/Desktop/notime/tmp/"
 clusterCols = c(1:2)
 fileSampleSize=1000
 
@@ -15,7 +15,7 @@ nFolds=5
 fileList = data.frame(unstim=list.files(dataDir,pattern=".fcs",ignore.case=T),labels=labels)
 
 #debug(citrus.full)
-citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,fileList=fileList,nFolds=5,featureTypes=c("densities"))
+res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,fileList=fileList,nFolds=5,featureTypes=c("densities"))
 
 
 # Eample 2: Diseased patients have high levels of functional marker 2 in cluster 3 when stimulated. 

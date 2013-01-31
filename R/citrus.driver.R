@@ -50,8 +50,6 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
   for (conditions in allConditions){
     cat(paste("Analyzing Condition",paste(conditions,collapse=" vs "),"\n"))
     
-    conditionOutputDir = file.path(outputDir,paste(conditions,collapse="_vs_"))
-    
     if ("transformFactor" %in% names(addtlArgs)){
       transformFactor=addtlArgs[["transformFactor"]]
     }  else {
@@ -116,6 +114,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     
     if (plot){
       # Make condition output directoy
+      conditionOutputDir = file.path(outputDir,paste(conditions,collapse="_vs_"))
       dir.create(conditionOutputDir,showWarnings=T,recursive=T)
       
       # Plot
