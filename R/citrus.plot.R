@@ -79,7 +79,7 @@ citrus.plotDifferentialFeatures = function(modelType,differentialFeatures,foldFe
     modelTypeDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
     nonzeroFeatureNames = differentialFeatures[[modelType]][[cvPoint]][["features"]]
     for (nonzeroFeatureName in nonzeroFeatureNames){
-      df = data.frame(value=features[,nonzeroFeatureName],labels,featureName=nonzeroFeatureName)
+      df = data.frame(value=features[,nonzeroFeatureName],labels=as.factor(labels),featureName=nonzeroFeatureName)
       if (which(nonzeroFeatureNames==nonzeroFeatureName)==1){
         combinedDf = df;
       } else {
@@ -114,13 +114,12 @@ scaleToRange =function(x,scale){
 citrus.overlapDensityPlot = function(data,backgroundRef=NULL,scaleUp=.8){
   samples = names(data)
   ncol=ncol(data[[samples[1]]])
-  
   nrow=length(names(data))
   
   dMax = max(unlist(lapply(data,max)))
   dMin = min(unlist(lapply(data,min)))
   if (!is.null(backgroundRef)){
-    dAll = apply(backgroundRef,2,density,from=dMin,to=dMax)
+    dAll = apply(backgroundRef,2,density,from=dMin,to=dMax)  
   }
   par(mar=c(1,5,0,0),oma=c(0,0,0,0))
   
@@ -130,7 +129,7 @@ citrus.overlapDensityPlot = function(data,backgroundRef=NULL,scaleUp=.8){
   #text(x=ncol/2,y=0,labels=paste("Range: ",sprintf("%1.1f",dMin),"-",sprintf("%1.1f",dMax)))
   for (i in 1:nrow){
     for (j in 1:ncol){
-      d = density(data[[samples[i]]][,j],from=dMin,to=dMax)
+      d = density(data[[samples[i]]][,j],from=dMin,to=dMax)  
       range = scaleToRange(dAll[[j]]$x,scale=c(j,j+.8))
       x0 = range[which(abs(dAll[[j]]$x)==(min(abs(dAll[[j]]$x))))]
       xMin = range[which(dAll[[j]]$x==min(dAll[[j]]$x))]

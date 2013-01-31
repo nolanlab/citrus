@@ -11,11 +11,12 @@
 #' @param featureTypes A vector of descriptive feature types to be calculated for each cluster. Valid arguments are \code{densities} and \code{medians}. See details.
 #' @param minimumClusterSizePercent Specifies the minimum cluster size to be analyzed as a percentage of the total aggregate datasize. A value etween \code{0} and \code{1}.
 #' @param transformCols A vector of integer or parameter names to be transformed before analysis. 
+#' @param plot Logical value indicating whether or not citrus output plots should be created. Defaults to \code{TRUE}.
 #' @param ... Further arguments to be passed to Citrus subcomponents. 
 #' @details Details about the cluster conditions matrix, fold features, etc.
 #' @author Robert Bruggner
 #' @references http://github.com/nolanlab/citrus/
-citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,...){
+citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,plot=T,...){
 
   addtlArgs = list(...)
 
@@ -52,9 +53,9 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     conditionOutputDir = file.path(outputDir,paste(conditions,collapse="_vs_"))
     
     if ("transformFactor" %in% names(addtlArgs)){
-	transformFactor=addtlArgs[["transformFactor"]]
+      transformFactor=addtlArgs[["transformFactor"]]
     }  else {
-	transformFactor=5
+      transformFactor=5
     }
     citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize,transformFactor=transformFactor)
     
@@ -106,24 +107,26 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     cvMinima = lapply(modelTypes,citrus.getCVMinima,thresholdErrorRates=thresholdErrorRates,thresholdSEMs=thresholdSEMs,thresholdFDRRates=thresholdFDRRates)
     names(cvMinima)=modelTypes
     
-    # Make condition output directoy
-    dir.create(conditionOutputDir,showWarnings=T,recursive=T)
-    
-    # Plot
-    sapply(modelTypes,citrus.plotTypeErrorRate,outputDir=conditionOutputDir,regularizationThresholds=regularizationThresholds,thresholdErrorRates=thresholdErrorRates,thresholdFDRRates=thresholdFDRRates,cvMinima=cvMinima,thresholdSEMs=thresholdSEMs,foldModels=foldModels)
-    
     # Extract Features
     differentialFeatures = lapply(modelTypes,citrus.extractModelFeatures,cvMinima=cvMinima,foldModels=foldModels,foldFeatures=foldFeatures,regularizationThresholds=regularizationThresholds)
     #citrus.extractModelFeatures("pamr",cvMinima=cvMinima,foldModels=foldModels,foldFeatures=foldFeatures,regularizationThresholds=regularizationThresholds)
     names(differentialFeatures) = modelTypes
     
-    # Plot Features
-    lapply(modelTypes,citrus.plotDifferentialFeatures,differentialFeatures=differentialFeatures,foldFeatures=foldFeatures,outputDir=conditionOutputDir,labels=fileList[,labelCol])
-    
-    # Plot Clusters
-    lapply(modelTypes,citrus.plotClusters,differentialFeatures=differentialFeatures,outputDir=conditionOutputDir,clusterChildren=foldsClusterAssignments,citrus.dataArray=citrus.dataArray,conditions=conditions,clusterCols=clusterCols)
-    
     res[[paste(conditions,collapse=" vs ")]] = list(foldsCluster=foldsCluster,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,differentialFeatures=differentialFeatures)
+    
+    if (plot){
+      # Make condition output directoy
+      dir.create(conditionOutputDir,showWarnings=T,recursive=T)
+      
+      # Plot
+      sapply(modelTypes,citrus.plotTypeErrorRate,outputDir=conditionOutputDir,regularizationThresholds=regularizationThresholds,thresholdErrorRates=thresholdErrorRates,thresholdFDRRates=thresholdFDRRates,cvMinima=cvMinima,thresholdSEMs=thresholdSEMs,foldModels=foldModels)
+      
+      # Plot Features
+      lapply(modelTypes,citrus.plotDifferentialFeatures,differentialFeatures=differentialFeatures,foldFeatures=foldFeatures,outputDir=conditionOutputDir,labels=fileList[,labelCol])
+      
+      # Plot Clusters
+      lapply(modelTypes,citrus.plotClusters,differentialFeatures=differentialFeatures,outputDir=conditionOutputDir,clusterChildren=foldsClusterAssignments,citrus.dataArray=citrus.dataArray,conditions=conditions,clusterCols=clusterCols)
+    }
   }
   return(res)
 }
@@ -141,11 +144,12 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
 #' @param featureTypes A vector of descriptive feature types to be calculated for each cluster. Valid arguments are \code{densities} and \code{medians}. See details.
 #' @param minimumClusterSizePercent Specifies the minimum cluster size to be analyzed as a percentage of the total aggregate datasize. A value etween \code{0} and \code{1}.
 #' @param transformCols A vector of integer or parameter names to be transformed before analysis. 
+#' @param plot Logical value indicating whether or not citrus output plots should be created. Defaults to \code{TRUE}.
 #' @param ... Further arguments to be passed to Citrus subcomponents. 
 #' @details Details about the cluster conditions matrix, fold features, etc.
 #' @author Robert Bruggner
 #' @references http://github.com/nolanlab/citrus/
-citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,...){
+citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,plot=T,...){
   res = list()
   # Error check before we actually start the work.
   if ((!all(featureTypes %in% citrus.getFeatureTypes()))||(length(featureTypes)<1)){
@@ -210,25 +214,27 @@ citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nF
       cvMinima[[modelType]]=list();
       cvMinima[[modelType]][["cv.min"]]=typeModel$cvmin
     }
-        
-    # Make condition output directoy
-    dir.create(conditionOutputDir,showWarnings=T,recursive=T)
-    
-    # Plot
-    sapply(modelTypes,citrus.plotTypeErrorRate,outputDir=conditionOutputDir,regularizationThresholds=regularizationThresholds,thresholdErrorRates=thresholdErrorRates,thresholdFDRRates=NULL,cvMinima=cvMinima,thresholdSEMs=thresholdSEMs,foldModels=models)
     
     # Extract Features
     differentialFeatures = lapply(modelTypes,citrus.extractModelFeatures,cvMinima=cvMinima,foldModels=models,foldFeatures=list(features),regularizationThresholds=regularizationThresholds)
     #citrus.extractModelFeatures("pamr",cvMinima=cvMinima,foldModels=foldModels,foldFeatures=foldFeatures,regularizationThresholds=regularizationThresholds)
     names(differentialFeatures) = modelTypes
     
-    # Plot Features
-    lapply(modelTypes,citrus.plotDifferentialFeatures,differentialFeatures=differentialFeatures,foldFeatures=list(features),outputDir=conditionOutputDir,labels=fileList[,labelCol])
-    
-    # Plot Clusters
-    lapply(modelTypes,citrus.plotClusters,differentialFeatures=differentialFeatures,outputDir=conditionOutputDir,clusterChildren=list(clusterAssignments),citrus.dataArray=citrus.dataArray,conditions=conditions,clusterCols=clusterCols)
-    
     res[[paste(conditions,collapse=" vs ")]] = list(citrus.dataArray=citrus.dataArray,features=features,cluster=cluster,clusterAssignments=clusterAssignments,largeEnoughClusters=largeEnoughClusters)
+    
+    if (plot){
+      # Make condition output directoy
+      dir.create(conditionOutputDir,showWarnings=T,recursive=T)
+      
+      # Plot
+      sapply(modelTypes,citrus.plotTypeErrorRate,outputDir=conditionOutputDir,regularizationThresholds=regularizationThresholds,thresholdErrorRates=thresholdErrorRates,thresholdFDRRates=NULL,cvMinima=cvMinima,thresholdSEMs=thresholdSEMs,foldModels=models)
+      # Plot Features
+      lapply(modelTypes,citrus.plotDifferentialFeatures,differentialFeatures=differentialFeatures,foldFeatures=list(features),outputDir=conditionOutputDir,labels=fileList[,labelCol])
+      
+      # Plot Clusters
+      lapply(modelTypes,citrus.plotClusters,differentialFeatures=differentialFeatures,outputDir=conditionOutputDir,clusterChildren=list(clusterAssignments),citrus.dataArray=citrus.dataArray,conditions=conditions,clusterCols=clusterCols)
+    }
+    
   }
   return(res)
 }

@@ -157,7 +157,7 @@ citrus.extractModelFeatures = function(modelType,cvMinima,foldModels,foldFeature
       threshold = regularizationThresholds[[modelType]][ cvMinima[[modelType]][[cvPoint]] ]
       if (finalModel$nonzero[cvMinima[[modelType]][[cvPoint]]]>0){
         f = pamr.listgenes(fit=finalModel,data=list(x=t(foldFeatures[[nAllFolds]]),geneids=colnames(foldFeatures[[nAllFolds]])),threshold=regularizationThresholds[[modelType]][ cvMinima[[modelType]][[cvPoint]] ] )  
-        f = f[,1]
+        f = as.vector(f[,1])
         res[[cvPoint]][["features"]] = f
         res[[cvPoint]][["clusters"]] = sort(unique(as.numeric(do.call("rbind",strsplit(f,split=" "))[,2])))  
       } else {
