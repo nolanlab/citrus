@@ -112,12 +112,12 @@ scaleToRange =function(x,scale){
 }
 
 citrus.overlapDensityPlot = function(clusterDataList,backgroundData){
-  combined = data.frame()
+  combined = data.frame(check.names=F,check.rows=F)
   for (clusterName in names(clusterDataList)){
-    combined=rbind(combined,data.frame(value=as.vector(clusterDataList[[clusterName]]),marker=as.vector(sapply(colnames(clusterDataList[[clusterName]]),rep,nrow(clusterDataList[[clusterName]]))),clusterId=clusterName,dplot="cluster"))
-    combined=rbind(combined,data.frame(value=as.vector(backgroundData),marker=as.vector(sapply(colnames(clusterDataList[[clusterName]]),rep,nrow(backgroundData))),clusterId=clusterName,dplot="background"))
+    combined=rbind(combined,data.frame(value=as.vector(clusterDataList[[clusterName]]),marker=as.vector(sapply(colnames(clusterDataList[[clusterName]]),rep,nrow(clusterDataList[[clusterName]]))),clusterId=clusterName,dplot="cluster",check.names=F,check.rows=F))
+    combined=rbind(combined,data.frame(value=as.vector(backgroundData),marker=as.vector(sapply(colnames(clusterDataList[[clusterName]]),rep,nrow(backgroundData))),clusterId=clusterName,dplot="background",check.names=F,check.rows=F))
   }
-  p = ggplot(combined) + geom_density(aes(x=value,fill=dplot),alpha=.3) + facet_grid(clusterId~marker)
+  p = ggplot(combined) + geom_density(aes(x=value,fill=dplot,colour=dplot),alpha=.6) + facet_grid(clusterId~marker)
   print(p)
 }
 
@@ -126,12 +126,21 @@ citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterC
   clusterChildren = clusterChildren[[length(clusterChildren)]]
   for (cvPoint in names(differentialFeatures[[modelType]])){
     nonzeroClusters = as.numeric(differentialFeatures[[modelType]][[cvPoint]][["clusters"]])
-    pdf(file=file.path(outputDir,paste(modelType,"_results/clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=(2*length(clusterCols)+2),height=(1.8*length(nonzeroClusters)))
+    pdf(file=file.path(outputDir,paste(modelType,"_results/clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=(2.2*length(clusterCols)+2),height=(2.2*length(nonzeroClusters)))
     clusterDataList=list();
     for (nonzeroCluster in sort(nonzeroClusters)){
-      clusterDataList[[as.character(nonzeroCluster)]]=data[clusterChildren[[nonzeroCluster]],clusterCols]
+      if (nrow(data[clusterChildren[[nonzeroCluster]],])>5000){
+        clusterDataList[[as.character(nonzeroCluster)]]=data[clusterChildren[[nonzeroCluster]],clusterCols][sample(1:nrow(data[clusterChildren[[nonzeroCluster]],]),1000),]
+      } else {
+        clusterDataList[[as.character(nonzeroCluster)]]=data[clusterChildren[[nonzeroCluster]],clusterCols]
+      }
     }
-    citrus.overlapDensityPlot(clusterDataList=clusterDataList,backgroundData=data[,clusterCols])
+    if (nrow(data)>5000){
+      bgData = data[sample(1:nrow(data),5000),clusterCols]
+    } else {
+      bgData = data[,clusterCols]
+    }
+    citrus.overlapDensityPlot(clusterDataList=clusterDataList,backgroundData=bgData)
     dev.off()
   }
 }
