@@ -3,7 +3,7 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
     print(paste("Plotting results for model type",modelType))
     modelOutputDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
     dir.create(modelOutputDir)
-    pdf(file.path(modelOutputDir,"ModelErrorRate.pdf"),width=8,height=8)
+    pdf(file.path(modelOutputDir,"ModelErrorRate.pdf"),width=6,height=6)
     thresholds=regularizationThresholds[[modelType]]
     errorRates=thresholdErrorRates[[modelType]]
     if (modelType=="glmnet"){
@@ -15,7 +15,7 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
       xlab="Regularization Threshold"
       nonzeroCounts = foldModels[[modelType]][[nAllFolds]]$nonzero
     }
-    plot(errorRates,type='o',pch=20,col="red",main=paste(modelType,"model error rate\n"),axes=F,xlab=xlab,ylim=c(0,1),ylab="Percent")
+    plot(errorRates,type='o',pch=20,col="red",main="Number of model features\n",axes=F,xlab=xlab,ylim=c(0,1),ylab="Model Cross Validation Error Rate")
     #Plot SEM
     for (i in 1:length(thresholds)){
       lines(c(i,i),c(errorRates[i]+thresholdSEMs[[modelType]][i],errorRates[i]-thresholdSEMs[[modelType]][i]),col="red",lty=3)

@@ -17,7 +17,6 @@ fileList = data.frame(unstim=list.files(dataDir,pattern=".fcs",ignore.case=T),la
 #debug(citrus.full)
 res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,fileList=fileList,nFolds=5,featureTypes=c("densities"))
 
-
 # Eample 2: Diseased patients have high levels of functional marker 2 in cluster 3 when stimulated. 
 # No results should be visible from the unstim files.
 rm(list=ls(all=T))
