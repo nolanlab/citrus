@@ -16,7 +16,7 @@
 #' @details Details about the cluster conditions matrix, fold features, etc.
 #' @author Robert Bruggner
 #' @references http://github.com/nolanlab/citrus/
-citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,plot=T,...){
+citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,plot=T,returnResults=F,...){
 
   addtlArgs = list(...)
 
@@ -109,8 +109,10 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     differentialFeatures = lapply(modelTypes,citrus.extractModelFeatures,cvMinima=cvMinima,foldModels=foldModels,foldFeatures=foldFeatures,regularizationThresholds=regularizationThresholds)
     #citrus.extractModelFeatures("pamr",cvMinima=cvMinima,foldModels=foldModels,foldFeatures=foldFeatures,regularizationThresholds=regularizationThresholds)
     names(differentialFeatures) = modelTypes
+    if (returnResults){
+      res[[paste(conditions,collapse=" vs ")]] = list(citrus.dataArray=citrus.dataArray,foldsCluster=foldsCluster,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,differentialFeatures=differentialFeatures)  
+    }
     
-    res[[paste(conditions,collapse=" vs ")]] = list(foldsCluster=foldsCluster,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,differentialFeatures=differentialFeatures)
     
     if (plot){
       # Make condition output directoy
@@ -148,7 +150,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
 #' @details Details about the cluster conditions matrix, fold features, etc.
 #' @author Robert Bruggner
 #' @references http://github.com/nolanlab/citrus/
-citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,plot=T,...){
+citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,plot=T,returnResults=F,...){
   res = list()
   # Error check before we actually start the work.
   if ((!all(featureTypes %in% citrus.getFeatureTypes()))||(length(featureTypes)<1)){
@@ -219,7 +221,10 @@ citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nF
     #citrus.extractModelFeatures("pamr",cvMinima=cvMinima,foldModels=foldModels,foldFeatures=foldFeatures,regularizationThresholds=regularizationThresholds)
     names(differentialFeatures) = modelTypes
     
-    res[[paste(conditions,collapse=" vs ")]] = list(citrus.dataArray=citrus.dataArray,features=features,cluster=cluster,clusterAssignments=clusterAssignments,largeEnoughClusters=largeEnoughClusters)
+    if (returnResults){
+      res[[paste(conditions,collapse=" vs ")]] = list(citrus.dataArray=citrus.dataArray,features=features,cluster=cluster,clusterAssignments=clusterAssignments,largeEnoughClusters=largeEnoughClusters)  
+    }
+    
     
     if (plot){
       # Make condition output directoy

@@ -74,7 +74,7 @@ citrus.predict = function(model,features){
 }
 
 
-citrus.generateRgularizationThresholds = function(features,labels,modelTypes,n=50,alpha=1){
+citrus.generateRgularizationThresholds = function(features,labels,modelTypes,n=100,alpha=1){
   if (length(modelTypes)<1){
     stop("no regularzation threshold types specified.")
   }
