@@ -54,11 +54,15 @@ citrus.calculateFileClusterMedians = function(fileId,clusterIds,clusterAssignmen
 citrus.calculateFileClusterMedian = function(clusterId,clusterAssignments,fileId,data,medianColumns){
   include = data[clusterAssignments[[clusterId]],]
   include = include[include[,"fileId"]==fileId,medianColumns]
-  if ((length(medianColumns)>1)&&(is.null(nrow(include)))){
+  if (length(medianColumns)>1){
+    # do we have data?
     if (length(include)>0){
-      medians = include
+      if (is.null(nrow(include))){
+        medians = include  
+      } else {
+        medians = apply(include,2,median) 
+      }
     } else {
-      # Assume empty clusters have 0 values. Maybe a bad assumption. 
       medians = (rep(0,length(medianColumns)))
     }
   } else if (length(medianColumns)==1){
@@ -68,7 +72,7 @@ citrus.calculateFileClusterMedian = function(clusterId,clusterAssignments,fileId
       medians=0
     }
   } else {
-    medians = apply(include,2,median)  
+     
   }
   
   names(medians) = paste(paste(paste("cluster",clusterId),medianColumns),"median")
