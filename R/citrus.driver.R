@@ -127,7 +127,24 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
       
       # Plot Clusters
       lapply(modelTypes,citrus.plotClusters,differentialFeatures=differentialFeatures,outputDir=conditionOutputDir,clusterChildren=foldsClusterAssignments,citrus.dataArray=citrus.dataArray,conditions=conditions,clusterCols=clusterCols)
+      
+      # GO BACK AND MAKE THIS PARALLEL CALLS....
+      g = citrus.createHierarchyGraph(largeEnoughClusters=foldLargeEnoughClusters[[nAllFolds]],mergeOrder=foldsCluster[[nAllFolds]]$merge,clusterAssignments=foldsClusterAssignments[[nAllFolds]])
+      l = layout.reingold.tilford(g,root=length(foldLargeEnoughClusters[[nAllFolds]]),circular=T)
+      clusterMedians = t(sapply(foldLargeEnoughClusters[[nAllFolds]],.getClusterMedians,clusterAssignments=foldsClusterAssignments[[nAllFolds]],data=citrus.dataArray$data,clusterCols=clusterCols))
+      rownames(clusterMedians) = foldLargeEnoughClusters[[nAllFolds]]
+      for (modelType in names(differentialFeatures)){
+        citrus.plotHierarchicalClusterMedians(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),"markerPlots.pdf"),clusterMedians,graph=g,layout=l)  
+        for (cvPoint in names(differentialFeatures[[modelType]])){
+          featureClusterMatrix = .getClusterFeatureMatrix(differentialFeatures[[modelType]][[cvPoint]][["features"]])
+          citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,largeEnoughClusters=foldLargeEnoughClusters[[nAllFolds]],graph=g,layout=l)
+          citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePetalPlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,largeEnoughClusters=foldLargeEnoughClusters[[nAllFolds]],graph=g,layout=l,petalPlot=T,clusterMedians=clusterMedians)
+        }
+      }
+    
     }
+    
+    
   }
   return(res)
 }

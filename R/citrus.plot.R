@@ -135,8 +135,8 @@ citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterC
         clusterDataList[[as.character(nonzeroCluster)]]=data[clusterChildren[[nonzeroCluster]],clusterCols]
       }
     }
-    if (nrow(data)>5000){
-      bgData = data[sample(1:nrow(data),5000),clusterCols]
+    if (nrow(data)>2500){
+      bgData = data[sample(1:nrow(data),2500),clusterCols]
     } else {
       bgData = data[,clusterCols]
     }
@@ -144,3 +144,130 @@ citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterC
     dev.off()
   }
 }
+
+########################################
+# Hierarchical Clustering plots
+########################################
+
+.getClusterMedians = function(clusterId,clusterAssignments,clusterCols,data){
+  apply(data[clusterAssignments[[clusterId]],clusterCols],2,median)
+}
+
+.decimalFormat = function(x){
+  sprintf("%.2f",x)
+}
+
+.scaleToOne = function(x){
+  x = x-min(x)
+  x = x/max(x)
+  return(x)
+}
+
+.petalVertex <- function(coords, params){
+  scale = params("vertex", "scale")
+  weights = params("vertex", "weights")
+  sapply(1:nrow(coords),.petalVertexWrapper,coordinates=coords,scale=scale,weights=weights)
+}
+
+.petalVertexWrapper = function(x,coordinates,scale,weights){
+  .petalPlot(xpos=coordinates[x,1],coordinates[x,2],d=weights[x,],scale=scale)
+}
+
+.petalPlot = function(xpos,ypos,d,scale=1,segCol=NULL,labels=NULL){
+  res=360
+  nSegments = length(d)
+  if (is.null(segCol)){
+    segCol=rainbow(nSegments,alpha=.7)
+    borCol=rainbow(nSegments)
+  }
+  angles = (360/nSegments)*c(0:nSegments)*(pi/180)
+  series = seq(from=1,to=360,length.out=(res))
+  points = series*(pi/180)
+  x = cos(points)
+  y = sin(points)
+  segPoints = floor(seq(from=1,to=360,length.out=(nSegments+1)))
+  for (i in 1:nSegments){
+    seg.x = c(xpos,xpos+x[segPoints[i]:segPoints[i+1]]*d[i]*scale)
+    seg.y = c(ypos,ypos+y[segPoints[i]:segPoints[i+1]]*d[i]*scale)
+    polygon(seg.x,seg.y,col=segCol[i],border=borCol[i])
+    lines(c(xpos,xpos+x[segPoints[i]]*scale),c(ypos,ypos+y[segPoints[i]]*scale),col=rgb(1,1,1,.4))
+  }
+  lines((x*scale)+xpos,(y*scale)+ypos,col=rgb(1,1,1,.4))
+  lines((x*.5*scale)+xpos,(y*.5*scale)+ypos,col=rgb(1,1,1,.4))
+  
+  if (!is.null(labels)){
+    labelPoints = segPoints[-length(segPoints)]+segPoints[2]/2
+    text(x=c(x[labelPoints]*scale+xpos),y=c(y[labelPoints]*scale+ypos),labels,col="white")
+  }
+  
+}
+
+.getClusterFeatureMatrix = function(featureVector){
+  df = do.call("rbind",strsplit(gsub(pattern="(cluster [0-9]+) ",replacement="\\1~",featureVector),"~"))
+  return(cbind(cluster=do.call("rbind",strsplit(df[,1]," "))[,2],feature=df[,2]))
+}
+  
+
+citrus.createHierarchyGraph = function(largeEnoughClusters,mergeOrder,clusterAssignments){
+  cmat = matrix(0,ncol=length(largeEnoughClusters),nrow=length(largeEnoughClusters),dimnames=list(largeEnoughClusters,largeEnoughClusters))
+  for (cluster in largeEnoughClusters){
+    children = mergeOrder[cluster,]  
+    for (child in children){
+      if (as.character(child) %in% rownames(cmat)){
+        cmat[as.character(cluster),as.character(child)] = 1
+      }
+    }
+  }
+  g = graph.adjacency(adjmatrix=cmat,mode="directed",add.colnames='label')
+  clusterSizes = do.call("rbind",lapply(clusterAssignments,length))
+  sizes = sapply(log(clusterSizes[largeEnoughClusters]),findInterval,vec=hist(log(clusterSizes[largeEnoughClusters]),breaks=10,plot=F)$breaks)
+  sizes = sizes+6
+  g = set.vertex.attribute(g,"size",value=sizes)
+  return(g)
+}
+
+citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph,layout){
+  pdf(file=outputFile,width=15,height=15,bg="black")
+  for (target in 1:ncol(clusterMedians)){
+    ct = seq(from=(min(clusterMedians[,target])-0.01),to=(max(clusterMedians[,target])+0.01),length.out=20)
+    cols = topo.colors(20)[sapply(clusterMedians[,target],findInterval,vec=ct)]
+    par(col.main="white")  
+    plot.igraph(graph,layout=layout,vertex.color=cols,main=colnames(clusterMedians)[target],edge.color="white",vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=rgb(1,1,1,.5),vertex.label.cex=.7,vertex.label.family="Helvetica")
+    
+    # Legend
+    legend_image <- as.raster(matrix(rev(topo.colors(20)), ncol=1))
+    rasterImage(legend_image, 1.1, -.5, 1.15,.5)
+    text(x=1.15, y = seq(-.5,.5,l=5), labels = .decimalFormat(ct[c(1,floor((length(ct)/4)*1:4))]) ,pos=4,col="white")
+  }
+  dev.off()  
+}
+
+
+citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureClusterMatrix,largeEnoughClusters,graph,layout,petalPlots=F,clusterMedians=NULL){
+  pdf(file=outputFile,width=15,height=15,bg="black")
+  for (feature in unique(featureClusterMatrix[,"feature"])){
+    fGroup = list();
+    featureClusters = as.numeric(featureClusterMatrix[featureClusterMatrix[,"feature"]==feature,"cluster"])
+    featureElements = match(featureClusters,largeEnoughClusters)
+    subgraph = induced.subgraph(graph,featureElements)
+    groupAssignments = clusters(subgraph)$membership
+    for (groupId in unique(groupAssignments)){
+      fGroup[[groupId]]=match(get.vertex.attribute(subgraph,"label")[groupAssignments==groupId],get.vertex.attribute(graph,"label"))
+    }
+    par(col.main="white")
+    if (petalPlots){
+      if (is.null(clusterMedians)){
+        stop("clusterMedians argument must be supplied to plot petals")
+      }
+      add.vertex.shape("petal", clip=vertex.shapes("circle")$clip,plot=.petalVertex, parameters=list(vertex.scale=.04,vertex.weights=apply(clusterMedians,2,.scaleToOne)))
+      plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color="white",vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=rgb(1,1,1,.5),vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=rgb(0,0,.5,.3),mark.col=topo.colors(length(fGroup),alpha=.3),vertex.shape="petal")
+      .petalPlot(xpos=1,ypos=-1,d=rep(1,ncol(clusterMedians)),scale=.2,labels=colnames(clusterMedians))
+    } else {
+      plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color="white",vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=rgb(1,1,1,.5),vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=rgb(0,0,.5,.5),mark.col=topo.colors(length(fGroup),alpha=.8))    
+    }
+  }
+  dev.off()
+}
+
+
+
