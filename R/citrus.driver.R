@@ -11,7 +11,8 @@
 #' @param featureTypes A vector of descriptive feature types to be calculated for each cluster. Valid arguments are \code{densities} and \code{medians}. See details.
 #' @param minimumClusterSizePercent Specifies the minimum cluster size to be analyzed as a percentage of the total aggregate datasize. A value etween \code{0} and \code{1}.
 #' @param transformCols A vector of integer or parameter names to be transformed before analysis. 
-#' @param plot Logical value indicating whether or not citrus output plots should be created. Defaults to \code{TRUE}.
+#' @param plot Logical value indicating whether or not Citrus output plots should be created. Defaults to \code{TRUE}.
+#' @param returnResults Logical value indicating whether or not caluclated clusters and features should be returned. Defaults to FALSE.
 #' @param ... Further arguments to be passed to Citrus subcomponents. 
 #' @details Details about the cluster conditions matrix, fold features, etc.
 #' @author Robert Bruggner
