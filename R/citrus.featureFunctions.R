@@ -10,7 +10,9 @@ citrus.buildFoldFeatures = function(index,featureTypes=c("densities"),folds,citr
   } else {
     foldsFileIds=as.vector(citrus.dataArray$fileIds[-folds[[index]],conditions])
   }
+  
   return(citrus.buildFeatures(clusterAssignments=foldsClusterAssignments[[index]],featureTypes,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],largeEnoughClusters=foldLargeEnoughClusters[[index]],foldsFileIds=foldsFileIds,foldFileNames=citrus.dataArray$fileNames[foldsFileIds],...))
+  
 }
 
 citrus.buildFeatures = function(clusterAssignments,featureTypes,data,largeEnoughClusters,foldsFileIds,foldFileNames,...){
@@ -21,10 +23,10 @@ citrus.buildFeatures = function(clusterAssignments,featureTypes,data,largeEnough
     densityFeatures = t(sapply(foldsFileIds,citrus.calculateFileClusterDensities,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,fileIds=data[,"fileId"]))
     rownames(densityFeatures) = foldFileNames
     colnames(densityFeatures) = paste("cluster",largeEnoughClusters,"density")
-    singularClusterDensity = which(apply(densityFeatures==1,2,all))
-    if (length(singularClusterDensity)>0){
-      densityFeatures = densityFeatures[,-singularClusterDensity]
-    }
+    #singularClusterDensity = which(apply(densityFeatures==1,2,all))
+    #if (length(singularClusterDensity)>0){
+    #  densityFeatures = densityFeatures[,-singularClusterDensity]
+    #}
     features[["densityFeatures"]]=densityFeatures
   }
   if ("medians" %in% featureTypes){
@@ -33,6 +35,9 @@ citrus.buildFeatures = function(clusterAssignments,featureTypes,data,largeEnough
     }
     cat(paste("Calculating medians for files:",paste(foldsFileIds,collapse=", "),"\n"))
     medianFeatures = t(sapply(foldsFileIds,citrus.calculateFileClusterMedians,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=data,medianColumns=addtlArgs[["medianColumns"]]))
+    #foldsFileIds
+    #citrus.calculateFileClusterMedians(foldsFileIds[3],clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=data,medianColumns=medianColumns)
+    #medianFeatures = t(sapply(foldsFileIds,citrus.calculateFileClusterMedians,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=data,medianColumns=medianColumns))
     rownames(medianFeatures) = foldFileNames
     features[["medianFeatures"]]=medianFeatures
   }
@@ -48,31 +53,52 @@ citrus.calculateFileClusterDensity = function(clusterId,clusterAssignments,fileI
 }
 
 citrus.calculateFileClusterMedians = function(fileId,clusterIds,clusterAssignments,data,medianColumns){
+  #for (clusterid in clusterIds){
+  #  print(clusterid)
+  #  citrus.calculateFileClusterMedian(clusterid,clusterAssignments=clusterAssignments,fileId=fileId,data=data,medianColumns=medianColumns)
+  #}
+  #citrus.calculateFileClusterMedian(clusterIds[1],clusterAssignments=clusterAssignments,fileId=fileId,data=data,medianColumns=medianColumns)
   unlist(lapply(clusterIds,citrus.calculateFileClusterMedian,clusterAssignments=clusterAssignments,fileId=fileId,data=data,medianColumns=medianColumns))
 }
 
 citrus.calculateFileClusterMedian = function(clusterId,clusterAssignments,fileId,data,medianColumns){
   include = data[clusterAssignments[[clusterId]],]
-  include = include[include[,"fileId"]==fileId,medianColumns]
-  if (length(medianColumns)>1){
-    # do we have data?
-    if (length(include)>0){
-      if (is.null(nrow(include))){
-        medians = include  
-      } else {
-        medians = apply(include,2,median) 
-      }
+  
+  # Are there zero cells assigned to our cluster?
+  if (length(clusterAssignments[[clusterId]])==0){
+    medians = rep(0,length(medianColumns))
+  
+  } else if (length(clusterAssignments[[clusterId]])==1) {
+    # Are there 1 cells assigned to our cluster?
+    
+    if (fileId==include["fileId"]){
+      medians = rep(0,length(medianColumns))
     } else {
-      medians = (rep(0,length(medianColumns)))
+      medians = include[medianColumns]
     }
-  } else if (length(medianColumns)==1){
-    if (length(include)>0){
-      medians = median(include)
-    } else {
-      medians=0
-    }
+    
   } else {
-     
+    # Are there more than 1 cells assigned to our cluster?
+    
+    include = include[include[,"fileId"]==fileId,medianColumns]
+    if (length(medianColumns)>1){
+      # do we have data?
+      if (length(include)>0){
+        if (is.null(nrow(include))){
+          medians = include  
+        } else {
+          medians = apply(include,2,median) 
+        }
+      } else {
+        medians = (rep(0,length(medianColumns)))
+      }
+    } else if (length(medianColumns)==1){
+      if (length(include)>0){
+        medians = median(include)
+      } else {
+        medians=0
+      }
+    }
   }
   
   names(medians) = paste(paste(paste("cluster",clusterId),medianColumns),"median")
