@@ -10,6 +10,7 @@ citrus.foldCluster = function(foldMembership,citrus.dataArray,clusterCols,condit
 }
 
 citrus.cluster = function(data){
+  cat(paste("Clustering",nrow(data),"events\n"));
   return(Rclusterpp.hclust(data))
 }
 

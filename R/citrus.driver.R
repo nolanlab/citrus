@@ -63,8 +63,6 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     folds = pamr:::balanced.folds(y=fileList[,labelCol],nfolds=nAllFolds)
     folds[[nAllFolds]]="all"
       
-    
-    cat("Clustering\n")
     foldsCluster = lapply(folds,citrus.foldCluster,citrus.dataArray=citrus.dataArray,clusterCols=clusterCols,conditions=conditions)
     cat("Assigning Events to Clusters\n")
     foldsClusterAssignments = lapply(foldsCluster,citrus.calculateCompleteHierarchicalMembership)
@@ -199,12 +197,8 @@ citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nF
   for (conditions in allConditions){
     cat(paste("Analyzing Condition",paste(conditions,collapse=" vs "),"\n"))
     
-    
-    
     citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize)
-    
     conditionData = citrus.dataArray$data[citrus.dataArray$data[,"fileId"]%in%citrus.dataArray$fileIds[,conditions],]
-    cat("Clustering\n")
     cluster = citrus.cluster(data=conditionData[,clusterCols])
     cat("Assigning Events to Clusters\n")
     clusterAssignments = citrus.calculateCompleteHierarchicalMembership(cluster)
