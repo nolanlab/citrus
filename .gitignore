@@ -6,3 +6,6 @@ src/*.so
 src-*
 ..Rcheck
 .Rbuildignore
+.DS_Store
+.DS_Store?
+citrusOutput
