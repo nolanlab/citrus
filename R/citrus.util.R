@@ -1,5 +1,5 @@
 # FILE SAMPLE SIZE SHOULD BE A NAMED VECTOR OR LIST OR SOMETHING THAT'S EASY TO EXTRACT BY NAME
-citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,transformCols=NULL,transformFactor=5){
+citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,transformCols=NULL,transformFactor=5,emptyValue=T){
   data = list();
   fileCounter = 1;
   fileNames = c();  
@@ -13,7 +13,7 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
         stop(paste("File",filePath,"not found."));
       }
       cat(paste("\tReading file ",fileName,"\n"));
-      suppressWarnings((fcsData =exprs(read.FCS(filePath,emptyValue=T))));
+      suppressWarnings((fcsData =exprs(read.FCS(filePath,emptyValue=emptyValue))));
       fcsData = cbind(fcsData,fileEventNumber=1:nrow(fcsData),fileId=fileCounter);
       fileCounter=fileCounter+1;
       if (!is.null(transformCols)){
@@ -69,11 +69,11 @@ citrus.version = function(){
   return("0.04")
 }
 
-citrus.fileEventCount = function(dataDir){
+citrus.fileEventCount = function(dataDir,emptyValue=T){
   lengths = list();
   for (fcsFile in list.files(dataDir,pattern=".fcs",ignore.case=T)){
     print(paste("Reading",fcsFile))
-    lengths[[fcsFile]] = suppressWarnings(dim(read.FCS(file.path(dataDir,fcsFile),emptyValue=T)))
+    lengths[[fcsFile]] = suppressWarnings(dim(read.FCS(file.path(dataDir,fcsFile),emptyValue=emptyValue)))
   }
   return(do.call("rbind",lengths))
 }
