@@ -17,7 +17,7 @@
 #' @details Details about the cluster conditions matrix, fold features, etc.
 #' @author Robert Bruggner
 #' @references http://github.com/nolanlab/citrus/
-citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,plot=T,returnResults=F,...){
+citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,family,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,plot=T,returnResults=F,...){
 
   addtlArgs = list(...)
 
@@ -25,6 +25,10 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
   # Error check before we actually start the work.
   if ((!all(featureTypes %in% citrus.getFeatureTypes()))||(length(featureTypes)<1)){
     stop(paste("featureTypes must be 1 or more of the following:",paste(citrus.getFeatureTypes(),collapse=", "),"\n"))
+  }
+
+  if (!(family %in% citrus.familyList())){
+    stop("'family' argument must specified and one of the following: ",paste(citrus.familyList(),collapse=", "))
   }
   
   if (("medians" %in% featureTypes)&&(!("medianColumns" %in% names(list(...))))){
