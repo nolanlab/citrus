@@ -35,6 +35,7 @@ citrus.buildFeatures = function(clusterAssignments,featureTypes,data,largeEnough
   return(do.call("cbind",features))
 }
 
+
 citrus.calculateFileClusterDensities = function(fileId,clusterIds,clusterAssignments,fileIds){
   sapply(clusterIds,citrus.calculateFileClusterDensity,clusterAssignments=clusterAssignments,fileId=fileId,fileIds=fileIds)
 }
