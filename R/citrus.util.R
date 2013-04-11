@@ -77,3 +77,7 @@ citrus.fileEventCount = function(dataDir,emptyValue=T){
   }
   return(do.call("rbind",lengths))
 }
+
+citrus.familyList = function(){
+  return(c("classification","survival"))
+}

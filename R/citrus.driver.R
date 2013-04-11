@@ -31,6 +31,15 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     stop("'family' argument must specified and one of the following: ",paste(citrus.familyList(),collapse=", "))
   }
   
+  if (family=="survival" && ("pamr" %in% modelTypes)){
+    warn("'pamr' model not implemented for 'survival' analysis. Removing.");
+    modelTypes=modelTypes[-which(modelTypes=="pamr")]
+  }
+  
+  if (length(modelTypes)==0){
+    stop("No model types specified.")
+  }
+  
   if (("medians" %in% featureTypes)&&(!("medianColumns" %in% names(list(...))))){
     stop("medianColumns argument must be specified to calculate cluster medians.")
   }
@@ -39,17 +48,26 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     stop(paste("Output directory",outputDir,"not found."))
   }
   
-  
-  labelCol = which(colnames(fileList)=="labels")
-  if (length(labelCol)==0){
-    stop("'labels' column not found in file list.")
+  if (family=="classification"){
+    labelCols = which(colnames(fileList)=="class")
+    balanceCol = labelCols
+    if (length(labelCols)!=1){
+      stop("Incorrect labeling for files. Expecting 'class' label column.")
+    }
+  } else if (family=="survival"){
+    labelCols = c(which(colnames(fileList)=="time"),which(colnames(fileList)=="event"))
+    balanceCol = which(colnames(fileList)=="event")
+    if (length(labelCols)!=2){
+      stop("Incorrect labeling for files. Expecting 'time' and 'event' label columns.")
+    }
   }
+  
   
   if ("conditionComparaMatrix" %in% names(addtlArgs)){
     #allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 
     allConditions = citrus.convertConditionMatrix(addtlArgs[["conditionComparaMatrix"]]) 
   } else {
-    allConditions = as.list(colnames(fileList)[-labelCol])
+    allConditions = as.list(colnames(fileList)[-labelCols])
   }
 
   for (conditions in allConditions){
@@ -62,9 +80,8 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     }
     citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize,transformFactor=transformFactor)
     
-    
     nAllFolds = nFolds+1
-    folds = pamr:::balanced.folds(y=fileList[,labelCol],nfolds=nAllFolds)
+    folds = pamr:::balanced.folds(y=fileList[,balanceCol],nfolds=nAllFolds)
     folds[[nAllFolds]]="all"
       
     foldsCluster = lapply(folds,citrus.foldCluster,citrus.dataArray=citrus.dataArray,clusterCols=clusterCols,conditions=conditions)
@@ -80,21 +97,21 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,...)
     #leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,medianColumns=medianColumns)
     
-    
     if (length(conditions)==2){
       foldFeatures = lapply(1:length(folds),citrus.buildFoldFeatureDifferences,features=foldFeatures,conditions=conditions,citrus.dataArray=citrus.dataArray,folds=folds)
       leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatureDifferences,features=leftoutFeatures,conditions=conditions,citrus.dataArray=citrus.dataArray,folds=folds,calculateLeaveoutData=T)
     }
     
-    regularizationThresholds = citrus.generateRgularizationThresholds(foldFeatures[[nAllFolds]],labels=fileList[,labelCol],modelTypes=modelTypes)
-    
-    foldModels = lapply(modelTypes,citrus.buildTypeModels,folds=folds,foldFeatures=foldFeatures,labels=fileList[,labelCol],regularizationThresholds=regularizationThresholds)
+    regularizationThresholds = do.call(paste("citrus.generateRegularizationThresholds",family,sep="."),args=list(features=foldFeatures[[nAllFolds]],labels=fileList[,labelCols],modelTypes=modelTypes))
+        
+    foldModels = citrus.buildModels(folds=folds,foldFeatures=foldFeatures,labels=fileList[,labelCols],regularizationThresholds=regularizationThresholds,modelTypes=modelTypes,family=family)
     names(foldModels)=modelTypes
 
+    # CONTINUE WORK HERE
     leftoutPredictions = lapply(modelTypes,citrus.foldTypePredict,foldModels=foldModels,leftoutFeatures=leftoutFeatures)
     names(leftoutPredictions)=modelTypes
     
-    predictionSuccess = lapply(as.list(modelTypes),citrus.foldTypeScore,folds=folds,leftoutPredictions=leftoutPredictions,labels=fileList[,labelCol])
+    predictionSuccess = lapply(as.list(modelTypes),citrus.foldTypeScore,folds=folds,leftoutPredictions=leftoutPredictions,labels=fileList[,labelCols])
     names(predictionSuccess)=modelTypes
     
     thresholdSEMs = lapply(modelTypes,citrus.modelTypeSEM,predictionSuccess=predictionSuccess)
@@ -103,7 +120,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     thresholdErrorRates = lapply(modelTypes,citrus.calcualteTypeErroRate,predictionSuccess=predictionSuccess)
     names(thresholdErrorRates)=modelTypes
     
-    thresholdFDRRates = lapply(modelTypes,citrus.calculateTypeFDRRate,foldModels=foldModels,foldFeatures=foldFeatures,labels=fileList[,labelCol])
+    thresholdFDRRates = lapply(modelTypes,citrus.calculateTypeFDRRate,foldModels=foldModels,foldFeatures=foldFeatures,labels=fileList[,labelCols])
     names(thresholdFDRRates)=modelTypes
     
     cvMinima = lapply(modelTypes,citrus.getCVMinima,thresholdErrorRates=thresholdErrorRates,thresholdSEMs=thresholdSEMs,thresholdFDRRates=thresholdFDRRates)
@@ -127,7 +144,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
       sapply(modelTypes,citrus.plotTypeErrorRate,outputDir=conditionOutputDir,regularizationThresholds=regularizationThresholds,thresholdErrorRates=thresholdErrorRates,thresholdFDRRates=thresholdFDRRates,cvMinima=cvMinima,thresholdSEMs=thresholdSEMs,foldModels=foldModels)
       
       # Plot Features
-      lapply(modelTypes,citrus.plotDifferentialFeatures,differentialFeatures=differentialFeatures,foldFeatures=foldFeatures,outputDir=conditionOutputDir,labels=fileList[,labelCol])
+      lapply(modelTypes,citrus.plotDifferentialFeatures,differentialFeatures=differentialFeatures,foldFeatures=foldFeatures,outputDir=conditionOutputDir,labels=fileList[,labelCols])
       
       # Plot Clusters
       lapply(modelTypes,citrus.plotClusters,differentialFeatures=differentialFeatures,outputDir=conditionOutputDir,clusterChildren=foldsClusterAssignments,citrus.dataArray=citrus.dataArray,conditions=conditions,clusterCols=clusterCols)
@@ -186,8 +203,8 @@ citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nF
     stop(paste("Output directory",outputDir,"not found."))
   }
   
-  labelCol = which(colnames(fileList)=="labels")
-  if (length(labelCol)==0){
+  labelCols = which(colnames(fileList)=="labels")
+  if (length(labelCols)==0){
     stop("'labels' column not found in file list.")
   }
   
@@ -195,7 +212,7 @@ citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nF
     #allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 
     allConditions = citrus.convertConditionMatrix(list(...)[["conditionComparaMatrix"]]) 
   } else {
-    allConditions = as.list(colnames(fileList)[-labelCol])
+    allConditions = as.list(colnames(fileList)[-labelCols])
   }
   
   for (conditions in allConditions){
@@ -218,14 +235,14 @@ citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nF
       colnames(features) = paste(colnames(features),"difference")
     }
     
-    regularizationThresholds = citrus.generateRgularizationThresholds(features,labels=fileList[,labelCol],modelTypes=modelTypes)
+    regularizationThresholds = citrus.generateRgularizationThresholds(features,labels=fileList[,labelCols],modelTypes=modelTypes)
     
     models = list();
     thresholdErrorRates = list();
     thresholdSEMs = list();
     cvMinima = list();
     for (modelType in modelTypes){
-      typeModel = citrus.buildModel(features=features,labels=fileList[,labelCol],type=modelType,regularizationThresholds=regularizationThresholds[[modelType]],cv=T,nFolds=nFolds)
+      typeModel = citrus.buildModel(features=features,labels=fileList[,labelCols],type=modelType,regularizationThresholds=regularizationThresholds[[modelType]],cv=T,nFolds=nFolds)
       models[[modelType]] = list(typeModel$model)
       thresholdErrorRates[[modelType]]=typeModel$errorRates
       thresholdSEMs[[modelType]]= typeModel$se
@@ -252,7 +269,7 @@ citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nF
       sapply(modelTypes,citrus.plotTypeErrorRate,outputDir=conditionOutputDir,regularizationThresholds=regularizationThresholds,thresholdErrorRates=thresholdErrorRates,thresholdFDRRates=NULL,cvMinima=cvMinima,thresholdSEMs=thresholdSEMs,foldModels=models)
       
       # Plot Features
-      lapply(modelTypes,citrus.plotDifferentialFeatures,differentialFeatures=differentialFeatures,foldFeatures=list(features),outputDir=conditionOutputDir,labels=fileList[,labelCol])
+      lapply(modelTypes,citrus.plotDifferentialFeatures,differentialFeatures=differentialFeatures,foldFeatures=list(features),outputDir=conditionOutputDir,labels=fileList[,labelCols])
       
       # Plot Clusters
       lapply(modelTypes,citrus.plotClusters,differentialFeatures=differentialFeatures,outputDir=conditionOutputDir,clusterChildren=list(clusterAssignments),citrus.dataArray=citrus.dataArray,conditions=conditions,clusterCols=clusterCols)
