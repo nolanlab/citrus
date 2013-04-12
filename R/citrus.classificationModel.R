@@ -58,7 +58,7 @@ citrus.buildFoldModels = function(index,folds,foldFeatures,labels,type,regulariz
   do.call(paste("citrus.buildModel",family,sep="."),args=list(features=foldFeatures[[index]],labels=labels,type=type,regularizationThresholds=regularizationThresholds))
 }
 
-citrus.thresholdCVs.classification = function(foldModels,leftoutFeatures,foldFeatures,modelTypes,regularizationThresholds,labels,...){
+citrus.thresholdCVs.classification = function(foldModels,leftoutFeatures,foldFeatures,modelTypes,regularizationThresholds,labels,folds,...){
   leftoutPredictions = lapply(modelTypes,citrus.foldTypePredict,foldModels=foldModels,leftoutFeatures=leftoutFeatures)
   names(leftoutPredictions)=modelTypes
   
@@ -71,7 +71,7 @@ citrus.thresholdCVs.classification = function(foldModels,leftoutFeatures,foldFea
   thresholdErrorRates = lapply(modelTypes,citrus.calcualteTypeErroRate,predictionSuccess=predictionSuccess)
   names(thresholdErrorRates)=modelTypes
   
-  thresholdFDRRates = lapply(modelTypes,citrus.calculateTypeFDRRate,foldModels=foldModels,foldFeatures=foldFeatures,labels=fileList[,labelCols])
+  thresholdFDRRates = lapply(modelTypes,citrus.calculateTypeFDRRate,foldModels=foldModels,foldFeatures=foldFeatures,labels=labels)
   names(thresholdFDRRates)=modelTypes
   
   res=list()

@@ -5,9 +5,10 @@
 #' @param outputDir Path to a directory where the citrus output will be placed.
 #' @param clusterCols A vector of integers or parameter names that should be used for clustering of the data
 #' @param fileSampleSize Number of events to be sampled from each analyzed file. Files with fewer events contribute all of their events. 
-#' @param fileList A matrix containing file names, conditions, and group assignments. See details. 
+#' @param fileList A matrix containing file names, conditions, and response variables. See details
 #' @param nFolds Number of cross validation folds used to assess model accuracy
-#' @param modelTypes A vector of classification models to construct. Valid arguments are \code{pamr} and \code{glmnet}.
+#' @param family Specifies the type of response variable is being regressed. Valid options are \code{classification} or \code{survival}. See details for required parameters in file list.
+#' @param modelTypes A vector of classification models to construct. Valid options are \code{pamr} and \code{glmnet}.
 #' @param featureTypes A vector of descriptive feature types to be calculated for each cluster. Valid arguments are \code{densities} and \code{medians}. See details.
 #' @param minimumClusterSizePercent Specifies the minimum cluster size to be analyzed as a percentage of the total aggregate datasize. A value etween \code{0} and \code{1}.
 #' @param transformCols A vector of integer or parameter names to be transformed before analysis. 
@@ -32,7 +33,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
   }
   
   if (family=="survival" && ("pamr" %in% modelTypes)){
-    warn("'pamr' model not implemented for 'survival' analysis. Removing.");
+    warning("'pamr' model not implemented for 'survival' analysis. Removing.");
     modelTypes=modelTypes[-which(modelTypes=="pamr")]
   }
   
@@ -92,7 +93,8 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     leftoutClusterAssignments = lapply(1:nFolds,citrus.mapFoldDataToClusterSpace,citrus.dataArray=citrus.dataArray,foldClusterAssignments=foldsClusterAssignments,folds=folds,conditions=conditions,clusterCols=clusterCols)
     cat("Calculating Fold Large Enough Clusters\n")
     foldLargeEnoughClusters = lapply(1:nAllFolds,citrus.calculateFoldLargeEnoughClusters,foldsClusterAssignments=foldsClusterAssignments,folds=folds,citrus.dataArray=citrus.dataArray,minimumClusterSizePercent=minimumClusterSizePercent)
-      
+    
+    cat("Calculating Features\n")
     foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,...)
     #foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,medianColumns=medianColumns)
     leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,...)
@@ -103,24 +105,26 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
       leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatureDifferences,features=leftoutFeatures,conditions=conditions,citrus.dataArray=citrus.dataArray,folds=folds,calculateLeaveoutData=T)
     }
     
+    # Calculate Regularization Thresholds
+    cat("Calculating Regularization Thresholds\n")
     regularizationThresholds = do.call(paste("citrus.generateRegularizationThresholds",family,sep="."),args=list(features=foldFeatures[[nAllFolds]],labels=fileList[,labelCols],modelTypes=modelTypes))
-    #glmnet(x=foldFeatures[[nAllFolds]],y=s,family="cox",alpha=1,nlambda=100)$lambda
     
+    # Build Fold Models
+    cat("\nBuilding folds models\n")
     foldModels = citrus.buildModels(folds=folds,foldFeatures=foldFeatures,labels=fileList[,labelCols],regularizationThresholds=regularizationThresholds,modelTypes=modelTypes,family=family)
     names(foldModels)=modelTypes
-        
-    # CONTINUE WORK HERE
-      
+             
+    # Calculate fold deviances
+    cat("\nCalculating threshold deviance rates\n")
     thresholdCVRates = do.call(paste("citrus.thresholdCVs",family,sep="."),args=list(foldModels=foldModels,leftoutFeatures=leftoutFeatures,foldFeatures=foldFeatures,modelTypes=modelTypes,regularizationThresholds=regularizationThresholds,labels=fileList[,labelCols],folds=folds))
-    #c = cv.glmnet(x=foldFeatures[[6]],y=s,family="cox",lambda=regularizationThresholds[[1]],foldid=foldid)
-    #cbind(thresholdCVRates[[1]],ncvm=c$cvm,ncvsd=c$cvsd)
-    #plot(c)
-    #plot(y=thresholdCVRates[["glmnet"]][,"cvm"],x=log(regularizationThresholds[[1]]),type='l')
     
+    # Find cv minima
+    cat("Calculating CV minima\n")
     cvMinima = lapply(modelTypes,citrus.getCVMinima,thresholdCVRates=thresholdCVRates)
     names(cvMinima)=modelTypes
     
     # Extract Features
+    cat("Extracting differential features\n")
     differentialFeatures = lapply(modelTypes,citrus.extractModelFeatures,cvMinima=cvMinima,foldModels=foldModels,foldFeatures=foldFeatures,regularizationThresholds=regularizationThresholds,family=family)
     names(differentialFeatures) = modelTypes
     differentialFeatures
@@ -129,6 +133,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
       res[[paste(conditions,collapse=" vs ")]] = list(citrus.dataArray=citrus.dataArray,foldsCluster=foldsCluster,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,differentialFeatures=differentialFeatures)  
     }
     
+    # Plot
     if (plot){
       # Make condition output directoy
       conditionOutputDir = file.path(outputDir,paste(conditions,collapse="_vs_"))

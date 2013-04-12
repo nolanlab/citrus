@@ -48,11 +48,11 @@ citrus.cvIteration.survival = function(i,modelType,features,labels,regularizatio
   }
 }
 
-citrus.thresholdCVs.survival = function(foldModels,foldFeatures,modelTypes,regularizationThresholds,labels,folds,...){
+citrus.thresholdCVs.survival = function(foldModels,foldFeatures,leftoutFeatures,modelTypes,regularizationThresholds,labels,folds,...){
   
   s = Surv(time=labels[,"time"],event=labels[,"event"])
   
-  thresholdPartialLikelihoods = lapply(modelTypes,calculateModelPartialLikelihood,leftoufFeatures=leftoutFeatures,foldFeatures=foldFeatures,foldModels=foldModels,labels=s,folds=folds)
+  thresholdPartialLikelihoods = lapply(modelTypes,calculateModelPartialLikelihood,leftoutFeatures=leftoutFeatures,foldFeatures=foldFeatures,foldModels=foldModels,labels=s,folds=folds)
   names(thresholdPartialLikelihoods)=modelTypes
   
   res=list()
@@ -64,7 +64,7 @@ citrus.thresholdCVs.survival = function(foldModels,foldFeatures,modelTypes,regul
 }
 
 
-calculateModelPartialLikelihood=function(modelType,leftoufFeatures,foldFeatures,foldModels,labels,folds){
+calculateModelPartialLikelihood=function(modelType,leftoutFeatures,foldFeatures,foldModels,labels,folds){
   nFolds=length(leftoutFeatures)
   nAllFolds = nFolds+1
   
@@ -72,8 +72,8 @@ calculateModelPartialLikelihood=function(modelType,leftoufFeatures,foldFeatures,
     cvRaw=matrix(NA,ncol=length(foldModels[[modelType]][[1]]$lambda),nrow=nFolds)
     for (foldId in 1:nFolds){
       coefmat = predict(foldModels[[modelType]][[foldId]], type = "coeff")
-      plFull = coxnet.deviance(x=rbind(foldFeatures[[foldId]],leftoutFeatures[[foldId]]),y=rbind(s[-folds[[foldId]],],s[folds[[foldId]],]),offset=NULL,weights=rep(1,nrow(foldFeatures[[nAllFolds]])),beta=coefmat)
-      plLeaveIn = coxnet.deviance(x=foldFeatures[[foldId]],y=s[-folds[[foldId]],],offset=NULL,weights=rep(1,nrow(foldFeatures[[foldId]])),beta=coefmat)
+      plFull = coxnet.deviance(x=rbind(foldFeatures[[foldId]],leftoutFeatures[[foldId]]),y=rbind(labels[-folds[[foldId]],],labels[folds[[foldId]],]),offset=NULL,weights=rep(1,nrow(foldFeatures[[nAllFolds]])),beta=coefmat)
+      plLeaveIn = coxnet.deviance(x=foldFeatures[[foldId]],y=labels[-folds[[foldId]],],offset=NULL,weights=rep(1,nrow(foldFeatures[[foldId]])),beta=coefmat)
       cvRaw[foldId,seq(along = plFull)]=plFull-plLeaveIn
     }
     
@@ -83,7 +83,7 @@ calculateModelPartialLikelihood=function(modelType,leftoufFeatures,foldFeatures,
     }
     
     N = nFolds - apply(is.na(cvRaw), 2, sum)
-    weights = as.vector(tapply(rep(1,nrow(foldFeatures[[nAllFolds]])) * s[,"status"], foldid, sum))
+    weights = as.vector(tapply(rep(1,nrow(foldFeatures[[nAllFolds]])) * labels[,"status"], foldid, sum))
     cvRaw = cvRaw/weights
     cvm=apply(cvRaw, 2, weighted.mean, w = weights, na.rm = TRUE)
     cvsd = sqrt(apply(scale(cvRaw, cvm, FALSE)^2, 2, weighted.mean, w = weights, na.rm = TRUE)/(N - 1))
