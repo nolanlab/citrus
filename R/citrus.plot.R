@@ -1,36 +1,47 @@
-citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds,thresholdErrorRates,foldModels,cvMinima,thresholdSEMs,thresholdFDRRates=NULL){  
+citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds,thresholdCVRates,foldModels,cvMinima,family){  
     nAllFolds = length(foldModels[[modelType]])
     print(paste("Plotting results for model type",modelType))
     modelOutputDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
     dir.create(modelOutputDir)
     pdf(file.path(modelOutputDir,"ModelErrorRate.pdf"),width=6,height=6)
     thresholds=regularizationThresholds[[modelType]]
-    errorRates=thresholdErrorRates[[modelType]]
+    errorRates=thresholdCVRates[[modelType]][,"cvm"]
+    ylim=c(0,1)
+    ylab="Model Cross Validation Error Rate"
     if (modelType=="glmnet"){
       thresholds = log(thresholds)
       xlab="log(Regularization Threshold)"
       nonzeroCounts = foldModels[[modelType]][[nAllFolds]]$df
+      if (family=="survival"){
+        ylim=range(errorRates)
+        ylab="Model Cross Validation Partial Likelihood"
+      }
     } 
     if (modelType=="pamr"){
       xlab="Regularization Threshold"
       nonzeroCounts = foldModels[[modelType]][[nAllFolds]]$nonzero
     }
-    plot(errorRates,type='o',pch=20,col="red",main="Number of model features\n",axes=F,xlab=xlab,ylim=c(0,1),ylab="Model Cross Validation Error Rate")
+    plot(errorRates,type='o',pch=20,col="red",main="Number of model features\n",axes=F,xlab=xlab,ylim=ylim,ylab=ylab)
     #Plot SEM
     for (i in 1:length(thresholds)){
-      lines(c(i,i),c(errorRates[i]+thresholdSEMs[[modelType]][i],errorRates[i]-thresholdSEMs[[modelType]][i]),col="red",lty=3)
+      lines(c(i,i),c(errorRates[i]+thresholdCVRates[[modelType]][,"cvsd"][i],errorRates[i]-thresholdCVRates[[modelType]][,"cvsd"][i]),col="red",lty=3)
     }
     grid()
     axis(1,at=1:length(errorRates),labels=sapply(thresholds,citrus.formatDecimal))
-    axis(2,at=c(0,.25,.5,.75,1),labels=c(0,25,50,75,100))
+    if (family=="survival"){
+      axis(2)
+    } else {
+      axis(2,at=c(0,.25,.5,.75,1),labels=c(0,25,50,75,100))  
+    }
+    
     axis(3,labels=nonzeroCounts,at=1:length(errorRates))
     legendLabels = c("Cross Validation Error Rate")
     legendColors = c("red")
     legendPchs = c(20)
     legendLty = c(1)
     legendPtCex=c(1)
-    if (!is.null(thresholdFDRRates)&&(modelType %in% names(thresholdFDRRates))){
-      lines(thresholdFDRRates[[modelType]],type='o',pch=1,cex=1.5,col="blue")
+    if (!is.null(thresholdCVRates[[modelType]]$fdr)){
+      lines(thresholdCVRates[[modelType]]$fdr,type='o',pch=1,cex=1.5,col="blue")
       legendLabels = c(legendLabels,"Feature False Discovery Rate")
       legendColors = c(legendColors,"blue")
       legendPchs = c(legendPchs,1)
@@ -73,8 +84,49 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
     dev.off()   
 }
 
-citrus.plotDifferentialFeatures = function(modelType,differentialFeatures,foldFeatures,outputDir,labels){
-  features = foldFeatures[[length(foldFeatures)]]
+citrus.plotDifferentialFeatures = function(modelType,differentialFeatures,features,outputDir,labels,family,foldModels,cvMinima,regularizationThresholds){
+  do.call(paste("citrus.plotModelDifferentialFeatures",family,sep="."),args=list(modelType=modelType,differentialFeatures=differentialFeatures,features=features,outputDir=outputDir,labels=labels,foldModels=foldModels,cvMinima=cvMinima,regularizationThresholds=regularizationThresholds))
+}
+
+citrus.plotModelDifferentialFeatures.survival = function(modelType,differentialFeatures,features,outputDir,labels,foldModels,cvMinima,regularizationThresholds,...){
+  s = Surv(time=labels[,"time"],event=labels[,"event"])
+  for (cvPoint in names(differentialFeatures[[modelType]])){
+    modelTypeDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
+    nonzeroFeatureNames = differentialFeatures[[modelType]][[cvPoint]][["features"]]
+    pchs = rep(13,nrow(s))
+    pchs[as.logical(s[,2])]=20
+    pdf(file.path(modelTypeDir,paste("features_",cvPoint,".pdf",sep="")))
+    for (nonzeroFeatureName in nonzeroFeatureNames){
+      f = features[,nonzeroFeatureName]
+      cutoff = median(f)
+      plot(x=f,y=s[,1],xlab=nonzeroFeatureName,ylab="time",pch=pchs,col="red",cex=2,main="Time vs Feature")   
+      lines(c(cutoff,cutoff),c(min(s[,1]-10),max(s[,1]+10)),col="blue",lty=3)
+      legend("topright",legend=c("censored","uncensored","median"),pch=c(13,20,45),col=c("red","red","blue"))
+    }
+    dev.off();
+    pdf(file.path(modelTypeDir,paste("survivalCurves_singleFeatures_",cvPoint,".pdf",sep="")))
+    for (nonzeroFeatureName in nonzeroFeatureNames){
+      f = features[,nonzeroFeatureName]
+      cutoff = median(f)
+      sf=survfit(s~group,data=data.frame(f,group=as.numeric(f<cutoff)))
+      plot(sf,xlab="Time",ylab="Percent Survival",main=paste("Survival stratified on",nonzeroFeatureName))
+      sdf = survdiff(s~group,data=data.frame(f,group=as.numeric(f<cutoff)))
+      legend("topright",legend=c(1 - pchisq(sdf$chisq, length(sdf$n) - 1)),cex=.7)
+    }
+    dev.off()
+    finalModel=foldModels[[modelType]][[length(foldModels[[modelType]])]]
+    pdf(file.path(modelTypeDir,paste("survivalCurves_allFeatures_",cvPoint,".pdf",sep="")))
+    f=citrus.predict.survival(finalModel,features)[,cvMinima[[modelType]][[cvPoint]]]
+    cutoff = median(f)
+    sf=survfit(s~group,data=data.frame(f,group=as.numeric(f<cutoff)))
+    plot(sf,xlab="Time",ylab="Percent Survival",main=paste("Survival stratified on",nonzeroFeatureName))
+    sdf = survdiff(s~group,data=data.frame(f,group=as.numeric(f<cutoff)))
+    legend("topright",legend=c(1 - pchisq(sdf$chisq, length(sdf$n) - 1)),cex=.7)
+    dev.off()
+  }
+}
+
+citrus.plotModelDifferentialFeatures.classification = function(modelType,differentialFeatures,features,outputDir,labels,...){
   for (cvPoint in names(differentialFeatures[[modelType]])){
     modelTypeDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
     nonzeroFeatureNames = differentialFeatures[[modelType]][[cvPoint]][["features"]]

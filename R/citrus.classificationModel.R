@@ -58,15 +58,42 @@ citrus.buildFoldModels = function(index,folds,foldFeatures,labels,type,regulariz
   do.call(paste("citrus.buildModel",family,sep="."),args=list(features=foldFeatures[[index]],labels=labels,type=type,regularizationThresholds=regularizationThresholds))
 }
 
+citrus.thresholdCVs.classification = function(foldModels,leftoutFeatures,foldFeatures,modelTypes,regularizationThresholds,labels,...){
+  leftoutPredictions = lapply(modelTypes,citrus.foldTypePredict,foldModels=foldModels,leftoutFeatures=leftoutFeatures)
+  names(leftoutPredictions)=modelTypes
+  
+  predictionSuccess = lapply(as.list(modelTypes),citrus.foldTypeScore,folds=folds,leftoutPredictions=leftoutPredictions,labels=labels)
+  names(predictionSuccess)=modelTypes
+  
+  thresholdSEMs = lapply(modelTypes,citrus.modelTypeSEM,predictionSuccess=predictionSuccess)
+  names(thresholdSEMs)=modelTypes
+  
+  thresholdErrorRates = lapply(modelTypes,citrus.calcualteTypeErroRate,predictionSuccess=predictionSuccess)
+  names(thresholdErrorRates)=modelTypes
+  
+  thresholdFDRRates = lapply(modelTypes,citrus.calculateTypeFDRRate,foldModels=foldModels,foldFeatures=foldFeatures,labels=fileList[,labelCols])
+  names(thresholdFDRRates)=modelTypes
+  
+  res=list()
+  for (modelType in modelTypes){
+    df = data.frame(threshold=regularizationThresholds[[modelType]],cvm=thresholdErrorRates[[modelType]],cvsd=thresholdSEMs[[modelType]]);
+    if (!is.null(thresholdFDRRates[[modelType]])){
+      df = cbind(df,fdr=thresholdFDRRates[[modelType]]);  
+    }
+    res[[modelType]]=df
+  }
+  return(res)
+}
+
 citrus.foldPredict = function(index,models,features){
-  citrus.predict(models[[index]],features[[index]])
+  citrus.predict.classification(models[[index]],features[[index]])
 }
 
 citrus.foldScore = function(index,folds,predictions,labels){
   return(predictions[[index]]==labels[folds[[index]]])
 }
 
-citrus.predict = function(model,features){
+citrus.predict.classification = function(model,features){
   if ("glmnet" %in% class(model)){
     predictions = predict(model,newx=features,type="class")
   } else if (class(model)=="pamrtrained"){
@@ -139,15 +166,15 @@ citrus.calculateTypeFDRRate = function(modelType,foldModels,foldFeatures,labels)
   }  
 }
 
-citrus.getCVMinima = function(modelType,thresholdErrorRates,thresholdSEMs,thresholdFDRRates){
-  errorRates = thresholdErrorRates[[modelType]]
-  SEMs = thresholdSEMs[[modelType]]
-  FDRRates = thresholdFDRRates[[modelType]]
+citrus.getCVMinima = function(modelType,thresholdCVRates,fdrRate=0.01){
+  errorRates = thresholdCVRates[[modelType]]$cvm
+  SEMs = thresholdCVRates[[modelType]]$cvsd
+  FDRRates = thresholdCVRates[[modelType]]$fdr
   cvPoints=list();
   cvPoints[["cv.min"]] = min(which(errorRates==min(errorRates)))
   cvPoints[["cv.1se"]] = min(which(errorRates<=(errorRates[cvPoints[["cv.min"]]]+SEMs[cvPoints[["cv.min"]]])))
   if (!is.null(FDRRates)) {
-    if (any(FDRRates<0.01)){
+    if (any(FDRRates<fdrRate)){
       if (length(intersect(which(FDRRates<0.01),which(errorRates==min(errorRates))))>0){
         cvPoints[["cv.fdr.constrained"]] = max(intersect(which(FDRRates<0.01),which(errorRates==min(errorRates))))    
       }
@@ -157,7 +184,7 @@ citrus.getCVMinima = function(modelType,thresholdErrorRates,thresholdSEMs,thresh
   return(cvPoints)
 }
 
-citrus.extractModelFeatures = function(modelType,cvMinima,foldModels,foldFeatures,regularizationThresholds){
+citrus.extractModelFeatures = function(modelType,cvMinima,foldModels,foldFeatures,regularizationThresholds,family){
   res = list();
   nAllFolds = length(foldModels[[modelType]])
   finalModel = foldModels[[modelType]][[nAllFolds]]
@@ -177,7 +204,10 @@ citrus.extractModelFeatures = function(modelType,cvMinima,foldModels,foldFeature
     } else if (modelType=="glmnet"){
       threshold = rev(regularizationThresholds[[modelType]])[ cvMinima[[modelType]][[cvPoint]] ]
       f = as.matrix(predict(finalModel,newx=foldFeatures[[nAllFolds]],type="coefficient",s=threshold))
-      f = rownames(f)[f!=0][-1]
+      f = rownames(f)[f!=0]
+      if (family=="classification"){
+        f = f[-1]
+      }
       if (length(f)>0){
         res[[cvPoint]][["features"]] = f
         res[[cvPoint]][["clusters"]] = sort(unique(as.numeric(do.call("rbind",strsplit(f,split=" "))[,2])))  

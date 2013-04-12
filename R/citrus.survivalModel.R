@@ -7,8 +7,9 @@ citrus.generateRegularizationThresholds.survival = function(features,labels,mode
     stop("pamr model not implemented for survival data.");
   }
   if ("glmnet" %in% modelTypes){
-    s = Surv(time=labels[,1],event=labels[,2])
-    regs$glmnet = rev(glmnet(x=features,y=s,family="cox",alpha=alpha,nlambda=n)$lambda)
+    s = Surv(time=labels[,"time"],event=labels[,"event"])
+    regs$glmnet = rev(glmnet(x=features,y=s,family="cox",alpha=alpha,nlambda=c(n-1))$lambda)
+    regs$glmnet[n]=((regs$glmnet[n-1]-regs$glmnet[n-2])*1.5)+regs$glmnet[n-1]
   }
   return(regs)
 }
@@ -45,4 +46,58 @@ citrus.cvIteration.survival = function(i,modelType,features,labels,regularizatio
   } else {
     stop(paste("Model Type",modelType,"unknown."));
   }
+}
+
+citrus.thresholdCVs.survival = function(foldModels,foldFeatures,modelTypes,regularizationThresholds,labels,folds,...){
+  
+  s = Surv(time=labels[,"time"],event=labels[,"event"])
+  
+  thresholdPartialLikelihoods = lapply(modelTypes,calculateModelPartialLikelihood,leftoufFeatures=leftoutFeatures,foldFeatures=foldFeatures,foldModels=foldModels,labels=s,folds=folds)
+  names(thresholdPartialLikelihoods)=modelTypes
+  
+  res=list()
+  for (modelType in modelTypes){
+    df = data.frame(threshold=regularizationThresholds[[modelType]],thresholdPartialLikelihoods[[modelType]]);
+    res[[modelType]]=df
+  }
+  return(res)
+}
+
+
+calculateModelPartialLikelihood=function(modelType,leftoufFeatures,foldFeatures,foldModels,labels,folds){
+  nFolds=length(leftoutFeatures)
+  nAllFolds = nFolds+1
+  
+  if (modelType=="glmnet"){
+    cvRaw=matrix(NA,ncol=length(foldModels[[modelType]][[1]]$lambda),nrow=nFolds)
+    for (foldId in 1:nFolds){
+      coefmat = predict(foldModels[[modelType]][[foldId]], type = "coeff")
+      plFull = coxnet.deviance(x=rbind(foldFeatures[[foldId]],leftoutFeatures[[foldId]]),y=rbind(s[-folds[[foldId]],],s[folds[[foldId]],]),offset=NULL,weights=rep(1,nrow(foldFeatures[[nAllFolds]])),beta=coefmat)
+      plLeaveIn = coxnet.deviance(x=foldFeatures[[foldId]],y=s[-folds[[foldId]],],offset=NULL,weights=rep(1,nrow(foldFeatures[[foldId]])),beta=coefmat)
+      cvRaw[foldId,seq(along = plFull)]=plFull-plLeaveIn
+    }
+    
+    foldid = rep(1,nrow(foldFeatures[[nAllFolds]]))
+    for (i in 1:nFolds){
+      foldid[folds[[i]]]=i
+    }
+    
+    N = nFolds - apply(is.na(cvRaw), 2, sum)
+    weights = as.vector(tapply(rep(1,nrow(foldFeatures[[nAllFolds]])) * s[,"status"], foldid, sum))
+    cvRaw = cvRaw/weights
+    cvm=apply(cvRaw, 2, weighted.mean, w = weights, na.rm = TRUE)
+    cvsd = sqrt(apply(scale(cvRaw, cvm, FALSE)^2, 2, weighted.mean, w = weights, na.rm = TRUE)/(N - 1))
+    return(list(cvm=cvm,cvsd=cvsd))
+  } else {
+    stop(paste("Partial Likelihood calculations not implemented for model type",modelType));
+  }
+}
+
+citrus.predict.survival = function(model,features){
+  if ("glmnet" %in% class(model)){
+    predictions = predict(model,newx=features)
+  } else {
+    stop(paste("don't know how to predict for class",class(model)));
+  }
+  return(predictions)
 }
