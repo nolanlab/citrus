@@ -100,10 +100,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,...)
     #leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,medianColumns=medianColumns)
     
-    if (length(conditions)==2){
-      foldFeatures = lapply(1:length(folds),citrus.buildFoldFeatureDifferences,features=foldFeatures,conditions=conditions,citrus.dataArray=citrus.dataArray,folds=folds)
-      leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatureDifferences,features=leftoutFeatures,conditions=conditions,citrus.dataArray=citrus.dataArray,folds=folds,calculateLeaveoutData=T)
-    }
+    
     
     # Calculate Regularization Thresholds
     cat("Calculating Regularization Thresholds\n")
@@ -226,10 +223,10 @@ citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nF
     features = citrus.buildFeatures(clusterAssignments=clusterAssignments,featureTypes=featureTypes,data=conditionData,largeEnoughClusters=largeEnoughClusters,foldsFileIds=as.vector(citrus.dataArray$fileIds[,conditions]),foldFileNames=citrus.dataArray$fileNames[as.vector(citrus.dataArray$fileIds[,conditions])],...)
     #features = citrus.buildFeatures(clusterAssignments=clusterAssignments,featureTypes=featureTypes,data=conditionData,largeEnoughClusters=largeEnoughClusters,foldsFileIds=as.vector(citrus.dataArray$fileIds[,conditions]),foldFileNames=citrus.dataArray$fileNames[as.vector(citrus.dataArray$fileIds[,conditions])],medianColumns=medianColumns)
     
-    if (length(conditions)==2){
-      features = features[citrus.dataArray$fileNames[citrus.dataArray$fileIds[,conditions[2]]],]-features[citrus.dataArray$fileNames[citrus.dataArray$fileIds[,conditions[1]]],]
-      colnames(features) = paste(colnames(features),"difference")
-    }
+    #if (length(conditions)==2){
+    #  features = features[citrus.dataArray$fileNames[citrus.dataArray$fileIds[,conditions[2]]],]-features[citrus.dataArray$fileNames[citrus.dataArray$fileIds[,conditions[1]]],]
+    #  colnames(features) = paste(colnames(features),"difference")
+    #}
     
     regularizationThresholds = citrus.generateRgularizationThresholds(features,labels=fileList[,labelCols],modelTypes=modelTypes)
     

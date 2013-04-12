@@ -10,15 +10,23 @@ citrus.buildFoldFeatures = function(index,featureTypes=c("densities"),folds,citr
   } else {
     foldsFileIds=as.vector(citrus.dataArray$fileIds[-folds[[index]],conditions])
   }
-  return(citrus.buildFeatures(clusterAssignments=foldsClusterAssignments[[index]],featureTypes,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],largeEnoughClusters=foldLargeEnoughClusters[[index]],foldsFileIds=foldsFileIds,foldFileNames=citrus.dataArray$fileNames[foldsFileIds],conditions=conditions,...))
+  return(citrus.buildFeatures(clusterAssignments=foldsClusterAssignments[[index]],featureTypes,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],largeEnoughClusters=foldLargeEnoughClusters[[index]],foldsFileIds=foldsFileIds,foldFileNames=citrus.dataArray$fileNames[foldsFileIds],conditions=conditions,citrus.dataArray=citrus.dataArray,...))
 }
 
-citrus.buildFeatures = function(clusterAssignments,featureTypes,data,largeEnoughClusters,foldsFileIds,foldFileNames,conditions,...){
+citrus.buildFeatures = function(clusterAssignments,featureTypes,data,largeEnoughClusters,foldsFileIds,foldFileNames,conditions,citrus.dataArray,...){
   features = list()
   for (featureType in featureTypes){
     #features[[featureType]]=t(sapply(foldsFileIds,paste("citrus.calculateFeature",featureType,sep="."),clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=data,conditions=conditions,medianColumns=medianColumns))
     features[[featureType]] = t(sapply(foldsFileIds,paste("citrus.calculateFeature",featureType,sep="."),clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=data,conditions=conditions,...))
-    rownames(features[[featureType]]) = foldFileNames
+    rownames(features[[featureType]]) = foldFileNames    
+    # ASSUME THAT WANT FEATURE DIFFERENCES. MAY BE BAD ASSUMPTION
+    if ((length(conditions)==2) && (featureType!="emDists")){
+      fns2 = citrus.dataArray$fileNames[citrus.dataArray$fileIds[,conditions[2]]]
+      fns1 = citrus.dataArray$fileNames[citrus.dataArray$fileIds[,conditions[1]]]
+      features[[featureType]] = features[[featureType]][rownames(features[[featureType]]) %in% fns2,] - features[[featureType]][rownames(features[[featureType]]) %in% fns1,]
+      colnames(features[[featureType]]) = paste(colnames(features[[featureType]]),"difference")
+    }
+    
   }
   return(do.call("cbind",features))
 }
