@@ -9,7 +9,7 @@ citrus.generateRegularizationThresholds.survival = function(features,labels,mode
   if ("glmnet" %in% modelTypes){
     s = Surv(time=labels[,"time"],event=labels[,"event"])
     regs$glmnet = rev(glmnet(x=features,y=s,family="cox",alpha=alpha,nlambda=c(n-1))$lambda)
-    regs$glmnet[n]=((regs$glmnet[n-1]-regs$glmnet[n-2])*1.5)+regs$glmnet[n-1]
+    regs$glmnet[length(regs$glmnet)]=((regs$glmnet[length(regs$glmnet)-1]-regs$glmnet[length(regs$glmnet)-2])*1.5)+regs$glmnet[length(regs$glmnet)-1]
   }
   return(regs)
 }
