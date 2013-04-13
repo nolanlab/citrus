@@ -24,8 +24,8 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
 
   res = list()
   # Error check before we actually start the work.
-  if ((!all(featureTypes %in% citrus.getFeatureTypes()))||(length(featureTypes)<1)){
-    stop(paste("featureTypes must be 1 or more of the following:",paste(citrus.getFeatureTypes(),collapse=", "),"\n"))
+  if ((!all(featureTypes %in% citrus.featureTypes()))||(length(featureTypes)<1)){
+    stop(paste("featureTypes must be 1 or more of the following:",paste(citrus.featureTypes(),collapse=", "),"\n"))
   }
 
   if (!(family %in% citrus.familyList())){
