@@ -61,7 +61,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     if (length(labelCols)!=2){
       stop("Incorrect labeling for files. Expecting 'time' and 'event' label columns.")
     }
-  }
+  } 
   
   
   if ("conditionComparaMatrix" %in% names(addtlArgs)){
@@ -82,8 +82,12 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     }
     citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize,transformFactor=transformFactor)
     
+    balanceFactor=as.factor(fileList[,balanceCol])
+    if (levels(balanceFactor)==1){
+      balanceFactor = as.factor(sample(c(0,1),length(balanceFactor),replace=T))
+    }
+    folds = pamr:::balanced.folds(y=balanceFactor,nfolds=nFolds)
     nAllFolds = nFolds+1
-    folds = pamr:::balanced.folds(y=as.factor(fileList[,balanceCol]),nfolds=nFolds)
     folds[[nAllFolds]]="all"
       
     foldsCluster = lapply(folds,citrus.foldCluster,citrus.dataArray=citrus.dataArray,clusterCols=clusterCols,conditions=conditions)
