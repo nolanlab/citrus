@@ -28,5 +28,7 @@ modelTypes=c("glmnet","pamr")
 #citrus.quick(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,fileList=fileList,nFolds=nFolds,conditionComparaMatrix=conditionComparaMatrix,featureTypes="medians",medianColumns=c("FunctionalMarker1","FunctionalMarker2"))
 citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,fileList=fileList,nFolds=nFolds,conditionComparaMatrix=conditionComparaMatrix,featureTypes="medians",medianColumns=c("FunctionalMarker1","FunctionalMarker2"),family="classification")
 
-citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,fileList=fileList,nFolds=nFolds,conditionComparaMatrix=conditionComparaMatrix,featureTypes="emDists",emdColumns=c("FunctionalMarker1","FunctionalMarker2"),family="classification")
-
+emdColumns=medianColumns
+conditionComparaMatrix=matrix(F,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
+conditionComparaMatrix[3]=T
+citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,fileList=fileList,nFolds=nFolds,conditionComparaMatrix=conditionComparaMatrix,featureTypes="emDists",emdColumns=c("FunctionalMarker1","FunctionalMarker2"),family="classification",emdColumns=emdColumns)

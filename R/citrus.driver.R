@@ -96,9 +96,9 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     
     cat("Calculating Features\n")
     foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,...)
-    #foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,medianColumns=medianColumns)
+    #foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,medianColumns=medianColumns,emdColumns=emdColumns)
     leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,...)
-    #leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,medianColumns=medianColumns)
+    #leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,medianColumns=medianColumns,emdColumns=emdColumns)
     
     
     
@@ -270,29 +270,4 @@ citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nF
     
   }
   return(res)
-}
-
-#' Calculate differences in feature values between two conditions
-#' 
-#' \code{citrus.buildFoldFeatureDifferences} takes feature values from two conditions and returns the difference. Essentially it is simple array subtraction using names for indices.
-#' @param index The fold index of files to be subtracted
-#' @param features An array of features from two conditions
-#' @param conditions A vector of 2 conditions to calculate feature differences between. 
-#' @param citrus.daataArray A citrus.dataArray object containing the data used to calculate he features
-#' @param folds A list of fold indices 
-#' @param calculateLeaveoutData A logical value indicating whether or not the difference should be calulated for files in the fold. If TRUE, then calculates differences for files in the fold. If FALSE, caluclates differences for files not in the fold.
-#' @author Robert Bruggner
-#' @references http://github.com/nolanlab/citrus/
-citrus.buildFoldFeatureDifferences = function(index,features,conditions,citrus.dataArray,folds,calculateLeaveoutData=F){
-  
-  if (folds[[index]]=="all"){
-    includeRowIds=1:nrow(citrus.dataArray$fileIds)
-  } else if (!calculateLeaveoutData){
-    includeRowIds=setdiff(1:nrow(citrus.dataArray$fileIds),folds[[index]])
-  } else {
-    includeRowIds = folds[[index]]
-  }
-  diffFeatures = features[[index]][citrus.dataArray$fileNames[citrus.dataArray$fileIds[includeRowIds,conditions[2]]],] - features[[index]][citrus.dataArray$fileNames[citrus.dataArray$fileIds[includeRowIds,conditions[1]]],] 
-  colnames(diffFeatures) = paste(colnames(diffFeatures),"difference")
-  return(diffFeatures)
 }

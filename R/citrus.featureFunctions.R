@@ -52,7 +52,7 @@ citrus.calculateFeature.emDists = function(foldsFileIds,clusterIds,clusterAssign
 citrus.calculateFileClustersEMDist = function(sampleIndex,clusterIds,clusterAssignments,referenceFileIds,targetFileIds,data,emdColumns){
   res = sapply(clusterIds,citrus.calculateFileClusterEMDist,clusterAssignments=clusterAssignments,referenceFileId=referenceFileIds[sampleIndex],targetFileId=targetFileIds[sampleIndex],data=data,emdColumns=emdColumns)
   res2 = as.vector(res) 
-  names(res2) = paste(paste(rownames(res),rep(clusterIds,each=nrow(res))),"emDist")
+  names(res2) = paste(paste(paste("cluster",rep(clusterIds,each=nrow(res))),rownames(res)),"emDist")
   return(res2)  
 }
 
@@ -64,7 +64,7 @@ citrus.calculateFileClusterEMDist = function(clusterId,clusterAssignments,refere
 }
 
 citrus.calculateFileClusterParameterEMDist = function(emdColumn,referenceData,targetData){
-  stop("IMPLEMENT MINIMUM CLUSTER PERCENTAGE CHECK");
+  cat("IMPLEMENT MINIMUM CLUSTER PERCENTAGE CHECK\n");
   h = hist(c(referenceData[,emdColumn],targetData[,emdColumn]),breaks=50,plot=F)
   emdw(A=h$mids,wA=hist(referenceData[,emdColumn],plot=F,breaks=h$breaks)$density,B=h$mids,wB=hist(targetData[,emdColumn],plot=F,breaks=h$breaks)$density)
 }
