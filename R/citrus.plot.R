@@ -119,7 +119,7 @@ citrus.plotModelDifferentialFeatures.survival = function(modelType,differentialF
     f=citrus.predict.survival(finalModel,features)[,cvMinima[[modelType]][[cvPoint]]]
     cutoff = median(f)
     sf=survfit(s~group,data=data.frame(f,group=as.numeric(f<cutoff)))
-    plot(sf,xlab="Time",ylab="Percent Survival",main=paste("Survival stratified on",nonzeroFeatureName))
+    plot(sf,xlab="Time",ylab="Percent Survival",main=paste("Survival stratified on",cvPoint,"model"))
     sdf = survdiff(s~group,data=data.frame(f,group=as.numeric(f<cutoff)))
     legend("topright",legend=c(1 - pchisq(sdf$chisq, length(sdf$n) - 1)),cex=.7)
     dev.off()
