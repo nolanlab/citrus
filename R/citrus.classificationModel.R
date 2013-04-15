@@ -166,61 +166,6 @@ citrus.calculateTypeFDRRate = function(modelType,foldModels,foldFeatures,labels)
   }  
 }
 
-citrus.getCVMinima = function(modelType,thresholdCVRates,fdrRate=0.01){
-  errorRates = thresholdCVRates[[modelType]]$cvm
-  SEMs = thresholdCVRates[[modelType]]$cvsd
-  FDRRates = thresholdCVRates[[modelType]]$fdr
-  cvPoints=list();
-  cvPoints[["cv.min"]] = min(which(errorRates==min(errorRates)))
-  cvPoints[["cv.1se"]] = min(which(errorRates<=(errorRates[cvPoints[["cv.min"]]]+SEMs[cvPoints[["cv.min"]]])))
-  if (!is.null(FDRRates)) {
-    if (any(FDRRates<fdrRate)){
-      if (length(intersect(which(FDRRates<0.01),which(errorRates==min(errorRates))))>0){
-        cvPoints[["cv.fdr.constrained"]] = max(intersect(which(FDRRates<0.01),which(errorRates==min(errorRates))))    
-      }
-    }
-    
-  }
-  return(cvPoints)
-}
-
-citrus.extractModelFeatures = function(modelType,cvMinima,foldModels,foldFeatures,regularizationThresholds,family){
-  res = list();
-  nAllFolds = length(foldModels[[modelType]])
-  finalModel = foldModels[[modelType]][[nAllFolds]]
-  for (cvPoint in names(cvMinima[[modelType]])){
-    if (modelType=="pamr"){
-      threshold = regularizationThresholds[[modelType]][ cvMinima[[modelType]][[cvPoint]] ]
-      if (finalModel$nonzero[cvMinima[[modelType]][[cvPoint]]]>0){
-        f = pamr.listgenes(fit=finalModel,data=list(x=t(foldFeatures[[nAllFolds]]),geneids=colnames(foldFeatures[[nAllFolds]])),threshold=regularizationThresholds[[modelType]][ cvMinima[[modelType]][[cvPoint]] ] )  
-        f = as.vector(f[,1])
-        res[[cvPoint]][["features"]] = f
-        res[[cvPoint]][["clusters"]] = sort(unique(as.numeric(do.call("rbind",strsplit(f,split=" "))[,2])))  
-      } else {
-        res[[cvPoint]][["features"]] = NULL
-        res[[cvPoint]][["clusters"]] = NULL
-      }
-      
-    } else if (modelType=="glmnet"){
-      threshold = rev(regularizationThresholds[[modelType]])[ cvMinima[[modelType]][[cvPoint]] ]
-      f = as.matrix(predict(finalModel,newx=foldFeatures[[nAllFolds]],type="coefficient",s=threshold))
-      f = rownames(f)[f!=0]
-      if (family=="classification"){
-        f = f[-1]
-      }
-      if (length(f)>0){
-        res[[cvPoint]][["features"]] = f
-        res[[cvPoint]][["clusters"]] = sort(unique(as.numeric(do.call("rbind",strsplit(f,split=" "))[,2])))  
-      } else {
-        res[[cvPoint]][["features"]] = NULL;
-        res[[cvPoint]][["clusters"]] = NULL;
-      }
-      
-    }
-  }
-  return(res)
-}
-
 citrus.getModelTypes = function(){
   return(c("pamr","glmnet"))
 }
