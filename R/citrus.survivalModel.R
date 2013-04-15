@@ -22,7 +22,7 @@ citrus.buildModel.survival = function(features,labels,type,regularizationThresho
   
   if (type=="glmnet") {
     s = Surv(time=labels[,"time"],event=labels[,"event"])
-    glmmodel = glmnet(x=features,y=s,family="cox",lambda=regularizationThresholds)
+    glmmodel = glmnet(x=features,y=s,family="cox",lambda=regularizationThresholds,maxit=200000)
     if (cv){
       errorRates = sapply(1:ncvRuns,citrus.cvIteration.survival,modelType="glmnet",features=features,labels=labels,regularizationThresholds=regularizationThresholds,nFolds=nFolds)  
       model=list();
@@ -52,7 +52,7 @@ citrus.thresholdCVs.survival = function(foldModels,foldFeatures,leftoutFeatures,
   
   s = Surv(time=labels[,"time"],event=labels[,"event"])
   
-  thresholdPartialLikelihoods = lapply(modelTypes,calculateModelPartialLikelihood,leftoutFeatures=leftoutFeatures,foldFeatures=foldFeatures,foldModels=foldModels,labels=s,folds=folds)
+  thresholdPartialLikelihoods = lapply(modelTypes,citrus.calculateModelPartialLikelihood,leftoutFeatures=leftoutFeatures,foldFeatures=foldFeatures,foldModels=foldModels,labels=s,folds=folds,regularizationThresholds=regularizationThresholds)
   names(thresholdPartialLikelihoods)=modelTypes
   
   res=list()
@@ -64,12 +64,12 @@ citrus.thresholdCVs.survival = function(foldModels,foldFeatures,leftoutFeatures,
 }
 
 
-calculateModelPartialLikelihood=function(modelType,leftoutFeatures,foldFeatures,foldModels,labels,folds){
+citrus.calculateModelPartialLikelihood=function(modelType,leftoutFeatures,foldFeatures,foldModels,labels,folds,regularizationThresholds){
   nFolds=length(leftoutFeatures)
   nAllFolds = nFolds+1
   
   if (modelType=="glmnet"){
-    cvRaw=matrix(NA,ncol=length(foldModels[[modelType]][[1]]$lambda),nrow=nFolds)
+    cvRaw=matrix(NA,ncol=length(regularizationThresholds[[modelType]]),nrow=nFolds)
     for (foldId in 1:nFolds){
       coefmat = predict(foldModels[[modelType]][[foldId]], type = "coeff")
       plFull = coxnet.deviance(x=rbind(foldFeatures[[foldId]],leftoutFeatures[[foldId]]),y=rbind(labels[-folds[[foldId]],],labels[folds[[foldId]],]),offset=NULL,weights=rep(1,nrow(foldFeatures[[nAllFolds]])),beta=coefmat)

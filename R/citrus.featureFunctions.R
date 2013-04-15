@@ -15,9 +15,9 @@ citrus.buildFoldFeatures = function(index,featureTypes=c("densities"),folds,citr
 
 citrus.buildFeatures = function(clusterAssignments,featureTypes,largeEnoughClusters,foldsFileIds,conditions,citrus.dataArray,...){
   features = list()
-  for (featureType in featureTypes){
+  for (featureType in sort(featureTypes)){
     #features[[featureType]]=do.call(paste("citrus.calculateFeature",featureType,sep="."),args=list(foldsFileIds=foldsFileIds,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],conditions=conditions,citrus.dataArray=citrus.dataArray,emdColumns=emdColumns))
-    features[[featureType]] = do.call(paste("citrus.calculateFeature",featureType,sep="."),args=list(foldsFileIds=foldsFileIds,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],conditions=conditions,citrus.dataArray=citrus.dataArray,...))
+    features[[featureType]] = do.call(paste("citrus.calculateFeature",featureType,sep="."),args=list(foldsFileIds=foldsFileIds,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],conditions=conditions,citrus.dataArray=citrus.dataArray,preCalcFeatures=features,...))
     
     # ASSUME THAT WANT FEATURE DIFFERENCES. MAY BE BAD ASSUMPTION
     if ((length(conditions)==2) && (featureType!="emDists")){
@@ -33,7 +33,7 @@ citrus.buildFeatures = function(clusterAssignments,featureTypes,largeEnoughClust
   return(do.call("cbind",features))
 }
 
-citrus.calculateFeature.emDists = function(foldsFileIds,clusterIds,clusterAssignments,data,foldFileNames,conditions,citrus.dataArray,...){
+citrus.calculateFeature.emDists = function(foldsFileIds,clusterIds,clusterAssignments,data,foldFileNames,conditions,citrus.dataArray,preCalcFeatures,...){
   addtlArgs = list(...)
   if (!("emdColumns" %in% names(addtlArgs))){
     stop("emdColumns argument must be specified to compute cluster emDists.")
@@ -41,10 +41,16 @@ citrus.calculateFeature.emDists = function(foldsFileIds,clusterIds,clusterAssign
   if (length(conditions)!=2){
     stop("Only know how to calculate EMD Features for two conditions.")
   }
+  if ("densities" %in% names(preCalcFeatures)){
+    df = preCalcFeatures[["densities"]]
+  } else {
+    df = citrus.calculateFeature.densities(foldsFileIds,clusterIds,clusterAssignments,data,citrus.dataArray)
+  }
+  completeClusterIds = clusterIds[apply(df>0.01,2,all)]
   referenceFileIds = foldsFileIds[foldsFileIds %in% citrus.dataArray$fileIds[,conditions[1]]]
   targetFileIds = foldsFileIds[foldsFileIds %in% citrus.dataArray$fileIds[,conditions[2]]]
   #features = t(sapply(1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=clusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=emdColumns))
-  features = t(sapply(1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=clusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=addtlArgs[["emdColumns"]]))
+  features = t(sapply(1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=completeClusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=addtlArgs[["emdColumns"]]))
   rownames(features) = citrus.dataArray$fileNames[targetFileIds]
   return(features)
 }
@@ -64,7 +70,7 @@ citrus.calculateFileClusterEMDist = function(clusterId,clusterAssignments,refere
 }
 
 citrus.calculateFileClusterParameterEMDist = function(emdColumn,referenceData,targetData){
-  cat("IMPLEMENT MINIMUM CLUSTER PERCENTAGE CHECK\n");
+  #cat("IMPLEMENT MINIMUM CLUSTER PERCENTAGE CHECK\n");
   h = hist(c(referenceData[,emdColumn],targetData[,emdColumn]),breaks=50,plot=F)
   emdw(A=h$mids,wA=hist(referenceData[,emdColumn],plot=F,breaks=h$breaks)$density,B=h$mids,wB=hist(targetData[,emdColumn],plot=F,breaks=h$breaks)$density)
 }
@@ -166,3 +172,15 @@ citrus.calculateLargeEnoughClusters = function(clusters,minimumClusterSize){
   return(which(clusterLengths >= minimumClusterSize))
 }
 
+citrus.getNonOverlappingFeatures = function(index,foldFeatures,leftoutFeatures){
+  c(setdiff(colnames(foldFeatures[[index]]),colnames(leftoutFeatures[[index]])),setdiff(colnames(leftoutFeatures[[index]]),colnames(foldFeatures[[index]])))
+}
+
+citrus.removeFeatures = function(index,foldFeatures,nonOverlappingFeatures){
+  ff = foldFeatures[[index]]
+  remove = which(colnames(ff)%in%nonOverlappingFeatures[[index]])
+  if (length(remove)>0){
+    ff = ff[,-remove]
+  }
+  return(ff)
+}

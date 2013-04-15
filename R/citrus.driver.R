@@ -65,14 +65,14 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
   
   
   if ("conditionComparaMatrix" %in% names(addtlArgs)){
-    #allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 
+    #allConditions = citrus.convertConditionMatrix(ccm) 
     allConditions = citrus.convertConditionMatrix(addtlArgs[["conditionComparaMatrix"]]) 
   } else {
     allConditions = as.list(colnames(fileList)[-labelCols])
   }
 
   for (conditions in allConditions){
-    #conditions = allConditions[[2]]
+    #conditions = allConditions[[1]]
     cat(paste("Analyzing Condition",paste(conditions,collapse=" vs "),"\n"))
     
     if ("transformFactor" %in% names(addtlArgs)){
@@ -100,11 +100,14 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFo
     
     cat("Calculating Features\n")
     foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,...)
-    #foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,medianColumns=medianColumns,emdColumns=emdColumns)
+    #foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,emdColumns=emdColumns)
     leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,...)
-    #leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,medianColumns=medianColumns,emdColumns=emdColumns)
+    #leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,emdColumns=emdColumns)
     
-    
+    #Normalize features... Sometimes EMD's aren't calculated. Need a better way to handle this.
+    nof = lapply(1:nFolds,citrus.getNonOverlappingFeatures,foldFeatures=foldFeatures,leftoutFeatures=leftoutFeatures)
+    foldFeatures[1:nFolds] = lapply(1:nFolds,citrus.removeFeatures,foldFeatures=foldFeatures,nonOverlappingFeatures=nof)
+    leftoutFeatures = lapply(1:nFolds,citrus.removeFeatures,foldFeatures=leftoutFeatures,nonOverlappingFeatures=nof)
     
     # Calculate Regularization Thresholds
     cat("Calculating Regularization Thresholds\n")
