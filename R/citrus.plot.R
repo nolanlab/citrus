@@ -1,6 +1,5 @@
 citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds,thresholdCVRates,foldModels,cvMinima,family){  
     nAllFolds = length(foldModels[[modelType]])
-    print(paste("Plotting results for model type",modelType))
     modelOutputDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
     dir.create(modelOutputDir)
     pdf(file.path(modelOutputDir,"ModelErrorRate.pdf"),width=6,height=6)
@@ -13,11 +12,10 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
       xlab="log(Regularization Threshold)"
       nonzeroCounts = foldModels[[modelType]][[nAllFolds]]$df
       if (family=="survival"){
-        ylim=range(errorRates)
+        ylim=range(errorRates,na.rm=T)
         ylab="Model Cross Validation Partial Likelihood"
       }
-    } 
-    if (modelType=="pamr"){
+    } else if (modelType=="pamr"){
       xlab="Regularization Threshold"
       nonzeroCounts = foldModels[[modelType]][[nAllFolds]]$nonzero
     }
@@ -57,9 +55,7 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
     if (!is.null(cv.1se)){
       points(c(cv.1se,cv.1se),y=c(errorRates[cv.1se],errorRates[cv.1se]),col="orange",pch=9,cex=2)  
     }
-    
-    
-    
+        
     legendLabels = c(legendLabels,"cv.min","cv.1se")
     legendColors = c(legendColors,"green","orange")
     legendPchs = c(legendPchs,20,9)
@@ -78,9 +74,7 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
       legendPtCex=c(legendPtCex,1.5)  
       
     }
-    
-    legend(x=1,y=1,legendLabels,col=legendColors,pch=legendPchs,lty=legendLty,pt.cex=legendPtCex,cex=.8,bg="white")
-    
+    legend(x="topleft",legendLabels,col=legendColors,pch=legendPchs,lty=legendLty,pt.cex=legendPtCex,cex=.8,bg="white")
     dev.off()   
 }
 
