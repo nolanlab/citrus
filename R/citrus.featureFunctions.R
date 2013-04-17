@@ -16,17 +16,19 @@ citrus.buildFoldFeatures = function(index,featureTypes=c("densities"),folds,citr
 citrus.buildFeatures = function(clusterAssignments,featureTypes,largeEnoughClusters,foldsFileIds,conditions,citrus.dataArray,...){
   features = list()
   for (featureType in sort(featureTypes)){
-    #features[[featureType]]=do.call(paste("citrus.calculateFeature",featureType,sep="."),args=list(foldsFileIds=foldsFileIds,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],conditions=conditions,citrus.dataArray=citrus.dataArray,emdColumns=emdColumns))
+    #features[[featureType]]=do.call(paste("citrus.calculateFeature",featureType,sep="."),args=list(foldsFileIds=foldsFileIds,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],conditions=conditions,citrus.dataArray=citrus.dataArray,emdColumns=emdColumns,preCalcFeatures=features))
     features[[featureType]] = do.call(paste("citrus.calculateFeature",featureType,sep="."),args=list(foldsFileIds=foldsFileIds,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],conditions=conditions,citrus.dataArray=citrus.dataArray,preCalcFeatures=features,...))
-    
+  }
+  for (featureType in sort(featureTypes)){
     # ASSUME THAT WANT FEATURE DIFFERENCES. MAY BE BAD ASSUMPTION
     if ((length(conditions)==2) && (featureType!="emDists")){
       cat("Two conditions found. Assuming differential features of interest.\n")
       cat(paste("Caluclating difference in ",featureType," between ",conditions[2]," & ",conditions[1],".\n",sep=""))
       fns2 = citrus.dataArray$fileNames[citrus.dataArray$fileIds[,conditions[2]]]
       fns1 = citrus.dataArray$fileNames[citrus.dataArray$fileIds[,conditions[1]]]
-      features[[featureType]] = features[[featureType]][rownames(features[[featureType]]) %in% fns2,] - features[[featureType]][rownames(features[[featureType]]) %in% fns1,]
-      colnames(features[[featureType]]) = paste(colnames(features[[featureType]]),"difference")
+      features[[paste(featureType,"difference")]] = features[[featureType]][rownames(features[[featureType]]) %in% fns2,] - features[[featureType]][rownames(features[[featureType]]) %in% fns1,]
+      colnames(features[[paste(featureType,"difference")]]) = paste(colnames(features[[paste(featureType,"difference")]]),"difference")
+      features[[featureType]]=NULL
     }
     
   }
@@ -39,7 +41,8 @@ citrus.calculateFeature.emDists = function(foldsFileIds,clusterIds,clusterAssign
     stop("emdColumns argument must be specified to compute cluster emDists.")
   }
   if (length(conditions)!=2){
-    stop("Only know how to calculate EMD Features for two conditions.")
+    warning("Only know how to calculate EMD Features for two conditions.")
+    return(NULL)
   }
   if ("densities" %in% names(preCalcFeatures)){
     df = preCalcFeatures[["densities"]]
@@ -49,7 +52,7 @@ citrus.calculateFeature.emDists = function(foldsFileIds,clusterIds,clusterAssign
   completeClusterIds = clusterIds[apply(df>0.01,2,all)]
   referenceFileIds = foldsFileIds[foldsFileIds %in% citrus.dataArray$fileIds[,conditions[1]]]
   targetFileIds = foldsFileIds[foldsFileIds %in% citrus.dataArray$fileIds[,conditions[2]]]
-  #features = t(sapply(1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=clusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=emdColumns))
+  #features = t(sapply(1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=completeClusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=emdColumns))
   features = t(sapply(1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=completeClusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=addtlArgs[["emdColumns"]]))
   rownames(features) = citrus.dataArray$fileNames[targetFileIds]
   return(features)
@@ -67,7 +70,11 @@ citrus.calculateFileClusterEMDist = function(clusterId,clusterAssignments,refere
   referenceData = clusterData[clusterData[,"fileId"]==referenceFileId,]
   targetData = clusterData[clusterData[,"fileId"]==targetFileId,]
   res=sapply(emdColumns,citrus.calculateFileClusterParameterEMDist,referenceData,targetData)
-  names(res)=colnames(data)[emdColumns]
+  if (is.numeric(emdColumns)){
+    names(res)=colnames(data)[emdColumns]  
+  } else {
+    names(res)=emdColumns 
+  }
   return(res)
 }
 

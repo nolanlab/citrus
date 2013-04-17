@@ -5,59 +5,53 @@ Rclusterpp.setThreads(1)
 
 # Example 1: Diseased patients have a differing proportion of cells in clusters 2 & 3.
 dataDir = file.path(system.file(package="citrus"),"extdata","example1")
-outputDir = "~/Desktop/notime/tmp/"
+outputDir = "~/Desktop/notime/tmp/citrusOutput/"
 clusterCols = c(1:2)
-fileSampleSize=1000
+fileSampleSize=100
 
 labels = c(rep("healthy",10),rep("diseased",10))
 labels = as.factor(labels)
 nFolds=5
-fileList = data.frame(unstim=list.files(dataDir,pattern=".fcs",ignore.case=T),labels=labels)
-
+fileList = data.frame(unstim=list.files(dataDir,pattern=".fcs",ignore.case=T))
 #debug(citrus.full)
-res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,fileList=fileList,nFolds=5,featureTypes=c("densities"))
+res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds=5,family="classification",featureTypes=c("densities"))
 
 # Eample 2: Diseased patients have high levels of functional marker 2 in cluster 3 when stimulated. 
 # No results should be visible from the unstim files.
 rm(list=ls(all=T))
-dataDir = file.path(system.file(package="citrus"),"extdata","example2")
-outputDir = "Desktop/notime/citrusTestRun/"
+dataDir = file.path(system.file(package="citrus"),"extdata","example3")
+outputDir = "~/Desktop/notime/tmp/citrusOutput/"
 clusterCols = c("LineageMarker1","LineageMarker2")
 medianCols = c("FunctionalMarker1","FunctionalMarker2")
-
 labels = c(rep("healthy",10),rep("diseased",10))
 labels = as.factor(labels)
 nFolds=5
-fileList = cbind(unstim=list.files(dataDir,pattern="unstim"),stim1=list.files(dataDir,pattern="stim1"),labels=c(rep("healthy",10),rep("diseased",10)))
-fileSampleSize=1000
+fileList = cbind(unstim=list.files(dataDir,pattern="unstim"),stim1=list.files(dataDir,pattern="stim1"))
+fileSampleSize=100
+featureTypes=c("densities","medians","emDists")
 
-# First just calculate density features. There should not be any good results here.
-citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,fileList=fileList,nFolds=nFolds,featureTypes=c("densities"))
-# Now try with medians. Should get good results.
-citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,fileList=fileList,nFolds=nFolds,featureTypes=c("medians"),medianColumns=c("FunctionalMarker1","FunctionalMarker2"))
-# Now try with both medians and densities. Should get good results and automatically find the good features.
-citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,fileList=fileList,nFolds=nFolds,featureTypes=c("densities","medians"),medianColumns=c("FunctionalMarker1","FunctionalMarker2"))
+conditionComparaMatrix=matrix(T,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
+conditionComparaMatrix[2]=F
+preclusterResult=citrus.preCluster(dataDir,outputDir,clusterCols,fileSampleSize,fileList[,-3],nFolds=5,conditionComparaMatrix=conditionComparaMatrix)
+endpointResult=citrus.endpointRegress(preclusterResult,outputDir,family="classification",labels=labels,plot=T,returnResults=T,featureTypes=featureTypes,medianColumns=medianCols,emdColumns=medianCols)
 
 
-# Eample 3: Diseased patients have activation of functional marker 2 in cluster 3 when stimulated. 
-# No results should be visible from the unstim files. Just analyzing the stimulated groups alone 
-# should produce messy results.
+# Eample 3: Diseased patients have high levels of functional marker 2 in cluster 3 when stimulated. 
+# No results should be visible from the unstim files. Suvival case
 rm(list=ls(all=T))
 dataDir = file.path(system.file(package="citrus"),"extdata","example3")
-outputDir = "Desktop/notime/citrusTestRun/"
+outputDir = "~/Desktop/notime/tmp/citrusOutput/"
 clusterCols = c("LineageMarker1","LineageMarker2")
 medianCols = c("FunctionalMarker1","FunctionalMarker2")
+labels = data.frame(time=c(floor(runif(n=10,min=11,max=20)),floor(runif(n=10,min=1,max=10))),event=sample(c(0,1,1),size=20,replace=T))
+labels = data.frame(time=c(floor(runif(n=10,min=11,max=20)),floor(runif(n=10,min=1,max=10))),event=1)
+nFolds=10
+fileList = cbind(unstim=list.files(dataDir,pattern="unstim"),stim1=list.files(dataDir,pattern="stim1"))
+fileSampleSize=500
+featureTypes=c("emDists")
 
-labels = c(rep("healthy",10),rep("diseased",10))
-labels = as.factor(labels)
-nFolds=5
-fileList = cbind(unstim=list.files(dataDir,pattern="unstim"),stim1=list.files(dataDir,pattern="stim1"),labels=c(rep("healthy",10),rep("diseased",10)))
-fileSampleSize=1000
-
-nFolds=5
-fileList = cbind(unstim=list.files(dataDir,pattern="unstim"),stim1=list.files(dataDir,pattern="stim1"),labels=c(rep("healthy",10),rep("diseased",10)))
 conditionComparaMatrix=matrix(F,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
 conditionComparaMatrix[3]=T
-featureTypes=c("densities","medians")
-citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,fileList=fileList,nFolds=nFolds,conditionComparaMatrix=conditionComparaMatrix,featureTypes=c("medians"),medianColumns=c("FunctionalMarker1","FunctionalMarker2"))
+preclusterResult=citrus.preCluster(dataDir,outputDir,clusterCols,fileSampleSize,fileList[,-3],nFolds=nFolds,conditionComparaMatrix=conditionComparaMatrix)
+endpointResult=citrus.endpointRegress(preclusterResult,outputDir,family="survival",labels=labels,plot=T,returnResults=T,featureTypes=featureTypes,medianColumns=medianCols,emdColumns=medianCols)
 
