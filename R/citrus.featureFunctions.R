@@ -66,7 +66,9 @@ citrus.calculateFileClusterEMDist = function(clusterId,clusterAssignments,refere
   clusterData = data[clusterAssignments[[clusterId]],]
   referenceData = clusterData[clusterData[,"fileId"]==referenceFileId,]
   targetData = clusterData[clusterData[,"fileId"]==targetFileId,]
-  sapply(emdColumns,citrus.calculateFileClusterParameterEMDist,referenceData,targetData)
+  res=sapply(emdColumns,citrus.calculateFileClusterParameterEMDist,referenceData,targetData)
+  names(res)=colnames(data)[emdColumns]
+  return(res)
 }
 
 citrus.calculateFileClusterParameterEMDist = function(emdColumn,referenceData,targetData){
