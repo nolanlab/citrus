@@ -172,7 +172,7 @@ citrus.endpointRegress = function(preclusterResult,outputDir,family,labels,model
     differentialFeatures
     
     if (returnResults){
-      regressionRes[[conditionName]] = list(foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,differentialFeatures=differentialFeatures,cvMinima=cvMinima,thresholdCVRates=thresholdCVRates,foldModels=foldModels,regularizationThresholds=regularizationThresholds)  
+      regressionRes[[conditionName]] = list(foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,leftoutFeatures=leftoutFeatures,differentialFeatures=differentialFeatures,cvMinima=cvMinima,thresholdCVRates=thresholdCVRates,foldModels=foldModels,regularizationThresholds=regularizationThresholds)
     }
     
     # Plot
