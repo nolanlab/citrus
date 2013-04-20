@@ -1,4 +1,9 @@
-citrus.generateRegularizationThresholds.survival = function(features,labels,modelTypes,n=100,alpha=1){
+citrus.generateRegularizationThresholds.survival = function(features,labels,modelTypes,n=100,...){
+  addtlArgs = list(...)
+  alpha=1
+  if ("alpha" %in% names(addtlArgs)){
+    alpha = addtlArgs[["alpha"]]
+  }
   if (length(modelTypes)<1){
     stop("no regularzation threshold types specified.")
   }
@@ -14,17 +19,21 @@ citrus.generateRegularizationThresholds.survival = function(features,labels,mode
   return(regs)
 }
 
-citrus.buildModel.survival = function(features,labels,type,regularizationThresholds,cv=F,nFolds=NULL,ncvRuns=10){
+citrus.buildModel.survival = function(features,labels,type,regularizationThresholds,cv=F,nFolds=NULL,ncvRuns=10,...){
   
+  addtlArgs = list(...)
   if ((cv)&&(is.null(nFolds))){
     stop("nfolds not specififed for cross validation.")
   }
-  
+  alpha=1
+  if ("alpha" %in% names(addtlArgs)){
+    alpha = addtlArgs[["alpha"]]
+  }
   if (type=="glmnet") {
     s = Surv(time=labels[,"time"],event=labels[,"event"])
-    glmmodel = glmnet(x=features,y=s,family="cox",lambda=regularizationThresholds,maxit=200000)
+    glmmodel = glmnet(x=features,y=s,family="cox",lambda=regularizationThresholds,maxit=200000,alpha=alpha)
     if (cv){
-      errorRates = sapply(1:ncvRuns,citrus.cvIteration.survival,modelType="glmnet",features=features,labels=labels,regularizationThresholds=regularizationThresholds,nFolds=nFolds)  
+      errorRates = sapply(1:ncvRuns,citrus.cvIteration.survival,modelType="glmnet",features=features,labels=labels,regularizationThresholds=regularizationThresholds,nFolds=nFolds,alpha=alpha)  
       model=list();
       model$model=glmmodel;
       model$errorRates=apply(errorRates,1,mean)
@@ -39,10 +48,10 @@ citrus.buildModel.survival = function(features,labels,type,regularizationThresho
   return(model)
 }
 
-citrus.cvIteration.survival = function(i,modelType,features,labels,regularizationThresholds,nFolds){
+citrus.cvIteration.survival = function(i,modelType,features,labels,regularizationThresholds,nFolds,alpha){
   if (modelType=="glmnet"){
     s = Surv(time=labels[,"time"],event=labels[,"event"])
-    return(cv.glmnet(x=features,y=s,family="cox",lambda=regularizationThresholds,type.measure="class",nfolds=nFolds)$cvm)
+    return(cv.glmnet(x=features,y=s,family="cox",lambda=regularizationThresholds,type.measure="class",nfolds=nFolds,alpha=alpha)$cvm)
   } else {
     stop(paste("Model Type",modelType,"unknown."));
   }

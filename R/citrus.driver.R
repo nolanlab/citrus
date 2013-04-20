@@ -149,11 +149,11 @@ citrus.endpointRegress = function(preclusterResult,outputDir,family,labels,model
     
     # Calculate Regularization Thresholds
     cat("Calculating Regularization Thresholds\n")
-    regularizationThresholds = do.call(paste("citrus.generateRegularizationThresholds",family,sep="."),args=list(features=foldFeatures[[nAllFolds]],labels=labels,modelTypes=modelTypes))
+    regularizationThresholds = do.call(paste("citrus.generateRegularizationThresholds",family,sep="."),args=list(features=foldFeatures[[nAllFolds]],labels=labels,modelTypes=modelTypes,...))
     
     # Build Fold Models
     cat("\nBuilding folds models\n")
-    foldModels = citrus.buildModels(folds=folds,foldFeatures=foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,modelTypes=modelTypes,family=family)
+    foldModels = citrus.buildModels(folds=folds,foldFeatures=foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,modelTypes=modelTypes,family=family,...)
     names(foldModels)=modelTypes
     
     # Calculate fold deviances
