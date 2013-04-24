@@ -1,5 +1,9 @@
 citrus.generateRegularizationThresholds.survival = function(features,labels,modelTypes,n=100,...){
   addtlArgs = list(...)
+  standardize=T
+  if ("standardize" %in% names(addtlArgs)){
+    standardize=addtlArgs[["standardize"]]
+  }
   alpha=1
   if ("alpha" %in% names(addtlArgs)){
     alpha = addtlArgs[["alpha"]]
@@ -13,7 +17,7 @@ citrus.generateRegularizationThresholds.survival = function(features,labels,mode
   }
   if ("glmnet" %in% modelTypes){
     s = Surv(time=labels[,"time"],event=labels[,"event"])
-    regs$glmnet = rev(glmnet(x=features,y=s,family="cox",alpha=alpha,nlambda=c(n-1))$lambda)
+    regs$glmnet = rev(glmnet(x=features,y=s,family="cox",alpha=alpha,nlambda=c(n-1),standardize=standardize)$lambda)
     regs$glmnet[length(regs$glmnet)]=((regs$glmnet[length(regs$glmnet)-1]-regs$glmnet[length(regs$glmnet)-2])*1.5)+regs$glmnet[length(regs$glmnet)-1]
   }
   return(regs)
@@ -29,11 +33,15 @@ citrus.buildModel.survival = function(features,labels,type,regularizationThresho
   if ("alpha" %in% names(addtlArgs)){
     alpha = addtlArgs[["alpha"]]
   }
+  standardize=T
+  if ("standardize" %in% names(addtlArgs)){
+    standardize=addtlArgs[["standardize"]]
+  }
   if (type=="glmnet") {
     s = Surv(time=labels[,"time"],event=labels[,"event"])
-    glmmodel = glmnet(x=features,y=s,family="cox",lambda=regularizationThresholds,maxit=200000,alpha=alpha)
+    glmmodel = glmnet(x=features,y=s,family="cox",lambda=regularizationThresholds,maxit=200000,alpha=alpha,standardize=standardize)
     if (cv){
-      errorRates = sapply(1:ncvRuns,citrus.cvIteration.survival,modelType="glmnet",features=features,labels=labels,regularizationThresholds=regularizationThresholds,nFolds=nFolds,alpha=alpha)  
+      errorRates = sapply(1:ncvRuns,citrus.cvIteration.survival,modelType="glmnet",features=features,labels=labels,regularizationThresholds=regularizationThresholds,nFolds=nFolds,alpha=alpha,standardize=standardize)  
       model=list();
       model$model=glmmodel;
       model$errorRates=apply(errorRates,1,mean)
@@ -48,10 +56,10 @@ citrus.buildModel.survival = function(features,labels,type,regularizationThresho
   return(model)
 }
 
-citrus.cvIteration.survival = function(i,modelType,features,labels,regularizationThresholds,nFolds,alpha){
+citrus.cvIteration.survival = function(i,modelType,features,labels,regularizationThresholds,nFolds,alpha,standardize){
   if (modelType=="glmnet"){
     s = Surv(time=labels[,"time"],event=labels[,"event"])
-    return(cv.glmnet(x=features,y=s,family="cox",lambda=regularizationThresholds,type.measure="class",nfolds=nFolds,alpha=alpha)$cvm)
+    return(cv.glmnet(x=features,y=s,family="cox",lambda=regularizationThresholds,type.measure="class",nfolds=nFolds,alpha=alpha,standardize=standardize)$cvm)
   } else {
     stop(paste("Model Type",modelType,"unknown."));
   }

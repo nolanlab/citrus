@@ -4,6 +4,16 @@ citrus.buildModel.classification = function(features,labels,type,regularizationT
     stop("nfolds not specififed for cross validation.")
   }
   
+  addtlArgs = list(...)
+  alpha=1
+  if ("alpha" %in% names(addtlArgs)){
+    alpha = addtlArgs[["alpha"]]
+  }
+  standardize=T
+  if ("standardize" %in% names(addtlArgs)){
+    standardize=addtlArgs[["standardize"]]
+  }
+  
   if (type=="pamr"){
     pamrData = list(x=t(features),y=labels)
     pamrModel = pamr.train(data=pamrData,threshold=regularizationThresholds,remove.zeros=F)
@@ -19,9 +29,9 @@ citrus.buildModel.classification = function(features,labels,type,regularizationT
     }
   } else if (type=="glmnet") {
     # NOTE THAT THIS IS BINOMIAL EXPLICITLY. DOES MULTINOMIAL WORK THE SAME, IF ONLY 2 CLASSES PROVIDED?
-    glmmodel = glmnet(x=features,y=labels,family="binomial",lambda=regularizationThresholds)
+    glmmodel = glmnet(x=features,y=labels,family="binomial",lambda=regularizationThresholds,alpha=alpha,standardize=standardize)
     if (cv){
-      errorRates = sapply(1:ncvRuns,citrus.cvIteration.classification,modelType="glmnet",features=features,labels=labels,regularizationThresholds=regularizationThresholds,nFolds=nFolds)  
+      errorRates = sapply(1:ncvRuns,citrus.cvIteration.classification,modelType="glmnet",features=features,labels=labels,regularizationThresholds=regularizationThresholds,nFolds=nFolds,alpha=alpha,standardize=standardize)  
       model=list();
       model$model=glmmodel;
       model$errorRates=apply(errorRates,1,mean)
@@ -36,11 +46,11 @@ citrus.buildModel.classification = function(features,labels,type,regularizationT
   return(model)
 }
 
-citrus.cvIteration.classification = function(i,modelType,features,labels,regularizationThresholds,nFolds,pamrModel=NULL){
+citrus.cvIteration.classification = function(i,modelType,features,labels,regularizationThresholds,nFolds,pamrModel=NULL,alpha=NULL,standardize=NULL){
   if (modelType == "pamr"){
     return(pamr.cv(fit=pamrModel,data=features,nfold=nFolds)$error)
   } else if (modelType=="glmnet"){
-    return(cv.glmnet(x=features,y=labels,family="binomial",lambda=regularizationThresholds,type.measure="class",nfolds=nFolds)$cvm)
+    return(cv.glmnet(x=features,y=labels,family="binomial",lambda=regularizationThresholds,type.measure="class",nfolds=nFolds,alpha=alpha,standardize=standardize)$cvm)
   } else {
     stop(paste("Model Type",modelType,"unknown."));
   }
@@ -115,6 +125,14 @@ citrus.generateRegularizationThresholds.classification = function(features,label
   if ("alpha" %in% names(addtlArgs)){
     alpha = addtlArgs[["alpha"]]
   }
+  addtlArgs = list(...)
+  if ((cv)&&(is.null(nFolds))){
+    stop("nfolds not specififed for cross validation.")
+  }
+  standardize=T
+  if ("standardize" %in% names(addtlArgs)){
+    standardize=addtlArgs[["standardize"]]
+  }
   regs = list()
   if ("pamr" %in% modelTypes){
     regs$pamr = rev(pamr.train(data=list(x=t(features),y=labels),n.threshold=n)$threshold)
@@ -125,7 +143,7 @@ citrus.generateRegularizationThresholds.classification = function(features,label
     } else {
       family="multinomial"
     }
-    regs$glmnet = rev(glmnet(x=features,y=labels,family=family,alpha=alpha,nlambda=n)$lambda)
+    regs$glmnet = rev(glmnet(x=features,y=labels,family=family,alpha=alpha,nlambda=n,standardize=standardize)$lambda)
   }
   return(regs)
 }
