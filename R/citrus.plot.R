@@ -47,8 +47,8 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
       legendPtCex=c(legendPtCex,1)
     }
     
-    cv.min = cvMinima[[modelType]]$cv.min
-    cv.1se = cvMinima[[modelType]]$cv.1se
+    cv.min = cvMinima[[modelType]]$cv.min.index
+    cv.1se = cvMinima[[modelType]]$cv.1se.index
     if (!is.null(cv.min)){
       points(c(cv.min,cv.min),y=c(errorRates[cv.min],errorRates[cv.min]),col="green",pch=20,cex=2)  
     }
@@ -64,7 +64,7 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
        
     if ( "cv.fdr.constrained" %in% names(cvMinima[[modelType]])) {
       
-      cv.fdr.constrained = cvMinima[[modelType]]$cv.fdr.constrained
+      cv.fdr.constrained = cvMinima[[modelType]]$cv.fdr.constrained.index
       points(c(cv.fdr.constrained,cv.fdr.constrained),y=c(errorRates[cv.fdr.constrained],errorRates[cv.fdr.constrained]),col="yellow",pch=17,cex=1.5)
       points(c(cv.fdr.constrained,cv.fdr.constrained),y=c(errorRates[cv.fdr.constrained],errorRates[cv.fdr.constrained]),col="black",pch=2,cex=1.5)
       legendLabels = c(legendLabels,"cv.fdr.constrained")
@@ -110,7 +110,7 @@ citrus.plotModelDifferentialFeatures.survival = function(modelType,differentialF
     dev.off()
     finalModel=foldModels[[modelType]][[length(foldModels[[modelType]])]]
     pdf(file.path(modelTypeDir,paste("survivalCurves_allFeatures_",cvPoint,".pdf",sep="")))
-    f=citrus.predict.survival(finalModel,features)[,cvMinima[[modelType]][[cvPoint]]]
+    f=citrus.predict.survival(finalModel,features,s=cvMinima[[modelType]][[cvPoint]])
     cutoff = median(f)
     sf=survfit(s~group,data=data.frame(f,group=as.numeric(f<cutoff)))
     plot(sf,xlab="Time",ylab="Percent Survival",main=paste("Survival stratified on",cvPoint,"model"))

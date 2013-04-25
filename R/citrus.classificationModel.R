@@ -1,8 +1,4 @@
-citrus.buildModel.classification = function(features,labels,type,regularizationThresholds,cv=F,nFolds=NULL,ncvRuns=10,...){
-  
-  if ((cv)&&(is.null(nFolds))){
-    stop("nfolds not specififed for cross validation.")
-  }
+citrus.buildModel.classification = function(features,labels,type,regularizationThresholds,...){
   
   addtlArgs = list(...)
   alpha=1
@@ -16,34 +12,26 @@ citrus.buildModel.classification = function(features,labels,type,regularizationT
   
   if (type=="pamr"){
     pamrData = list(x=t(features),y=labels)
-    pamrModel = pamr.train(data=pamrData,threshold=regularizationThresholds,remove.zeros=F)
-    if (cv){
-      errorRates = sapply(1:ncvRuns,citrus.cvIteration.classification,modelType="pamr",features=pamrData,labels=NULL,regularizationThresholds=regularizationThresholds,nFolds=nFolds,pamrModel=pamrModel)  
-      model=list();
-      model$model=pamrModel;
-      model$errorRates=apply(errorRates,1,mean)
-      model$se = apply(errorRates,1,sd)/sqrt(ncvRuns)
-      model$cvmin = min(which(model$errorRates==min(model$errorRates)))
-    } else {
-      model = pamrModel
-    }
+    model = pamr.train(data=pamrData,threshold=regularizationThresholds,remove.zeros=F)
   } else if (type=="glmnet") {
     # NOTE THAT THIS IS BINOMIAL EXPLICITLY. DOES MULTINOMIAL WORK THE SAME, IF ONLY 2 CLASSES PROVIDED?
-    glmmodel = glmnet(x=features,y=labels,family="binomial",lambda=regularizationThresholds,alpha=alpha,standardize=standardize)
-    if (cv){
-      errorRates = sapply(1:ncvRuns,citrus.cvIteration.classification,modelType="glmnet",features=features,labels=labels,regularizationThresholds=regularizationThresholds,nFolds=nFolds,alpha=alpha,standardize=standardize)  
-      model=list();
-      model$model=glmmodel;
-      model$errorRates=apply(errorRates,1,mean)
-      model$se = apply(errorRates,1,sd)/sqrt(ncvRuns)
-      model$cvmin = min(which(model$errorRates==min(model$errorRates)))
-    } else {
-      model = glmmodel
-    }
+    model = glmnet(x=features,y=labels,family="binomial",lambda=regularizationThresholds,alpha=alpha,standardize=standardize)
   } else {
     stop(paste("Type:",type,"not yet implemented"));
   }
   return(model)
+}
+
+
+citrus.buildFoldModels = function(index,folds,foldFeatures,labels,type,regularizationThresholds,family,...){
+  if (!((length(folds[[index]])==1) && (folds[[index]]=="all"))){
+    if (!is.null(dim(labels))){
+      labels = labels[-folds[[index]],]
+    } else {
+      labels = labels[-folds[[index]]]
+    }
+  }
+  do.call(paste("citrus.buildModel",family,sep="."),args=list(features=foldFeatures[[index]],labels=labels,type=type,regularizationThresholds=regularizationThresholds,...=...))
 }
 
 citrus.cvIteration.classification = function(i,modelType,features,labels,regularizationThresholds,nFolds,pamrModel=NULL,alpha=NULL,standardize=NULL){
@@ -56,16 +44,37 @@ citrus.cvIteration.classification = function(i,modelType,features,labels,regular
   }
 }
 
-citrus.buildFoldModels = function(index,folds,foldFeatures,labels,type,regularizationThresholds,family,...){
-  if (!((length(folds[[index]])==1) && (folds[[index]]=="all"))){
-    if (!is.null(dim(labels))){
-      labels = labels[-folds[[index]],]
-    } else {
-      labels = labels[-folds[[index]]]
+citrus.thresholdCVs.quick = function(modelType,features,regularizationThresholds,family,labels,nFolds=5,ncvIterations=10,...){
+  typeRegularizationThresholds=regularizationThresholds[[modelType]]
+  if (modelType=="pamr"){
+    if (family=="survival"){
+      stop("PAM model not implemeted for survival.")
     }
-    
+    pamrData = list(x=t(features),y=labels)
+    pamrModel = pamr.train(data=pamrData,threshold=typeRegularizationThresholds,remove.zeros=F)
+    errorRates = sapply(1:ncvIterations,paste("citrus.cvIteration",family,sep="."),modelType="pamr",features=pamrData,labels=labels,regularizationThresholds=typeRegularizationThresholds,nFolds=nFolds,pamrModel=pamrModel)
+    fdrRate = citrus:::pamr.fdr.new(pamrModel,data=pamrData,nperms=1000)$results[,"Median FDR"]
+  } else if (modelType=="glmnet"){
+    addtlArgs = list(...)
+    alpha=1
+    if ("alpha" %in% names(addtlArgs)){
+      alpha=addtlArgs[["alpha"]]
+    }
+    standardize=T
+    if ("standardize" %in% names(addtlArgs)){
+      standardize=addtlArgs[["standardize"]]
+    }
+    errorRates = sapply(1:ncvIterations,paste("citrus.cvIteration",family,sep="."),modelType="glmnet",features=features,labels=labels,regularizationThresholds=typeRegularizationThresholds,nFolds=nFolds,alpha=alpha,standardize=standardize)
+  } else {
+    stop(paste("CV for Model type",modelType,"not implemented"))
   }
-  do.call(paste("citrus.buildModel",family,sep="."),args=list(features=foldFeatures[[index]],labels=labels,type=type,regularizationThresholds=regularizationThresholds,...=...))
+  cvm=apply(errorRates,1,mean)
+  cvsd=apply(errorRates,1,sd)/sqrt(ncvIterations)
+  results = data.frame(threshold=typeRegularizationThresholds,cvm=cvm,cvsd=cvsd)
+  if (exists("fdrRate")){
+    results$fdr=fdrRate
+  }
+  return(results)
 }
 
 citrus.thresholdCVs.classification = function(foldModels,leftoutFeatures,foldFeatures,modelTypes,regularizationThresholds,labels,folds,...){
@@ -116,7 +125,7 @@ citrus.predict.classification = function(model,features){
 }
 
 
-citrus.generateRegularizationThresholds.classification = function(features,labels,modelTypes,n=100,...){
+citrus.generateRegularizationThresholds.classification = function(features,labels,modelTypes,n,...){
   if (length(modelTypes)<1){
     stop("no regularzation threshold types specified.")
   }
@@ -125,25 +134,22 @@ citrus.generateRegularizationThresholds.classification = function(features,label
   if ("alpha" %in% names(addtlArgs)){
     alpha = addtlArgs[["alpha"]]
   }
-  addtlArgs = list(...)
-  if ((cv)&&(is.null(nFolds))){
-    stop("nfolds not specififed for cross validation.")
-  }
   standardize=T
   if ("standardize" %in% names(addtlArgs)){
     standardize=addtlArgs[["standardize"]]
   }
   regs = list()
+  
   if ("pamr" %in% modelTypes){
     regs$pamr = rev(pamr.train(data=list(x=t(features),y=labels),n.threshold=n)$threshold)
   }
   if ("glmnet" %in% modelTypes){
     if (length(unique(labels))==2){
-      family="binomial"
+      glmfamily="binomial"
     } else {
-      family="multinomial"
+      glmfamily="multinomial"
     }
-    regs$glmnet = rev(glmnet(x=features,y=labels,family=family,alpha=alpha,nlambda=n,standardize=standardize)$lambda)
+    regs$glmnet = glmnet(x=features,y=labels,family=glmfamily,alpha=alpha,nlambda=n,standardize=standardize)$lambda
   }
   return(regs)
 }
@@ -158,7 +164,7 @@ citrus.getFoldErrorRate = function(foldErrorRate){
 }
 
 citrus.buildModels=function(folds,foldFeatures,labels,regularizationThresholds,modelTypes,family,...){
-  lapply(modelTypes,citrus.buildTypeModels,folds=folds,foldFeatures=foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,family=family,...)
+  lapply(modelTypes,citrus.buildTypeModels,folds=folds,foldFeatures=foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,family=family,...=...)
 }
 
 citrus.buildTypeModels = function(modelType,folds,foldFeatures,labels,regularizationThresholds,family,...){

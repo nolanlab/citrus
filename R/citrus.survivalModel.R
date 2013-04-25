@@ -1,4 +1,4 @@
-citrus.generateRegularizationThresholds.survival = function(features,labels,modelTypes,n=100,...){
+citrus.generateRegularizationThresholds.survival = function(features,labels,modelTypes,n,...){
   addtlArgs = list(...)
   standardize=T
   if ("standardize" %in% names(addtlArgs)){
@@ -17,18 +17,15 @@ citrus.generateRegularizationThresholds.survival = function(features,labels,mode
   }
   if ("glmnet" %in% modelTypes){
     s = Surv(time=labels[,"time"],event=labels[,"event"])
-    regs$glmnet = rev(glmnet(x=features,y=s,family="cox",alpha=alpha,nlambda=c(n-1),standardize=standardize)$lambda)
-    regs$glmnet[length(regs$glmnet)]=((regs$glmnet[length(regs$glmnet)-1]-regs$glmnet[length(regs$glmnet)-2])*1.5)+regs$glmnet[length(regs$glmnet)-1]
+    regs$glmnet = glmnet(x=features,y=s,family="cox",alpha=alpha,nlambda=c(n-1),standardize=standardize)$lambda
+    regs$glmnet[1]=((regs$glmnet[1]-regs$glmnet[2])*1.5)+regs$glmnet[1]
   }
   return(regs)
 }
 
-citrus.buildModel.survival = function(features,labels,type,regularizationThresholds,cv=F,nFolds=NULL,ncvRuns=10,...){
+citrus.buildModel.survival = function(features,labels,type,regularizationThresholds,...){
   
   addtlArgs = list(...)
-  if ((cv)&&(is.null(nFolds))){
-    stop("nfolds not specififed for cross validation.")
-  }
   alpha=1
   if ("alpha" %in% names(addtlArgs)){
     alpha = addtlArgs[["alpha"]]
@@ -39,17 +36,7 @@ citrus.buildModel.survival = function(features,labels,type,regularizationThresho
   }
   if (type=="glmnet") {
     s = Surv(time=labels[,"time"],event=labels[,"event"])
-    glmmodel = glmnet(x=features,y=s,family="cox",lambda=regularizationThresholds,maxit=200000,alpha=alpha,standardize=standardize)
-    if (cv){
-      errorRates = sapply(1:ncvRuns,citrus.cvIteration.survival,modelType="glmnet",features=features,labels=labels,regularizationThresholds=regularizationThresholds,nFolds=nFolds,alpha=alpha,standardize=standardize)  
-      model=list();
-      model$model=glmmodel;
-      model$errorRates=apply(errorRates,1,mean)
-      model$se = apply(errorRates,1,sd)/sqrt(ncvRuns)
-      model$cvmin = min(which(model$errorRates==min(model$errorRates)))
-    } else {
-      model = glmmodel
-    }
+    model = glmnet(x=features,y=s,family="cox",lambda=regularizationThresholds,maxit=200000,alpha=alpha,standardize=standardize)
   } else {
     stop(paste("Type:",type,"not yet implemented"));
   }
@@ -59,7 +46,7 @@ citrus.buildModel.survival = function(features,labels,type,regularizationThresho
 citrus.cvIteration.survival = function(i,modelType,features,labels,regularizationThresholds,nFolds,alpha,standardize){
   if (modelType=="glmnet"){
     s = Surv(time=labels[,"time"],event=labels[,"event"])
-    return(cv.glmnet(x=features,y=s,family="cox",lambda=regularizationThresholds,type.measure="class",nfolds=nFolds,alpha=alpha,standardize=standardize)$cvm)
+    return(cv.glmnet(x=features,y=s,family="cox",lambda=regularizationThresholds,nfolds=nFolds,alpha=alpha,standardize=standardize)$cvm)
   } else {
     stop(paste("Model Type",modelType,"unknown."));
   }
@@ -110,9 +97,9 @@ citrus.calculateModelPartialLikelihood=function(modelType,leftoutFeatures,foldFe
   }
 }
 
-citrus.predict.survival = function(model,features){
+citrus.predict.survival = function(model,features,s){
   if ("glmnet" %in% class(model)){
-    predictions = predict(model,newx=features)
+    predictions = predict(model,newx=features,s=s)
   } else {
     stop(paste("don't know how to predict for class",class(model)));
   }
