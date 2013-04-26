@@ -84,10 +84,10 @@ citrus.thresholdCVs.classification = function(foldModels,leftoutFeatures,foldFea
   predictionSuccess = lapply(as.list(modelTypes),citrus.foldTypeScore,folds=folds,leftoutPredictions=leftoutPredictions,labels=labels)
   names(predictionSuccess)=modelTypes
   
-  thresholdSEMs = lapply(modelTypes,citrus.modelTypeSEM,predictionSuccess=predictionSuccess)
-  names(thresholdSEMs)=modelTypes
+  #thresholdSEMs = lapply(modelTypes,citrus.modelTypeSEM,predictionSuccess=predictionSuccess,regularizationThresholds=regularizationThresholds)
+  #names(thresholdSEMs)=modelTypes
   
-  thresholdErrorRates = lapply(modelTypes,citrus.calcualteTypeErroRate,predictionSuccess=predictionSuccess)
+  thresholdErrorRates = lapply(modelTypes,citrus.calculateTypeErroRate,predictionSuccess=predictionSuccess,regularizationThresholds=regularizationThresholds)
   names(thresholdErrorRates)=modelTypes
   
   thresholdFDRRates = lapply(modelTypes,citrus.calculateTypeFDRRate,foldModels=foldModels,foldFeatures=foldFeatures,labels=labels)
@@ -95,7 +95,7 @@ citrus.thresholdCVs.classification = function(foldModels,leftoutFeatures,foldFea
   
   res=list()
   for (modelType in modelTypes){
-    df = data.frame(threshold=regularizationThresholds[[modelType]],cvm=thresholdErrorRates[[modelType]],cvsd=thresholdSEMs[[modelType]]);
+    df = data.frame(threshold=regularizationThresholds[[modelType]],cvm=thresholdErrorRates[[modelType]]$cvm,cvsd=thresholdErrorRates[[modelType]]$cvsd);
     if (!is.null(thresholdFDRRates[[modelType]])){
       df = cbind(df,fdr=thresholdFDRRates[[modelType]]);  
     }
@@ -154,10 +154,9 @@ citrus.generateRegularizationThresholds.classification = function(features,label
   return(regs)
 }
 
-citrus.calculateSEM = function(predictionSuccess){
-  nfolds = length(predictionSuccess)
-  apply(do.call("rbind",lapply(predictionSuccess,citrus.getFoldErrorRate)),2,mean)/sqrt(nfolds)
-}
+#citrus.calculateSEM = function(predictionSuccess,regularizationThresholds){
+#  apply(do.call("rbind",lapply(predictionSuccess,citrus.getFoldErrorRate)),2,mean)/sqrt(nfolds)
+#}
 
 citrus.getFoldErrorRate = function(foldErrorRate){
   apply(!foldErrorRate,2,sum)/nrow(foldErrorRate)
@@ -179,12 +178,25 @@ citrus.foldTypeScore = function(modelType,folds,leftoutPredictions,labels){
   lapply(1:length(leftoutPredictions[[modelType]]),citrus.foldScore,folds=folds,predictions=leftoutPredictions[[modelType]],labels=labels)
 }
 
-citrus.modelTypeSEM = function(modelType,predictionSuccess){
-  citrus.calculateSEM(predictionSuccess[[modelType]])
-}
+#citrus.modelTypeSEM = function(modelType,predictionSuccess,regularizationThresholds){
+#  citrus.calculateSEM(predictionSuccess[[modelType]],regularizationThresholds[[modelType]])
+#}
 
-citrus.calcualteTypeErroRate = function(modelType,predictionSuccess){
-  return((1-(apply(do.call("rbind",predictionSuccess[[modelType]]),2,sum)/nrow(do.call("rbind",predictionSuccess[[modelType]])))  ))
+citrus.calculateTypeErroRate = function(modelType,predictionSuccess,regularizationThresholds){
+  nFolds=length(predictionSuccess[[modelType]])
+  counter=1;
+  tmp=list()
+  for (i in 1:nFolds){
+    for (j in 1:nrow(predictionSuccess[[modelType]][[i]])){
+      tmp[[counter]] = predictionSuccess[[modelType]][[i]][j,]
+      length(tmp[[counter]])=length(regularizationThresholds[[modelType]])
+      counter=counter+1;
+    }
+  }
+  bound = do.call("rbind",tmp)
+  thresholdMeans= 1-apply(bound,2,mean,na.rm=T)
+  thresholdSEMs = apply(bound,2,sd,na.rm=T)/sqrt(apply(!is.na(bound),2,sum))
+  return(list(cvm=thresholdMeans,cvsd=thresholdSEMs))
 } 
 
 citrus.calculateTypeFDRRate = function(modelType,foldModels,foldFeatures,labels){
