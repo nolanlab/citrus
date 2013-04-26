@@ -47,13 +47,18 @@ citrus.calculateFeature.emDists = function(foldsFileIds,clusterIds,clusterAssign
   if ("densities" %in% names(preCalcFeatures)){
     df = preCalcFeatures[["densities"]]
   } else {
-    df = citrus.calculateFeature.densities(foldsFileIds,clusterIds,clusterAssignments,data,citrus.dataArray)
+    df = citrus.calculateFeature.densities(foldsFileIds,clusterIds,clusterAssignments,data,citrus.dataArray,...)
   }
   completeClusterIds = clusterIds[apply(df>0.01,2,all)]
   referenceFileIds = foldsFileIds[foldsFileIds %in% citrus.dataArray$fileIds[,conditions[1]]]
   targetFileIds = foldsFileIds[foldsFileIds %in% citrus.dataArray$fileIds[,conditions[2]]]
+  if ("snowCluster" %in% names(addtlArgs)){
+    features = t(parSapply(addtlArgs[["snowCluster"]],1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=completeClusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=addtlArgs[["emdColumns"]]))
+  } else {
+    features = t(sapply(1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=completeClusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=addtlArgs[["emdColumns"]]))
+  }
   #features = t(sapply(1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=completeClusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=emdColumns))
-  features = t(sapply(1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=completeClusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=addtlArgs[["emdColumns"]]))
+  #features = t(sapply(1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=completeClusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=addtlArgs[["emdColumns"]]))
   rownames(features) = citrus.dataArray$fileNames[targetFileIds]
   return(features)
 }
@@ -85,7 +90,13 @@ citrus.calculateFileClusterParameterEMDist = function(emdColumn,referenceData,ta
 }
 
 citrus.calculateFeature.densities = function(foldsFileIds,clusterIds,clusterAssignments,data,citrus.dataArray,...){
-  features = t(sapply(foldsFileIds,citrus.calculateFileClustersDensities,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))
+  addtlArgs = list(...)
+  if ("snowCluster" %in% names(addtlArgs)){
+    features = t(parSapply(addtlArgs[["snowCluster"]],foldsFileIds,citrus.calculateFileClustersDensities,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))      
+  } else {
+    features = t(sapply(foldsFileIds,citrus.calculateFileClustersDensities,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))
+  }
+  #features = t(sapply(foldsFileIds,citrus.calculateFileClustersDensities,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))
   rownames(features) = citrus.dataArray$fileNames[foldsFileIds]
   return(features)
 }
@@ -102,7 +113,13 @@ citrus.calculateFileClusterDensity = function(clusterId,clusterAssignments,fileI
 }
 
 citrus.calculateFeature.medians = function(foldsFileIds,clusterIds,clusterAssignments,data,citrus.dataArray,...){
-  features = t(sapply(foldsFileIds,citrus.calculateFileClustersMedians,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))
+  addtlArgs = list(...)
+  if ("snowCluster" %in% names(addtlArgs)){
+    features = t(parSapply(addtlArgs[["snowCluster"]],foldsFileIds,citrus.calculateFileClustersMedians,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))    
+  } else {
+    features = t(sapply(foldsFileIds,citrus.calculateFileClustersMedians,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))    
+  }
+  
   rownames(features) = citrus.dataArray$fileNames[foldsFileIds]
   return(features)
 }
