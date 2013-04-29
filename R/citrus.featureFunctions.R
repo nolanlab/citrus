@@ -86,7 +86,11 @@ citrus.calculateFileClusterEMDist = function(clusterId,clusterAssignments,refere
 citrus.calculateFileClusterParameterEMDist = function(emdColumn,referenceData,targetData){
   #cat("IMPLEMENT MINIMUM CLUSTER PERCENTAGE CHECK\n");
   h = hist(c(referenceData[,emdColumn],targetData[,emdColumn]),breaks=50,plot=F)
-  emdw(A=h$mids,wA=hist(referenceData[,emdColumn],plot=F,breaks=h$breaks)$density,B=h$mids,wB=hist(targetData[,emdColumn],plot=F,breaks=h$breaks)$density)
+  dist = emdw(A=h$mids,wA=hist(referenceData[,emdColumn],plot=F,breaks=h$breaks)$density,B=h$mids,wB=hist(targetData[,emdColumn],plot=F,breaks=h$breaks)$density)
+  if ((mean(referenceData[,emdColumn])-mean(targetData[,emdColumn]))>0){
+    dist = -dist
+  }
+  return(dist)
 }
 
 citrus.calculateFeature.densities = function(foldsFileIds,clusterIds,clusterAssignments,data,citrus.dataArray,...){
