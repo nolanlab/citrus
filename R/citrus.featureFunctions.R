@@ -10,10 +10,10 @@ citrus.buildFoldFeatures = function(index,featureTypes=c("densities"),folds,citr
   } else {
     foldsFileIds=as.vector(citrus.dataArray$fileIds[-folds[[index]],conditions])
   }
-  return(citrus.buildFeatures(clusterAssignments=foldsClusterAssignments[[index]],featureTypes,largeEnoughClusters=foldLargeEnoughClusters[[index]],foldsFileIds=foldsFileIds,conditions=conditions,citrus.dataArray=citrus.dataArray,...))
+  return(citrus.buildClusterFeatures(clusterAssignments=foldsClusterAssignments[[index]],featureTypes,largeEnoughClusters=foldLargeEnoughClusters[[index]],foldsFileIds=foldsFileIds,conditions=conditions,citrus.dataArray=citrus.dataArray,...))
 }
 
-citrus.buildFeatures = function(clusterAssignments,featureTypes,largeEnoughClusters,foldsFileIds,conditions,citrus.dataArray,...){
+citrus.buildClusterFeatures = function(clusterAssignments,featureTypes,largeEnoughClusters,foldsFileIds,conditions,citrus.dataArray,...){
   features = list()
   for (featureType in sort(featureTypes)){
     #features[[featureType]]=do.call(paste("citrus.calculateFeature",featureType,sep="."),args=list(foldsFileIds=foldsFileIds,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],conditions=conditions,citrus.dataArray=citrus.dataArray,emdColumns=emdColumns,preCalcFeatures=features))

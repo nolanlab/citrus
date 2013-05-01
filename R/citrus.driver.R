@@ -26,10 +26,13 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,lab
       stop("Incorrect labeling for files. Expecting 'time' and 'event' label columns.")
     }
   }
-  preclusterResults = citrus.preCluster(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,transformCols,conditionComparaMatrix,balanceFactor,transformFactor)
-  #regresssionResults = citrus.endpointRegress(preclusterResults,outputDir,family,labels,modelTypes,featureTypes,minimumClusterSizePercent,plot,returnResults,emdColumns=medianCols)
-  regresssionResults = citrus.endpointRegress(preclusterResults,outputDir,family,labels,modelTypes,featureTypes,minimumClusterSizePercent,plot,returnResults,...)
-  return(list(preclusterResults=preclusterResults,regresssionResults=regresssionResults))
+  preclusterResult = citrus.preCluster(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,transformCols,conditionComparaMatrix,balanceFactor,transformFactor)
+  featureObject = citrus.buildFeatures(preclusterResult,outputDir,featureTypes,minimumClusterSizePercent,...)
+  regressionResults = citrus.endpointRegress(citrus.featureObject=featureObject,citrus.preclusterResult=preclusterResult,family,modelTypes,labels,...) 
+  if (plot){
+    citrus.plotRegressionResults(outputDir,citrus.preclusterResult=preclusterResult,citrus.featureObject=featureObject,citrus.regressionResult=regressionResults,modelTypes,family,labels)
+  }
+  return(list(preclusterResult=preclusterResult,featureObject=featureObject,regressionResults=regressionResults))
 }
 
 citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels,family,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,conditionComparaMatrix=NULL,plot=T,returnResults=F,transformFactor=NULL,...){
@@ -41,10 +44,6 @@ citrus.quick = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,la
     }
   }
   preclusterResult = citrus.preCluster(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds="all",transformCols,conditionComparaMatrix,balanceFactor,transformFactor)
-  #returnResults=T
-  #plot=T
-  #transformCols=NULL
-  #regresssionResult = citrus.endpointRegress.quick(preclusterResult,outputDir,family,labels,modelTypes,featureTypes,minimumClusterSizePercent,plot,returnResults,plot=plot,returnResults=returnResults,medianColumns=medianCols,emdColumns=medianCols)
   regresssionResult = citrus.endpointRegress.quick(preclusterResult,outputDir,family,labels,modelTypes,featureTypes,minimumClusterSizePercent,plot,returnResults,plot=plot,returnResults=returnResults,...)
   if (returnResults){
     return(regresssionResult)
@@ -229,26 +228,12 @@ citrus.endpointRegress.quick = function(preclusterResult,outputDir,family,labels
 }
 
 
-citrus.endpointRegress = function(preclusterResult,outputDir,family,labels,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,plot=T,returnResults=F,...){
-  
+citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densities"),minimumClusterSizePercent=0.05,returnResults=T,...){  
   addtlArgs = list(...)
   
   # Error check before we actually start the work.
   if ((!all(featureTypes %in% citrus.featureTypes()))||(length(featureTypes)<1)){
     stop(paste("featureTypes must be 1 or more of the following:",paste(citrus.featureTypes(),collapse=", "),"\n"))
-  }
-  
-  if (!(family %in% citrus.familyList())){
-    stop("'family' argument must specified and one of the following: ",paste(citrus.familyList(),collapse=", "))
-  }
-  
-  if (family=="survival" && ("pamr" %in% modelTypes)){
-    warning("'pamr' model not implemented for 'survival' analysis. Removing.");
-    modelTypes=modelTypes[-which(modelTypes=="pamr")]
-  }
-  
-  if (length(modelTypes)==0){
-    stop("No model types specified.")
   }
   
   if (("medians" %in% featureTypes)&&(!("medianColumns" %in% names(list(...))))){
@@ -259,24 +244,13 @@ citrus.endpointRegress = function(preclusterResult,outputDir,family,labels,model
     stop(paste("Output directory",outputDir,"not found."))
   }
   
-  if (family=="survival"){
-    if ((ncol(labels)!=2)||(!all(colnames(labels) %in% c("time","event")))){
-      stop("Incorrect labeling for files. Expecting 'time' and 'event' label columns.")
-    }
-    lengthLabels = nrow(labels)
-  } else {
-    lengthLabels = length(labels)
-  }
   
-  regressionRes = list()
+  
+  featureRes = list()
   
   for (conditionName in names(preclusterResult)){
     
-    if (lengthLabels!=nrow(preclusterResult[[conditionName]]$citrus.dataArray$fileIds)){
-      stop(paste("Number of Lables not equal to number of samples:",lengthLabels,nrow(preclusterResult[[conditionName]]$citrus.dataArray$fileIds)))
-    }    
-    
-    cat(paste("Analyzing Condition",conditionName,"\n"))
+    cat(paste("Building features for condition",conditionName,"\n"))
     conditions=preclusterResult[[conditionName]]$conditions
     
     folds = preclusterResult[[conditionName]]$folds
@@ -300,18 +274,69 @@ citrus.endpointRegress = function(preclusterResult,outputDir,family,labels,model
     foldFeatures[1:nFolds] = lapply(1:nFolds,citrus.removeFeatures,foldFeatures=foldFeatures,nonOverlappingFeatures=nof)
     leftoutFeatures = lapply(1:nFolds,citrus.removeFeatures,foldFeatures=leftoutFeatures,nonOverlappingFeatures=nof)
     
+    conditionResults = list(foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,leftoutFeatures=leftoutFeatures)
+    save(conditionResults,file=file.path(outputDir,paste("citrus.Features",conditionName,"rDat",sep="")))
+    featureRes[[conditionName]]=conditionResults
+  }
+  
+  if (returnResults){
+    return(featureRes)
+  } else {
+    return()
+  }
+  
+}
+  
+
+citrus.endpointRegress = function(citrus.featureObject,citrus.preclusterResult,family,modelTypes,labels,returnResults=T,...){
+  
+  if (!(family %in% citrus.familyList())){
+    stop("'family' argument must specified and one of the following: ",paste(citrus.familyList(),collapse=", "))
+  }
+  
+  if (family=="survival" && ("pamr" %in% modelTypes)){
+    warning("'pamr' model not implemented for 'survival' analysis. Removing.");
+    modelTypes=modelTypes[-which(modelTypes=="pamr")]
+  }
+  
+  if (length(modelTypes)==0){
+    stop("No model types specified.")
+  }
+  
+  if (!file.exists(outputDir)){
+    stop(paste("Output directory",outputDir,"not found."))
+  }
+  
+  if (family=="survival"){
+    if ((ncol(labels)!=2)||(!all(colnames(labels) %in% c("time","event")))){
+      stop("Incorrect labeling for files. Expecting 'time' and 'event' label columns.")
+    }
+    lengthLabels = nrow(labels)
+  } else {
+    lengthLabels = length(labels)
+  }
+  
+  if (lengthLabels!=nrow(citrus.preclusterResult[[1]]$citrus.dataArray$fileIds)){
+    stop(paste("Number of Lables not equal to number of samples:",lengthLabels,nrow(citrus.preclusterResult[[1]]$citrus.dataArray$fileIds)))
+  }    
+
+  regressionRes = list()
+
+  regressionRes=list()
+  for (conditionName in names(citrus.featureObject)){
     # Calculate Regularization Thresholds
+    nAllFolds = length(citrus.featureObject[[conditionName]]$foldFeatures)
     cat("Calculating Regularization Thresholds\n")
-    regularizationThresholds = do.call(paste("citrus.generateRegularizationThresholds",family,sep="."),args=list(features=foldFeatures[[nAllFolds]],labels=labels,modelTypes=modelTypes,n=100,...))
+    regularizationThresholds = do.call(paste("citrus.generateRegularizationThresholds",family,sep="."),args=list(features=citrus.featureObject[[conditionName]]$foldFeatures[[nAllFolds]],labels=labels,modelTypes=modelTypes,n=100,...))
     
     # Build Fold Models
     cat("\nBuilding folds models\n")
-    foldModels = citrus.buildModels(folds=folds,foldFeatures=foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,modelTypes=modelTypes,family=family,...)
+    foldModels = citrus.buildModels(folds=citrus.preclusterResult[[conditionName]]$folds,foldFeatures=citrus.featureObject[[conditionName]]$foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,modelTypes=modelTypes,family=family,...)
     names(foldModels)=modelTypes
     
     # Calculate fold deviances
     cat("\nCalculating threshold deviance rates\n")
-    thresholdCVRates = do.call(paste("citrus.thresholdCVs",family,sep="."),args=list(foldModels=foldModels,leftoutFeatures=leftoutFeatures,foldFeatures=foldFeatures,modelTypes=modelTypes,regularizationThresholds=regularizationThresholds,labels=labels,folds=folds))
+    thresholdCVRates = do.call(paste("citrus.thresholdCVs",family,sep="."),args=list(foldModels=foldModels,leftoutFeatures=citrus.featureObject[[conditionName]]$leftoutFeatures,foldFeatures=citrus.featureObject[[conditionName]]$foldFeatures,modelTypes=modelTypes,regularizationThresholds=regularizationThresholds,labels=labels,folds=citrus.preclusterResult[[conditionName]]$folds))
     
     # Find cv minima
     cat("Calculating CV minima\n")
@@ -320,47 +345,53 @@ citrus.endpointRegress = function(preclusterResult,outputDir,family,labels,model
     
     # Extract Features
     cat("Extracting differential features\n")
-    differentialFeatures = lapply(modelTypes,citrus.extractModelFeatures,cvMinima=cvMinima,foldModels=foldModels,foldFeatures=foldFeatures,regularizationThresholds=regularizationThresholds,family=family)
+    differentialFeatures = lapply(modelTypes,citrus.extractModelFeatures,cvMinima=cvMinima,foldModels=foldModels,foldFeatures=citrus.featureObject[[conditionName]]$foldFeatures,regularizationThresholds=regularizationThresholds,family=family)
     names(differentialFeatures) = modelTypes
-    differentialFeatures
+  
+    regressionRes[[conditionName]] = list(differentialFeatures=differentialFeatures,cvMinima=cvMinima,thresholdCVRates=thresholdCVRates,foldModels=foldModels,regularizationThresholds=regularizationThresholds)
     
-    if (returnResults){
-      regressionRes[[conditionName]] = list(foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,leftoutFeatures=leftoutFeatures,differentialFeatures=differentialFeatures,cvMinima=cvMinima,thresholdCVRates=thresholdCVRates,foldModels=foldModels,regularizationThresholds=regularizationThresholds)
-    }
+  }
+  if (returnResults){
+    return(regressionRes)
+  } else {
+    return()
+  }
+}
+
+
+# Plot
+citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus.featureObject,citrus.regressionResult,modelTypes,family,labels){
+  
+  for (conditionName in names(citrus.regressionResult)){
+    nAllFolds = length(citrus.featureObject[[conditionName]]$foldFeatures)
+    # Make condition output directoy
+    conditionOutputDir = file.path(outputDir,conditionName)
+    dir.create(conditionOutputDir,showWarnings=T,recursive=T)
+  
+    cat("Plotting Error Rate\n")
+    sapply(modelTypes,citrus.plotTypeErrorRate,outputDir=conditionOutputDir,regularizationThresholds=citrus.regressionResult[[conditionName]]$regularizationThresholds,thresholdCVRates=citrus.regressionResult[[conditionName]]$thresholdCVRates,cvMinima=citrus.regressionResult[[conditionName]]$cvMinima,foldModels=citrus.regressionResult[[conditionName]]$foldModels,family=family)
+   
+    cat("Plotting Stratifying Features\n")
+    lapply(modelTypes,citrus.plotDifferentialFeatures,differentialFeatures=citrus.regressionResult[[conditionName]]$differentialFeatures,features=citrus.featureObject[[conditionName]]$foldFeatures[[nAllFolds]],outputDir=conditionOutputDir,labels=labels,family=family,cvMinima=citrus.regressionResult[[conditionName]]$cvMinima,foldModels=citrus.regressionResult[[conditionName]]$foldModels,regularizationThresholds=citrus.regressionResult[[conditionName]]$regularizationThresholds)
     
-    # Plot
-    if (plot){
-      # Make condition output directoy
-      conditionOutputDir = file.path(outputDir,conditionName)
-      dir.create(conditionOutputDir,showWarnings=T,recursive=T)
-      
-      # Plot
-      cat("Plotting Error Rate\n")
-      sapply(modelTypes,citrus.plotTypeErrorRate,outputDir=conditionOutputDir,regularizationThresholds=regularizationThresholds,thresholdCVRates=thresholdCVRates,cvMinima=cvMinima,foldModels=foldModels,family=family)
-      
-      # Plot Features
-      cat("Plotting Stratifying Features\n")
-      lapply(modelTypes,citrus.plotDifferentialFeatures,differentialFeatures=differentialFeatures,features=foldFeatures[[nAllFolds]],outputDir=conditionOutputDir,labels=labels,family=family,cvMinima=cvMinima,foldModels=foldModels,regularizationThresholds=regularizationThresholds)
-      
-      # Plot Clusters
-      cat("Plotting Stratifying Clusters\n")
-      lapply(modelTypes,citrus.plotClusters,differentialFeatures=differentialFeatures,outputDir=conditionOutputDir,clusterChildren=preclusterResult[[conditionName]]$foldsClusterAssignments,citrus.dataArray=preclusterResult[[conditionName]]$citrus.dataArray,conditions=preclusterResult[[conditionName]]$conditions,clusterCols=preclusterResult[[conditionName]]$clusterColumns)
-      
-      # GO BACK AND MAKE THIS PARALLEL CALLS....
-      cat("Plotting Clustering Graph\n")
-      g = citrus.createHierarchyGraph(largeEnoughClusters=foldLargeEnoughClusters[[nAllFolds]],mergeOrder=preclusterResult[[conditionName]]$foldsCluster[[nAllFolds]]$merge,clusterAssignments=preclusterResult[[conditionName]]$foldsClusterAssignments[[nAllFolds]])
-      l = layout.reingold.tilford(g,root=length(foldLargeEnoughClusters[[nAllFolds]]),circular=T)
-      clusterMedians = t(sapply(foldLargeEnoughClusters[[nAllFolds]],.getClusterMedians,clusterAssignments=preclusterResult[[conditionName]]$foldsClusterAssignments[[nAllFolds]],data=preclusterResult[[conditionName]]$citrus.dataArray$data,clusterCols=preclusterResult[[conditionName]]$clusterColumns))
-      rownames(clusterMedians) = foldLargeEnoughClusters[[nAllFolds]]
-      for (modelType in names(differentialFeatures)){
-        citrus.plotHierarchicalClusterMedians(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),"markerPlots.pdf"),clusterMedians,graph=g,layout=l)  
-        for (cvPoint in names(differentialFeatures[[modelType]])){
-          featureClusterMatrix = .getClusterFeatureMatrix(differentialFeatures[[modelType]][[cvPoint]][["features"]])
-          citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,largeEnoughClusters=foldLargeEnoughClusters[[nAllFolds]],graph=g,layout=l)
-          citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePetalPlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,largeEnoughClusters=foldLargeEnoughClusters[[nAllFolds]],graph=g,layout=l,petalPlot=T,clusterMedians=clusterMedians)
-        }
+    cat("Plotting Stratifying Clusters\n")
+    lapply(modelTypes,citrus.plotClusters,differentialFeatures=citrus.regressionResult[[conditionName]]$differentialFeatures,outputDir=conditionOutputDir,clusterChildren=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments,citrus.dataArray=citrus.preclusterResult[[conditionName]]$citrus.dataArray,conditions=citrus.preclusterResult[[conditionName]]$conditions,clusterCols=citrus.preclusterResult[[conditionName]]$clusterColumns)
+    
+    
+    # GO BACK AND MAKE THIS PARALLEL CALLS....
+    cat("Plotting Clustering Graph\n")
+    g = citrus.createHierarchyGraph(largeEnoughClusters=citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],mergeOrder=citrus.preclusterResult[[conditionName]]$foldsCluster[[nAllFolds]]$merge,clusterAssignments=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments[[nAllFolds]])
+    l = layout.reingold.tilford(g,root=length(citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]]),circular=T)
+    clusterMedians = t(sapply(citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],.getClusterMedians,clusterAssignments=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments[[nAllFolds]],data=citrus.preclusterResult[[conditionName]]$citrus.dataArray$data,clusterCols=citrus.preclusterResult[[conditionName]]$clusterColumns))
+    rownames(clusterMedians) = citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]]
+    for (modelType in names(citrus.regressionResult[[conditionName]]$differentialFeatures)){
+      citrus.plotHierarchicalClusterMedians(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),"markerPlots.pdf"),clusterMedians,graph=g,layout=l)  
+      for (cvPoint in names(citrus.regressionResult[[conditionName]]$differentialFeatures[[modelType]])){
+        featureClusterMatrix = .getClusterFeatureMatrix(citrus.regressionResult[[conditionName]]$differentialFeatures[[modelType]][[cvPoint]][["features"]])
+        citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,largeEnoughClusters=citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],graph=g,layout=l)
+        citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePetalPlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,largeEnoughClusters=citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],graph=g,layout=l,petalPlot=T,clusterMedians=clusterMedians)
       }
     }
   }
-  return(regressionRes) 
+  
 }
