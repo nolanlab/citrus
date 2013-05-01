@@ -275,7 +275,7 @@ citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densi
     leftoutFeatures = lapply(1:nFolds,citrus.removeFeatures,foldFeatures=leftoutFeatures,nonOverlappingFeatures=nof)
     
     conditionResults = list(foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,leftoutFeatures=leftoutFeatures)
-    save(conditionResults,file=file.path(outputDir,paste("citrus.Features",conditionName,"rDat",sep="")))
+    save(conditionResults,file=file.path(outputDir,paste("citrus.Features",conditionName,".rDat",sep="")))
     featureRes[[conditionName]]=conditionResults
   }
   
