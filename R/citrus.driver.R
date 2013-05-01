@@ -303,9 +303,6 @@ citrus.endpointRegress = function(citrus.featureObject,citrus.preclusterResult,f
     stop("No model types specified.")
   }
   
-  if (!file.exists(outputDir)){
-    stop(paste("Output directory",outputDir,"not found."))
-  }
   
   if (family=="survival"){
     if ((ncol(labels)!=2)||(!all(colnames(labels) %in% c("time","event")))){
