@@ -274,7 +274,7 @@ citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densi
     foldFeatures[1:nFolds] = lapply(1:nFolds,citrus.removeFeatures,foldFeatures=foldFeatures,nonOverlappingFeatures=nof)
     leftoutFeatures = lapply(1:nFolds,citrus.removeFeatures,foldFeatures=leftoutFeatures,nonOverlappingFeatures=nof)
     
-    conditionResults = list(foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,leftoutFeatures=leftoutFeatures)
+    conditionResults = list(foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,leftoutFeatures=leftoutFeatures,folds=folds)
     save(conditionResults,file=file.path(outputDir,paste("citrus.Features.",conditionName,".rDat",sep="")))
     featureRes[[conditionName]]=conditionResults
   }
@@ -288,7 +288,7 @@ citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densi
 }
   
 
-citrus.endpointRegress = function(citrus.featureObject,citrus.preclusterResult,family,modelTypes,labels,returnResults=T,...){
+citrus.endpointRegress = function(citrus.featureObject,family,modelTypes,labels,returnResults=T,...){
   
   if (!(family %in% citrus.familyList())){
     stop("'family' argument must specified and one of the following: ",paste(citrus.familyList(),collapse=", "))
@@ -313,27 +313,28 @@ citrus.endpointRegress = function(citrus.featureObject,citrus.preclusterResult,f
     lengthLabels = length(labels)
   }
   
-  if (lengthLabels!=nrow(citrus.preclusterResult[[1]]$citrus.dataArray$fileIds)){
-    stop(paste("Number of Lables not equal to number of samples:",lengthLabels,nrow(citrus.preclusterResult[[1]]$citrus.dataArray$fileIds)))
-  }    
-
+  
   regressionRes = list()
 
   regressionRes=list()
   for (conditionName in names(citrus.featureObject)){
     # Calculate Regularization Thresholds
     nAllFolds = length(citrus.featureObject[[conditionName]]$foldFeatures)
+    if (lengthLabels!=nrow(citrus.featureObject[[conditionName]]$foldFeatures[[nAllFolds]])){
+      stop(paste("Number of Lables not equal to number of samples."))
+    }    
+    
     cat("Calculating Regularization Thresholds\n")
     regularizationThresholds = do.call(paste("citrus.generateRegularizationThresholds",family,sep="."),args=list(features=citrus.featureObject[[conditionName]]$foldFeatures[[nAllFolds]],labels=labels,modelTypes=modelTypes,n=100,...))
     
     # Build Fold Models
     cat("\nBuilding folds models\n")
-    foldModels = citrus.buildModels(folds=citrus.preclusterResult[[conditionName]]$folds,foldFeatures=citrus.featureObject[[conditionName]]$foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,modelTypes=modelTypes,family=family,...)
+    foldModels = citrus.buildModels(folds=citrus.featureObject[[conditionName]]$folds,foldFeatures=citrus.featureObject[[conditionName]]$foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,modelTypes=modelTypes,family=family,...)
     names(foldModels)=modelTypes
     
     # Calculate fold deviances
     cat("\nCalculating threshold deviance rates\n")
-    thresholdCVRates = do.call(paste("citrus.thresholdCVs",family,sep="."),args=list(foldModels=foldModels,leftoutFeatures=citrus.featureObject[[conditionName]]$leftoutFeatures,foldFeatures=citrus.featureObject[[conditionName]]$foldFeatures,modelTypes=modelTypes,regularizationThresholds=regularizationThresholds,labels=labels,folds=citrus.preclusterResult[[conditionName]]$folds))
+    thresholdCVRates = do.call(paste("citrus.thresholdCVs",family,sep="."),args=list(foldModels=foldModels,leftoutFeatures=citrus.featureObject[[conditionName]]$leftoutFeatures,foldFeatures=citrus.featureObject[[conditionName]]$foldFeatures,modelTypes=modelTypes,regularizationThresholds=regularizationThresholds,labels=labels,folds=citrus.featureObject[[conditionName]]$folds))
     
     # Find cv minima
     cat("Calculating CV minima\n")
