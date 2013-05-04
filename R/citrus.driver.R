@@ -358,8 +358,12 @@ citrus.endpointRegress = function(citrus.featureObject,family,modelTypes,labels,
 
 
 # Plot
-citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus.featureObject,citrus.regressionResult,modelTypes,family,labels){
-  
+citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus.featureObject,citrus.regressionResult,modelTypes,family,labels,...){
+  addtlArgs = list(...)
+  clusterColLabels=NULL;
+  if ("clusterColLabels" %in% names(addtlArgs)){
+    clusterColLabels=addtlArgs[["clusterColLabels"]]
+  }
   for (conditionName in names(citrus.regressionResult)){
     nAllFolds = length(citrus.featureObject[[conditionName]]$foldFeatures)
     # Make condition output directoy
@@ -373,7 +377,7 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus
     lapply(modelTypes,citrus.plotDifferentialFeatures,differentialFeatures=citrus.regressionResult[[conditionName]]$differentialFeatures,features=citrus.featureObject[[conditionName]]$foldFeatures[[nAllFolds]],outputDir=conditionOutputDir,labels=labels,family=family,cvMinima=citrus.regressionResult[[conditionName]]$cvMinima,foldModels=citrus.regressionResult[[conditionName]]$foldModels,regularizationThresholds=citrus.regressionResult[[conditionName]]$regularizationThresholds)
     
     cat("Plotting Stratifying Clusters\n")
-    lapply(modelTypes,citrus.plotClusters,differentialFeatures=citrus.regressionResult[[conditionName]]$differentialFeatures,outputDir=conditionOutputDir,clusterChildren=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments,citrus.dataArray=citrus.preclusterResult[[conditionName]]$citrus.dataArray,conditions=citrus.preclusterResult[[conditionName]]$conditions,clusterCols=citrus.preclusterResult[[conditionName]]$clusterColumns)
+    lapply(modelTypes,citrus.plotClusters,differentialFeatures=citrus.regressionResult[[conditionName]]$differentialFeatures,outputDir=conditionOutputDir,clusterChildren=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments,citrus.dataArray=citrus.preclusterResult[[conditionName]]$citrus.dataArray,conditions=citrus.preclusterResult[[conditionName]]$conditions,clusterCols=citrus.preclusterResult[[conditionName]]$clusterColumns,clusterColLabels=clusterColLabels)
     
     
     # GO BACK AND MAKE THIS PARALLEL CALLS....

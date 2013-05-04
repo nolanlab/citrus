@@ -94,18 +94,19 @@ citrus.plotModelDifferentialFeatures.survival = function(modelType,differentialF
       f = features[,nonzeroFeatureName]
       cutoff = median(f)
       plot(x=f,y=s[,1],xlab=nonzeroFeatureName,ylab="time",pch=pchs,col="red",cex=2,main="Time vs Feature")   
-      lines(c(cutoff,cutoff),c(min(s[,1]-10),max(s[,1]+10)),col="blue",lty=3)
+      #lines(c(cutoff,cutoff),c(min(s[,1]-10),max(s[,1]+10)),col="blue",lty=3)
       legend("topright",legend=c("censored","uncensored","median"),pch=c(13,20,45),col=c("red","red","blue"))
     }
     dev.off();
-    pdf(file.path(modelTypeDir,paste("survivalCurves_singleFeatures_",cvPoint,".pdf",sep="")))
+    pdf(file.path(modelTypeDir,paste("survivalCurves_singleFeatures_",cvPoint,".pdf",sep="")),height=6,width=6)
     for (nonzeroFeatureName in nonzeroFeatureNames){
       f = features[,nonzeroFeatureName]
       cutoff = median(f)
       sf=survfit(s~group,data=data.frame(f,group=as.numeric(f<cutoff)))
       plot(sf,xlab="Time",ylab="Percent Survival",main=paste("Survival stratified on",nonzeroFeatureName))
       sdf = survdiff(s~group,data=data.frame(f,group=as.numeric(f<cutoff)))
-      legend("topright",legend=c(1 - pchisq(sdf$chisq, length(sdf$n) - 1)),cex=.7)
+      p.val = 1 - pchisq(sdf$chisq, length(sdf$n) - 1)
+      legend("topright",legend=c(paste("P-Value:",substr(p.val,1,5))),cex=1)
     }
     dev.off()
     finalModel=foldModels[[modelType]][[length(foldModels[[modelType]])]]
@@ -167,9 +168,14 @@ citrus.overlapDensityPlot = function(clusterDataList,backgroundData){
   print(p)
 }
 
-citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterChildren,citrus.dataArray,conditions,clusterCols){
+citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterChildren,citrus.dataArray,conditions,clusterCols,clusterColLabels=NULL){
   data = citrus.dataArray$data[citrus.dataArray$data[,"fileId"] %in% citrus.dataArray$fileIds[,conditions],]
   clusterChildren = clusterChildren[[length(clusterChildren)]]
+  if (!is.null(clusterColLabels)){
+    if (length(clusterColLabels)!=length(clusterCols)){
+      stop("clusterColsLabels length must equal length of clusterCols");
+    }
+  }
   for (cvPoint in names(differentialFeatures[[modelType]])){
     nonzeroClusters = as.numeric(differentialFeatures[[modelType]][[cvPoint]][["clusters"]])
     pdf(file=file.path(outputDir,paste(modelType,"_results/clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=(2.2*length(clusterCols)+2),height=(2.2*length(nonzeroClusters)))
@@ -180,12 +186,16 @@ citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterC
       } else {
         clusterDataList[[as.character(nonzeroCluster)]]=data[clusterChildren[[nonzeroCluster]],clusterCols]
       }
+      if (!is.null(clusterColLabels)){
+        colnames(clusterDataList[[as.character(nonzeroCluster)]])=clusterColLabels	
+      }
     }
     if (nrow(data)>2500){
       bgData = data[sample(1:nrow(data),2500),clusterCols]
     } else {
       bgData = data[,clusterCols]
     }
+    
     citrus.overlapDensityPlot(clusterDataList=clusterDataList,backgroundData=bgData)
     dev.off()
   }
