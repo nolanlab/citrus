@@ -72,8 +72,6 @@ Rclusterpp.setThreads(1)
 
 conditionComparaMatrix=matrix(F,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
 conditionComparaMatrix[3]=T
-preclusterResult=citrus.preCluster(dataDir,outputDir,clusterCols,fileList=fileList,fileSampleSize,nFolds=nFolds,conditionComparaMatrix=conditionComparaMatrix)
-endpointResult=citrus.endpointRegress(preclusterResult,outputDir,family="survival",labels=labels,plot=T,returnResults=T,featureTypes=featureTypes,medianColumns=medianCols,emdColumns=medianCols)
 res=citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels,nFolds=5,family,modelTypes="glmnet",featureTypes="emDists",minimumClusterSizePercent=minimumClusterSizePercent,conditionComparaMatrix=conditionComparaMatrix,plot=T,returnResults=T,emdColumns=medianCols)
 res=citrus.quick(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels,family,modelTypes="glmnet",featureTypes="emDists",minimumClusterSizePercent=minimumClusterSizePercent,conditionComparaMatrix=conditionComparaMatrix,plot=T,returnResults=T,emdColumns=medianCols)
 
