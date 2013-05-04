@@ -2,10 +2,14 @@
 citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,transformCols=NULL,transformFactor=5,emptyValue=T){
   data = list();
   fileCounter = 1;
-  fileNames = c();  
+  fileNames = c();
+  fileChannelNames = list();
+  fileReagentNames = list();
   for (i in 1:length(conditions)){
     cat(paste("Reading Condition ",conditions[i],"\n"));
     conditionData = list();
+    fileChannelNames[[conditions[i]]] = list();
+    fileReagentNames[[conditions[i]]] = list();
     for (fileName in fileList[,conditions[i]]){
       fileNames[fileCounter]=fileName
       filePath = file.path(dataDir,fileName);
@@ -13,7 +17,10 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
         stop(paste("File",filePath,"not found."));
       }
       cat(paste("\tReading file ",fileName,"\n"));
-      suppressWarnings((fcsData =exprs(read.FCS(filePath,emptyValue=emptyValue))));
+      suppressWarnings((fcsFile = read.FCS(filePath,emptyValue=emptyValue)))
+      fcsData=exprs(fcsFile)
+      fileChannelNames[[conditions[i]]][[fileName]]=as.vector(pData(parameters(fcsFile))$name)
+      fileReagentNames[[conditions[i]]][[fileName]]=as.vector(pData(parameters(fcsFile))$desc)
       fcsData = cbind(fcsData,fileEventNumber=1:nrow(fcsData),fileId=fileCounter);
       fileCounter=fileCounter+1;
       if (!is.null(transformCols)){
@@ -30,7 +37,7 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
     gc();
   }
   
-  results = list(data=do.call("rbind",data),fileIds=matrix(1:(fileCounter-1),ncol=length(conditions),dimnames=list(c(),conditions)),fileNames=fileNames)
+  results = list(data=do.call("rbind",data),fileIds=matrix(1:(fileCounter-1),ncol=length(conditions),dimnames=list(c(),conditions)),fileNames=fileNames,fileChannelNames=fileChannelNames,fileReagentNames=fileReagentNames)
   class(results) = "citrusDataObject"
   # HOW DO I MAKE IT PRINT OUT SUMMARIES? 
   return(results);

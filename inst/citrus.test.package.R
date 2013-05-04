@@ -13,6 +13,7 @@ labels = c(rep("healthy",10),rep("diseased",10))
 labels = as.factor(labels)
 nFolds=5
 fileList = data.frame(unstim=list.files(dataDir,pattern=".fcs",ignore.case=T))
+res = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions="unstim",fileSampleSize=50)
 featureTypes=c("densities")
 modelTypes=c("pamr","glmnet")
 minimumClusterSizePercent=0.05
