@@ -49,7 +49,8 @@ citrus.calculateFeature.emDists = function(foldsFileIds,clusterIds,clusterAssign
   } else {
     df = citrus.calculateFeature.densities(foldsFileIds,clusterIds,clusterAssignments,data,citrus.dataArray,...)
   }
-  completeClusterIds = clusterIds[apply(df>0.01,2,all)]
+  completeClusterIds = clusterIds[apply(df>0,2,all)]
+  
   referenceFileIds = foldsFileIds[foldsFileIds %in% citrus.dataArray$fileIds[,conditions[1]]]
   targetFileIds = foldsFileIds[foldsFileIds %in% citrus.dataArray$fileIds[,conditions[2]]]
   if ("snowCluster" %in% names(addtlArgs)){
@@ -57,8 +58,6 @@ citrus.calculateFeature.emDists = function(foldsFileIds,clusterIds,clusterAssign
   } else {
     features = t(sapply(1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=completeClusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=addtlArgs[["emdColumns"]]))
   }
-  #features = t(sapply(1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=completeClusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=emdColumns))
-  #features = t(sapply(1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=completeClusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=addtlArgs[["emdColumns"]]))
   rownames(features) = citrus.dataArray$fileNames[targetFileIds]
   return(features)
 }
@@ -85,6 +84,13 @@ citrus.calculateFileClusterEMDist = function(clusterId,clusterAssignments,refere
 
 citrus.calculateFileClusterParameterEMDist = function(emdColumn,referenceData,targetData){
   #cat("IMPLEMENT MINIMUM CLUSTER PERCENTAGE CHECK\n");
+  if ((length(referenceData)==0)||(length(targetData)==0)){
+    return(0);
+  } else if (is.null(dim(referenceData))||is.null(dim(targetData))){
+    return(0);
+  } else if ((nrow(referenceData)<25)||(nrow(targetData)<25)){
+    return(0);
+  } 
   h = hist(c(referenceData[,emdColumn],targetData[,emdColumn]),breaks=50,plot=F)
   dist = emdw(A=h$mids,wA=hist(referenceData[,emdColumn],plot=F,breaks=h$breaks)$density,B=h$mids,wB=hist(targetData[,emdColumn],plot=F,breaks=h$breaks)$density)
   if ((mean(referenceData[,emdColumn])-mean(targetData[,emdColumn]))>0){

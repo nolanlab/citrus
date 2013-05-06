@@ -64,6 +64,11 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
     stop(paste("Output directory",outputDir,"not found."))
   }
   
+  emptyValue=T
+  if ("emptyValue" %in% names(addtlArgs)){
+    emptyValue = addtlArgs[["emptyValue"]]
+  }
+
   if (!is.null(conditionComparaMatrix)){
     allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 
   } else {
@@ -87,7 +92,7 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
   for (conditions in allConditions){
     cat(paste("Clustering Condition",paste(conditions,collapse=" vs "),"\n"))
     
-    citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize,transformFactor=transformFactor)
+    citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize,transformFactor=transformFactor,emptyValue=emptyValue)
     
     foldsCluster = lapply(folds,citrus.foldCluster,citrus.dataArray=citrus.dataArray,clusterCols=clusterCols,conditions=conditions)
     cat("Assigning Events to Clusters\n")
