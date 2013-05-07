@@ -41,16 +41,19 @@ citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densi
       stop("No Features Calculated.")
     }
     #foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=preclusterResult[[conditionName]]$citrus.dataArray,foldsClusterAssignments=preclusterResult[[conditionName]]$foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,emdColumns=emdColumns)
-    leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=preclusterResult[[conditionName]]$citrus.dataArray,foldsClusterAssignments=preclusterResult[[conditionName]]$leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,...)
-    #leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,emdColumns=emdColumns)
     
     #Normalize features... Sometimes EMD's aren't calculated. Need a better way to handle this.
     if (folds[[1]][1]!="all"){
+      leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=preclusterResult[[conditionName]]$citrus.dataArray,foldsClusterAssignments=preclusterResult[[conditionName]]$leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,...)
+      #leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,emdColumns=emdColumns)
+
       nof = lapply(1:nFolds,citrus.getNonOverlappingFeatures,foldFeatures=foldFeatures,leftoutFeatures=leftoutFeatures)
       foldFeatures[1:nFolds] = lapply(1:nFolds,citrus.removeFeatures,foldFeatures=foldFeatures,nonOverlappingFeatures=nof)
       leftoutFeatures = lapply(1:nFolds,citrus.removeFeatures,foldFeatures=leftoutFeatures,nonOverlappingFeatures=nof)
+      conditionResults = list(foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,leftoutFeatures=leftoutFeatures,folds=folds)
+    } else {
+      conditionResults = list(foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,folds=folds)	
     }
-    conditionResults = list(foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,leftoutFeatures=leftoutFeatures,folds=folds)
     save(conditionResults,file=file.path(outputDir,paste("citrus.Features.",conditionName,".rDat",sep="")))
     featureRes[[conditionName]]=conditionResults
   }
