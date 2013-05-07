@@ -1,3 +1,68 @@
+
+citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densities"),minimumClusterSizePercent=0.05,returnResults=T,...){  
+  addtlArgs = list(...)
+  
+  # Error check before we actually start the work.
+  if ((!all(featureTypes %in% citrus.featureTypes()))||(length(featureTypes)<1)){
+    stop(paste("featureTypes must be 1 or more of the following:",paste(citrus.featureTypes(),collapse=", "),"\n"))
+  }
+  
+  if (("medians" %in% featureTypes)&&(!("medianColumns" %in% names(list(...))))){
+    stop("medianColumns argument must be specified to calculate cluster medians.")
+  }
+  
+  if (("emDists" %in% featureTypes)&&(!("emdColumns" %in% names(list(...))))){
+    stop("emDists argument must be specified to calculate cluster emDists.")
+  }
+  
+  
+  if (!file.exists(outputDir)){
+    stop(paste("Output directory",outputDir,"not found."))
+  }
+  
+  
+  featureRes = list()
+  
+  for (conditionName in names(preclusterResult)){
+    
+    cat(paste("Building features for condition",conditionName,"\n"))
+    conditions=preclusterResult[[conditionName]]$conditions
+    
+    folds = preclusterResult[[conditionName]]$folds
+    nAllFolds=length(folds)
+    nFolds=nAllFolds-1
+    
+    cat("Calculating Fold Large Enough Clusters\n")
+    foldLargeEnoughClusters = lapply(1:nAllFolds,citrus.calculateFoldLargeEnoughClusters,foldsClusterAssignments=preclusterResult[[conditionName]]$foldsClusterAssignments,folds=folds,citrus.dataArray=preclusterResult[[conditionName]]$citrus.dataArray,minimumClusterSizePercent=minimumClusterSizePercent)
+    
+    cat("Calculating Features\n")
+    foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=preclusterResult[[conditionName]]$citrus.dataArray,foldsClusterAssignments=preclusterResult[[conditionName]]$foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,...)
+    if (any(do.call("c",lapply(lapply(foldFeatures,dim),is.null)))){
+      stop("No Features Calculated.")
+    }
+    #foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=preclusterResult[[conditionName]]$citrus.dataArray,foldsClusterAssignments=preclusterResult[[conditionName]]$foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,emdColumns=emdColumns)
+    leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=preclusterResult[[conditionName]]$citrus.dataArray,foldsClusterAssignments=preclusterResult[[conditionName]]$leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,...)
+    #leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,emdColumns=emdColumns)
+    
+    #Normalize features... Sometimes EMD's aren't calculated. Need a better way to handle this.
+    if (folds[[1]][1]!="all"){
+      nof = lapply(1:nFolds,citrus.getNonOverlappingFeatures,foldFeatures=foldFeatures,leftoutFeatures=leftoutFeatures)
+      foldFeatures[1:nFolds] = lapply(1:nFolds,citrus.removeFeatures,foldFeatures=foldFeatures,nonOverlappingFeatures=nof)
+      leftoutFeatures = lapply(1:nFolds,citrus.removeFeatures,foldFeatures=leftoutFeatures,nonOverlappingFeatures=nof)
+    }
+    conditionResults = list(foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,leftoutFeatures=leftoutFeatures,folds=folds)
+    save(conditionResults,file=file.path(outputDir,paste("citrus.Features.",conditionName,".rDat",sep="")))
+    featureRes[[conditionName]]=conditionResults
+  }
+  
+  if (returnResults){
+    return(featureRes)
+  } else {
+    return()
+  }
+  
+}
+
 citrus.getFeatureSetNames = function(){
   return(c("densities","medians"))
 }
