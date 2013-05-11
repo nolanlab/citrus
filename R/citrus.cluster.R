@@ -14,9 +14,14 @@ citrus.cluster = function(data){
   return(Rclusterpp.hclust(data))
 }
 
-citrus.calculateCompleteHierarchicalMembership = function(clustering){
+citrus.calculateCompleteHierarchicalMembership = function(clustering,...){
     mergeOrder = clustering$merge
-    return(lapply(as.list(1:nrow(mergeOrder)),citrus.traverseMergeOrder,mergeOrder=mergeOrder))
+    if ("snowCluster" %in% names(list(...))){
+      return(parLapply(list(...)[["snowCluster"]],as.list(1:nrow(mergeOrder)),citrus.traverseMergeOrder,mergeOrder=mergeOrder))
+    } else {
+      return(lapply(as.list(1:nrow(mergeOrder)),citrus.traverseMergeOrder,mergeOrder=mergeOrder))
+    }
+    
 }
 
 citrus.mapFoldDataToClusterSpace = function(index,citrus.dataArray,foldClusterAssignments,folds,conditions,clusterCols){
@@ -55,7 +60,7 @@ citrus.traverseMergeOrder = function(node,mergeOrder){
 }
 
 
-citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,transformCols=NULL,conditionComparaMatrix=NULL,balanceFactor=NULL,transformFactor=5,...){
+citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds=5,folds=NULL,transformCols=NULL,conditionComparaMatrix=NULL,balanceFactor=NULL,transformFactor=5,...){
   
   addtlArgs = list(...)
   
@@ -83,6 +88,8 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
   if (nFolds=="all"){
     folds = list()
     nAllFolds=1
+  } else if (!is.null(folds)){
+    nAllFolds = nFolds+1  
   } else {
     folds = pamr:::balanced.folds(y=balanceFactor,nfolds=nFolds)
     nAllFolds = nFolds+1  
