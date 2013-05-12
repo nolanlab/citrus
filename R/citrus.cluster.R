@@ -89,7 +89,7 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
     folds = list()
     nAllFolds=1
   } else if (!is.null(folds)){
-    nAllFolds = nFolds+1  
+    nAllFolds = length(folds)+1  
   } else {
     folds = pamr:::balanced.folds(y=balanceFactor,nfolds=nFolds)
     nAllFolds = nFolds+1  
