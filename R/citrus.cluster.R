@@ -89,7 +89,7 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
     folds = list()
     nAllFolds=1
   } else if (!is.null(folds)){
-    nAllFolds = nFolds+1  
+    nAllFolds = length(folds)+1  
   } else {
     folds = pamr:::balanced.folds(y=balanceFactor,nfolds=nFolds)
     nAllFolds = nFolds+1  
@@ -109,7 +109,7 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
       foldsClusterAssignments = lapply(foldsCluster,citrus.calculateCompleteHierarchicalMembership)  
     }
     
-    resObj = list(folds=folds,foldsCluster=foldsCluster,foldsClusterAssignments=foldsClusterAssignments,conditions=conditions,citrus.dataArray=citrus.dataArray,clusterColumns=clusterCols)
+    preclusterObject = list(folds=folds,foldsCluster=foldsCluster,foldsClusterAssignments=foldsClusterAssignments,conditions=conditions,citrus.dataArray=citrus.dataArray,clusterColumns=clusterCols)
     if (nFolds!="all"){
       cat("Assigning Leftout Events to Clusters\n")
       if ("snowCluster" %in% names(addtlArgs)){
@@ -118,10 +118,10 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
         leftoutClusterAssignments = lapply(1:nFolds,citrus.mapFoldDataToClusterSpace,citrus.dataArray=citrus.dataArray,foldClusterAssignments=foldsClusterAssignments,folds=folds,conditions=conditions,clusterCols=clusterCols)  
       }
       
-      resObj$leftoutClusterAssignments=leftoutClusterAssignments
+      preclusterObject$leftoutClusterAssignments=leftoutClusterAssignments
     }
-    save(resObj,file=file.path(outputDir,paste("citrus.Cluster.",paste(conditions,collapse="_vs_"),".rDat",sep="")))
-    res[[paste(conditions,collapse="_vs_")]]=resObj
+    save(preclusterObject,file=file.path(outputDir,paste("citrus.Cluster.",paste(conditions,collapse="_vs_"),".rDat",sep="")))
+    res[[paste(conditions,collapse="_vs_")]]=preclusterObject
   }
   return(res)
 }

@@ -12,7 +12,7 @@ citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densi
   }
   
   if (("emDists" %in% featureTypes)&&(!("emdColumns" %in% names(list(...))))){
-    stop("emDists argument must be specified to calculate cluster emDists.")
+    stop("emdColumns argument must be specified to calculate cluster emDists.")
   }
   
   
