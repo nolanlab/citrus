@@ -20,7 +20,13 @@ minimumClusterSizePercent=0.05
 plot=T
 returnResults=T
 family="classification"
+transformCols=NULL
+conditionComparaMatrix=NULL
+transformFactor=NULL
+Sys.setenv(OMP_NUM_THREADS=1)
+nFolds=5
 res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds=5,family="classification",featureTypes=c("densities"))
+citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds="all",family="classification",featureTypes=c("densities"))
 res = citrus.quick(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels,family="classification",featureTypes=featureTypes)
 
 

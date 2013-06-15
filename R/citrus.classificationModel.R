@@ -44,7 +44,12 @@ citrus.cvIteration.classification = function(i,modelType,features,labels,regular
   }
 }
 
-citrus.thresholdCVs.quick = function(modelType,features,regularizationThresholds,family,labels,nFolds=5,ncvIterations=10,...){
+
+citrus.thresholdCVs.quick = function(foldModels,foldFeatures,modelTypes,regularizationThresholds,labels,family,...){
+  sapply(modelTypes,citrus.thresholdCVs.model.quick,features=foldFeatures[[1]],regularizationThresholds=regularizationThresholds,family=family,labels=labels,...)
+}
+
+citrus.thresholdCVs.model.quick = function(modelType,features,regularizationThresholds,family,labels,nFolds=5,ncvIterations=10,...){
   typeRegularizationThresholds=regularizationThresholds[[modelType]]
   if (modelType=="pamr"){
     if (family=="survival"){
@@ -83,9 +88,6 @@ citrus.thresholdCVs.classification = function(foldModels,leftoutFeatures,foldFea
   
   predictionSuccess = lapply(as.list(modelTypes),citrus.foldTypeScore,folds=folds,leftoutPredictions=leftoutPredictions,labels=labels)
   names(predictionSuccess)=modelTypes
-  
-  #thresholdSEMs = lapply(modelTypes,citrus.modelTypeSEM,predictionSuccess=predictionSuccess,regularizationThresholds=regularizationThresholds)
-  #names(thresholdSEMs)=modelTypes
   
   thresholdErrorRates = lapply(modelTypes,citrus.calculateTypeErroRate,predictionSuccess=predictionSuccess,regularizationThresholds=regularizationThresholds)
   names(thresholdErrorRates)=modelTypes
