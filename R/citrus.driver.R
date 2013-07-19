@@ -18,7 +18,7 @@
 #' @details Details about the cluster conditions matrix, fold features, etc.
 #' @author Robert Bruggner
 #' @references http://github.com/nolanlab/citrus/
-citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels,nFolds,family,modelTypes=c("pamr","glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,conditionComparaMatrix=NULL,plot=T,returnResults=F,transformFactor=NULL,...){
+citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels,nFolds,family,modelTypes=c("glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,conditionComparaMatrix=NULL,plot=T,returnResults=F,transformFactor=NULL,...){
   balanceFactor=NULL
   if (family=="survival"){
     balanceFactor=as.factor(labels[,"event"])
@@ -28,6 +28,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,lab
   }
   preclusterResult = citrus.preCluster(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,transformCols,conditionComparaMatrix,balanceFactor,transformFactor)
   #featureObject = citrus.buildFeatures(preclusterResult,outputDir,featureTypes,minimumClusterSizePercent)
+  #citrus.featureObject = featureObject
   featureObject = citrus.buildFeatures(preclusterResult,outputDir,featureTypes,minimumClusterSizePercent,...)
   #regressionResults = citrus.endpointRegress(citrus.featureObject=featureObject,family=family,modelTypes=modelTypes,labels=labels) 
   regressionResults = citrus.endpointRegress(citrus.featureObject=featureObject,family=family,modelTypes=modelTypes,labels=labels,...) 
@@ -95,11 +96,13 @@ citrus.endpointRegress = function(citrus.featureObject,family,modelTypes,labels,
     
     # Find cv minima
     cat("Calculating CV minima\n")
-    cvMinima = sapply(modelTypes,citrus.getCVMinima,thresholdCVRates=thresholdCVRates)
+    cvMinima = lapply(modelTypes,citrus.getCVMinima,thresholdCVRates=thresholdCVRates)
+    names(cvMinima) = modelTypes
     
     # Extract Features
     cat("Extracting differential features\n")
-    differentialFeatures = sapply(modelTypes,citrus.extractModelFeatures,cvMinima=cvMinima,foldModels=foldModels,foldFeatures=citrus.featureObject[[conditionName]]$foldFeatures,regularizationThresholds=regularizationThresholds,family=family)
+    differentialFeatures = lapply(modelTypes,citrus.extractModelFeatures,cvMinima=cvMinima,foldModels=foldModels,foldFeatures=citrus.featureObject[[conditionName]]$foldFeatures,regularizationThresholds=regularizationThresholds,family=family)
+    names(differentialFeatures) = modelTypes
     
     regressionRes[[conditionName]] = list(differentialFeatures=differentialFeatures,cvMinima=cvMinima,thresholdCVRates=thresholdCVRates,foldModels=foldModels,regularizationThresholds=regularizationThresholds)
     

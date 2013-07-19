@@ -1,13 +1,13 @@
 rm(list = ls())
 library("citrus")
 
-Rclusterpp.setThreads(1)
+#Rclusterpp.setThreads(1)
 
 # Example 1: Diseased patients have a differing proportion of cells in clusters 2 & 3.
 dataDir = file.path(system.file(package="citrus"),"extdata","example1")
 outputDir = "~/Desktop/notime/tmp/citrusOutput/"
 clusterCols = c(1:2)
-fileSampleSize=500
+fileSampleSize=1000
 
 labels = c(rep("healthy",10),rep("diseased",10))
 labels = as.factor(labels)
@@ -23,11 +23,10 @@ family="classification"
 transformCols=NULL
 conditionComparaMatrix=NULL
 transformFactor=NULL
-Sys.setenv(OMP_NUM_THREADS=1)
+#Sys.setenv(OMP_NUM_THREADS=1)
 nFolds=5
 res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds=5,family="classification",featureTypes=c("densities"))
-citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds="all",family="classification",featureTypes=c("densities"))
-res = citrus.quick(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels,family="classification",featureTypes=featureTypes)
+res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds="all",family="classification",featureTypes=c("densities"),plot=T)
 
 
 # Eample 2: Diseased patients have high levels of functional marker 2 in cluster 3 when stimulated. 

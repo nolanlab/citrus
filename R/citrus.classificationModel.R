@@ -46,7 +46,9 @@ citrus.cvIteration.classification = function(i,modelType,features,labels,regular
 
 
 citrus.thresholdCVs.quick = function(foldModels,foldFeatures,modelTypes,regularizationThresholds,labels,family,...){
-  sapply(modelTypes,citrus.thresholdCVs.model.quick,features=foldFeatures[[1]],regularizationThresholds=regularizationThresholds,family=family,labels=labels,...)
+  rates = lapply(modelTypes,citrus.thresholdCVs.model.quick,features=foldFeatures[[1]],regularizationThresholds=regularizationThresholds,family=family,labels=labels,...)
+  names(rates)=modelTypes
+  return(rates)
 }
 
 citrus.thresholdCVs.model.quick = function(modelType,features,regularizationThresholds,family,labels,nFolds=5,ncvIterations=10,...){
