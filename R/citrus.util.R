@@ -69,10 +69,15 @@ citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaM
     fileIds = list();
     populationClusterMap = list();
     for (condition in conditions){
-      conditionFileIds = c();
+      
+      nPatients = length(filePopulationList[[condition]][,populationName])
+      baseFileId = (match(condition,conditions)-1)*nPatients
+      fileIds[[condition]] = (baseFileId+1):(baseFileId+nPatients)
       for (populationName in colnames(filePopulationList[[condition]])){
         populationEvents = c();
-        for (fcsFileName in filePopulationList[[condition]][,populationName]){
+        for (patientId in 1:nPatients){
+          fcsFileName = filePopulationList[[condition]][patientId,populationName]
+          fileId = baseFileId+patientId
           print(paste("Reading",fcsFileName))
           fcsFile = read.FCS(file.path(dataDir,fcsFileName))
           fileChannelNames[[fcsFileName]] = colnames(fcsFile)
@@ -82,12 +87,12 @@ citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaM
           absoluteEventIds = (lastEvent+1):(eventCounter+nrow(fcsFileData))
           cda = rbind(cda,data.frame(fcsFileData,fileId=fileId))
           populationEvents = c(populationEvents,absoluteEventIds)
-          
           eventCounter = eventCounter+nrow(fcsFileData)
           fileNames[[fileId]]=fcsFileName
-          conditionFileIds = c(conditionFileIds,fileId)
           fileId=fileId+1;
         }
+        
+        
         if (populationName %in% names(populationClusterMap)){
           clusterAssignments[[populationClusterMap[[populationName]]]] = c(populationClusterMap[[populationName]],populationEvents)
         } else {
@@ -98,12 +103,12 @@ citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaM
         
       }
     }
-    fileIds[[condition]] = conditionFileIds;
+    
     results[[paste(conditions,collapse="_vs_")]] = list(folds="all",
                                                         foldsClusterAssignments=list(all=clusterAssignments),
                                                         conditions=conditions,
                                                         citrus.dataArray=list(data=as.matrix(cda),
-                                                                              fileNames=unlist(fileNames),
+                                                                              fileNames=unlist(fileNames,use.names=F),
                                                                               fileIds=do.call("cbind",fileIds),
                                                                               fileChannelNames=fileChannelNames,
                                                                               fileReagentNames=fileReagentNames),

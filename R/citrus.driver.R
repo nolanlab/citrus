@@ -32,6 +32,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,labels,nFold
   }
       
   preclusterResult = citrus.preCluster(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,transformCols,conditionComparaMatrix,balanceFactor,transformFactor)
+  #preclusterResult = citrus.assembleHandGates(dataDir=dataDir,filePopulationList=filePopulationList)
   #featureObject = citrus.buildFeatures(preclusterResult,outputDir,featureTypes,minimumClusterSizePercent)
   #citrus.featureObject = featureObject
   featureObject = citrus.buildFeatures(preclusterResult,outputDir,featureTypes,minimumClusterSizePercent,...)
