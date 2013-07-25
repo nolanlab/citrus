@@ -30,8 +30,10 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,labels,nFold
   
   if (!is.null(fileList)){
     preclusterResult = citrus.preCluster(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,transformCols,conditionComparaMatrix,balanceFactor,transformFactor)
+    plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph")
   } else if (!is.null(filePopulationList)){
     preclusterResult = citrus.assembleHandGates(dataDir,filePopulationList,conditionComparaMatrix)
+    plotTypes=c("errorRate","stratifyingFeatures")
   } else {
     stop("Either fileList or filePopulationList arguments must be provided")
   }
@@ -42,7 +44,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,labels,nFold
   #regressionResults = citrus.endpointRegress(citrus.featureObject=featureObject,family=family,modelTypes=modelTypes,labels=labels) 
   regressionResults = citrus.endpointRegress(citrus.featureObject=featureObject,family=family,modelTypes=modelTypes,labels=labels,...) 
   if (plot){
-    citrus.plotRegressionResults(outputDir,citrus.preclusterResult=preclusterResult,citrus.featureObject=featureObject,citrus.regressionResult=regressionResults,modelTypes,family,labels)
+    citrus.plotRegressionResults(outputDir,citrus.preclusterResult=preclusterResult,citrus.featureObject=featureObject,citrus.regressionResult=regressionResults,modelTypes,family,labels,plotTypes)
   }
   return(list(preclusterResult=preclusterResult,featureObject=featureObject,regressionResults=regressionResults))
 }
