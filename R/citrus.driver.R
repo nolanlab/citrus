@@ -19,23 +19,26 @@
 #' @author Robert Bruggner
 #' @references http://github.com/nolanlab/citrus/
 citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,labels,nFolds,family,fileList=NULL,filePopulationList=NULL,modelTypes=c("glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,conditionComparaMatrix=NULL,plot=T,returnResults=F,transformFactor=NULL,...){
+  
   balanceFactor=NULL
-  #if (is.null(c(fileList,filePopulationList)){
-  #  stop("Either fileList or filePopulationList arguments must be provided")
-  #}
-              
   if (family=="survival"){
     balanceFactor=as.factor(labels[,"event"])
     if ((ncol(labels)!=2)||(!all(colnames(labels) %in% c("time","event")))){
       stop("Incorrect labeling for files. Expecting 'time' and 'event' label columns.")
     }
   }
+  
+  if (!is.null(fileList)){
+    preclusterResult = citrus.preCluster(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,transformCols,conditionComparaMatrix,balanceFactor,transformFactor)
+  } else if (!is.null(filePopulationList)){
+    preclusterResult = citrus.assembleHandGates(dataDir,filePopulationList,conditionComparaMatrix)
+  } else {
+    stop("Either fileList or filePopulationList arguments must be provided")
+  }
       
-  preclusterResult = citrus.preCluster(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,transformCols,conditionComparaMatrix,balanceFactor,transformFactor)
-  #preclusterResult = citrus.assembleHandGates(dataDir=dataDir,filePopulationList=filePopulationList)
   #featureObject = citrus.buildFeatures(preclusterResult,outputDir,featureTypes,minimumClusterSizePercent)
-  #citrus.featureObject = featureObject
   featureObject = citrus.buildFeatures(preclusterResult,outputDir,featureTypes,minimumClusterSizePercent,...)
+  
   #regressionResults = citrus.endpointRegress(citrus.featureObject=featureObject,family=family,modelTypes=modelTypes,labels=labels) 
   regressionResults = citrus.endpointRegress(citrus.featureObject=featureObject,family=family,modelTypes=modelTypes,labels=labels,...) 
   if (plot){
