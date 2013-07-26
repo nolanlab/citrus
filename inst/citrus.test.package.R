@@ -24,21 +24,11 @@ nFolds=5
 res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds=5,family="classification",featureTypes=c("densities"))
 res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds="all",family="classification",featureTypes=c("densities"),plot=T)
 
-filePopulationList = list(unstim=matrix(list.files("~/Desktop/work/citrus/inst/extdata//example4.1",pattern=".fcs"),ncol=3,byrow=T,dimnames=list(NULL,paste("Pop",1:3))))
-filePopulationList = list(unstim=matrix(list.files("~/Desktop/work/citrus/inst/extdata//example4.1",pattern=".fcs"),ncol=3,byrow=T,dimnames=list(NULL,paste("Pop",1:3))),stim1=matrix(list.files("~/Desktop/work/citrus/inst/extdata//example4.1",pattern=".fcs"),ncol=3,byrow=T,dimnames=list(NULL,paste("Pop",1:3))))
-x = citrus.assembleHandGates(dataDir=dataDir,filePopulationList=filePopulationList)
-
-conditionComparaMatrix=matrix(T,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
-conditionComparaMatrix[2]=F
-
-x = citrus.assembleHandGates(dataDir=dataDir,filePopulationList=filePopulationList,conditionComparaMatrix=conditionComparaMatrix)
-length(x$unstim_vs_stim1$foldsClusterAssignments$all)
-length(x$stim1$foldsClusterAssignments$all)
-table(x$stim1$citrus.dataArray$data[x$stim1$foldsClusterAssignments$all[[3]],"fileId"])
+filePopulationList = list(unstim=matrix(list.files("~/Desktop/work/citrus/inst/extdata/example4.1",pattern=".fcs"),ncol=3,byrow=T,dimnames=list(NULL,paste("Pop",1:3))))
+res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,filePopulationList=filePopulationList,labels=labels,family="classification",featureTypes=c("densities"),modelTypes=c("glmnet","pamr"),plot=T)
 
 
-
-# Eample 2: Diseased patients have high levels of functional marker 2 in cluster 3 when stimulated. 
+# Example 2: Diseased patients have high levels of functional marker 2 in cluster 3 when stimulated. 
 # No results should be visible from the unstim files.
 rm(list=ls(all=T))
 dataDir = file.path(system.file(package="citrus"),"extdata","example3")
@@ -51,19 +41,32 @@ nFolds=5
 fileList = cbind(unstim=list.files(dataDir,pattern="unstim"),stim1=list.files(dataDir,pattern="stim1"))
 fileSampleSize=1000
 featureTypes=c("densities","medians","emDists")
+featureTypes=c("emDists")
 family="classification"
 modelTypes="glmnet"
 minimumClusterSizePercent=0.05
-conditionComparaMatrix=matrix(T,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
-conditionComparaMatrix[2]=F
-preclusterResult=citrus.preCluster(dataDir,outputDir,clusterCols,fileSampleSize,fileList[,-3],nFolds=5,conditionComparaMatrix=conditionComparaMatrix)
-endpointResult=citrus.endpointRegress(preclusterResult,outputDir,family="classification",labels=labels,plot=T,returnResults=T,featureTypes=featureTypes,medianColumns=medianCols,emdColumns=medianCols)
-res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels,nFolds=5,family,modelTypes,featureTypes=featureTypes,minimumClusterSizePercent,conditionComparaMatrix=conditionComparaMatrix,plot=T,returnResults=T,medianColumns=medianCols,emdColumns=medianCols)
-res = citrus.quick(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels,family,modelTypes,featureTypes=featureTypes,minimumClusterSizePercent,conditionComparaMatrix=conditionComparaMatrix,plot=T,returnResults=T,medianColumns=medianCols,emdColumns=medianCols)
-
 conditionComparaMatrix=matrix(F,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
 conditionComparaMatrix[3]=T
-res = citrus.quick(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels,family,modelTypes,featureTypes="emDists",minimumClusterSizePercent,conditionComparaMatrix=conditionComparaMatrix,plot=T,returnResults=T,medianColumns=medianCols,emdColumns=medianCols)
+
+# Results should be bad
+res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,labels=labels,nFolds=5,family="classification",fileList=fileList,modelTypes=c("glmnet","pamr"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix)
+# Results should be pretty good
+res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,labels=labels,nFolds=5,family="classification",fileList=fileList,modelTypes=c("glmnet","pamr"),featureTypes=c("medians"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix,medianColumns=medianCols)
+# Results should be pretty good
+res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,labels=labels,nFolds=5,family="classification",fileList=fileList,modelTypes=c("glmnet","pamr"),featureTypes=c("emDists"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix,emdColumns=medianCols)
+
+# Same but quicker
+res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,labels=labels,nFolds="all",family="classification",fileList=fileList,modelTypes=c("glmnet","pamr"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix)
+res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,labels=labels,nFolds="all",family="classification",fileList=fileList,modelTypes=c("glmnet","pamr"),featureTypes=c("medians"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix,medianColumns=medianCols)
+res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,labels=labels,nFolds="all",family="classification",fileList=fileList,modelTypes=c("glmnet","pamr"),featureTypes=c("emDists"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix,emdColumns=medianCols)
+
+# Same but using hand-gated data
+dataDir = file.path(system.file(package="citrus"),"extdata","example2.1")
+filePopulationList = list(unstim=matrix(list.files(dataDir,pattern="unstim"),ncol=3,byrow=T,dimnames=list(NULL,paste("Pop",1:3))),stim1=matrix(list.files(dataDir,pattern="stim1"),ncol=3,byrow=T,dimnames=list(NULL,paste("Pop",1:3))))
+res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,labels=labels,family="classification",filePopulationList=filePopulationList,modelTypes=c("glmnet","pamr"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix)
+res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,labels=labels,family="classification",filePopulationList=filePopulationList,modelTypes=c("glmnet","pamr"),featureTypes=c("medians"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix,medianColumns=medianCols)
+res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,labels=labels,family="classification",filePopulationList=filePopulationList,modelTypes=c("glmnet","pamr"),featureTypes=c("emDists"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix,emdColumns=medianCols)
+
 
 
 # Eample 3: Diseased patients have high levels of functional marker 2 in cluster 3 when stimulated. 

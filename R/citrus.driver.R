@@ -29,7 +29,16 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,labels,nFold
   }
   
   if (!is.null(fileList)){
-    preclusterResult = citrus.preCluster(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds,transformCols,conditionComparaMatrix,balanceFactor,transformFactor)
+    preclusterResult = citrus.preCluster(dataDir=dataDir,
+                                         outputDir=outputDir,
+                                         clusterCols=clusterCols,
+                                         fileSampleSize=fileSampleSize,
+                                         fileList=fileList,
+                                         nFolds=nFolds,
+                                         transformCols=transformCols,
+                                         conditionComparaMatrix=conditionComparaMatrix,
+                                         balanceFactor=balanceFactor,
+                                         transformFactor=transformFactor)
     plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph")
   } else if (!is.null(filePopulationList)){
     preclusterResult = citrus.assembleHandGates(dataDir,filePopulationList,conditionComparaMatrix)

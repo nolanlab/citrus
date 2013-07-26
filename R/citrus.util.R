@@ -70,7 +70,7 @@ citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaM
     populationClusterMap = list();
     for (condition in conditions){
       
-      nPatients = length(filePopulationList[[condition]][,populationName])
+      nPatients = nrow(filePopulationList[[condition]])
       baseFileId = (match(condition,conditions)-1)*nPatients
       fileIds[[condition]] = (baseFileId+1):(baseFileId+nPatients)
       for (populationName in colnames(filePopulationList[[condition]])){
@@ -94,7 +94,7 @@ citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaM
         
         
         if (populationName %in% names(populationClusterMap)){
-          clusterAssignments[[populationClusterMap[[populationName]]]] = c(populationClusterMap[[populationName]],populationEvents)
+          clusterAssignments[[populationClusterMap[[populationName]]]] = c(clusterAssignments[[populationClusterMap[[populationName]]]],populationEvents)
         } else {
           clusterAssignments[[populationCounter]]=populationEvents;
           populationClusterMap[[populationName]]=populationCounter
