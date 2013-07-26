@@ -43,7 +43,7 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
   return(results);
 }
 
-citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaMatrix=NULL){
+citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaMatrix=NULL,fileSampleSize=NULL){
   
   if (!is.null(conditionComparaMatrix)){
     allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 
@@ -53,9 +53,7 @@ citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaM
   }
   
   results = list();
-  
-  
-  
+
   for (conditions in allConditions){
     
     cda = data.frame();
@@ -83,6 +81,11 @@ citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaM
           fileChannelNames[[fcsFileName]] = colnames(fcsFile)
           fileReagentNames[[fcsFileName]] = pData(parameters(fcsFile))$desc
           fcsFileData = exprs(fcsFile)
+          if (!is.null(fileSampleSize)){
+            if (fileSampleSize < nrow(fcsFileData)){
+              fcsFileData = fcsFileData[sample(1:nrow(fcsFileData),fileSampleSize),]
+            }
+          }
           lastEvent = nrow(cda)
           absoluteEventIds = (lastEvent+1):(eventCounter+nrow(fcsFileData))
           cda = rbind(cda,data.frame(fcsFileData,fileId=fileId))
