@@ -57,7 +57,8 @@ shinyUI(pageWithSidebar(
                 tags$div(sliderInput("minimumClusterSizePercent",label="Minimum Cluster Size: A percentage of aggregate data size",min=1,max=100,step=1,value=5),style="width:300px;"),
                 tags$hr(),
                 uiOutput("calculatedFeatures"),
-                uiOutput("medianCols")
+                uiOutput("medianCols"),
+                uiOutput("emdCols")
                ),
       
       tabPanel("Classification Setup",
@@ -74,15 +75,10 @@ shinyUI(pageWithSidebar(
                tags$hr(),
                uiOutput("run"),
                tags$hr(),
-               tags$em("Additional Runtime Options:",class="control-label"),
-               tags$br(),
-               checkboxInput(inputId="quickMode",label="Quick Estimation Mode"),
-               tags$hr(),
                tags$em("TBD Runtime Options:",class="control-label"),
                tags$br(),
                disableInput(checkboxInput(inputId="multithread",label="Run Multithreaded")),
-               disableInput(checkboxInput(inputId="exportClusters",label="Export Identified Clusters")),
-               disableInput(checkboxInput(inputId="optimisticMode",label="Run in Naive Mode"))
+               disableInput(checkboxInput(inputId="exportClusters",label="Export Identified Clusters"))
                )
       )
       

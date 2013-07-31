@@ -5,11 +5,13 @@
 #' @param outputDir Path to a directory where the citrus output will be placed.
 #' @param clusterCols A vector of integers or parameter names that should be used for clustering of the data
 #' @param fileSampleSize Number of events to be sampled from each analyzed file. Files with fewer events contribute all of their events. 
-#' @param fileList A matrix containing file names, conditions, and response variables. See details
-#' @param nFolds Number of cross validation folds used to assess model accuracy
-#' @param family Specifies the type of response variable is being regressed. Valid options are \code{classification} or \code{survival}. See details for required parameters in file list.
+#' @param labels Outcome variable to regress against. Should be groups for classification or survival time. 
+#' @param nFolds Number of cross validation folds used to assess model accuracy. Set this value to "all" for quick analysis.
+#' @param family Type of regression to perform. Valid options are \code{classification} or \code{survival}.
+#' @param fileList A matrix containing file names. 1 condition per column. See details.
+#' @param filePopulationList A list with each named entry consisting of a matrix of file names. Samples in rows and 1 population per column.
 #' @param modelTypes A vector of classification models to construct. Valid options are \code{pamr} and \code{glmnet}.
-#' @param featureTypes A vector of descriptive feature types to be calculated for each cluster. Valid arguments are \code{densities} and \code{medians}. See details.
+#' @param featureTypes A vector of descriptive feature types to be calculated for each cluster. Valid arguments are \code{densities}, \code{medians}, and \code{emDists}. See details.
 #' @param minimumClusterSizePercent Specifies the minimum cluster size to be analyzed as a percentage of the total aggregate datasize. A value etween \code{0} and \code{1}.
 #' @param transformCols A vector of integer or parameter names to be transformed before analysis. 
 #' @param plot Logical value indicating whether or not Citrus output plots should be created. Defaults to \code{TRUE}.

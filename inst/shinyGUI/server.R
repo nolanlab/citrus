@@ -68,7 +68,7 @@ shinyServer(function(input, output) {
     return(tagList(
                     tags$span("Calculated Cluster Features:",class="control-label"),
                     tags$br(),
-                    tagList(lapply(citrus.getFeatureTypes(),serialFeaturesInput))
+                    tagList(lapply(citrus.featureTypes(),serialFeaturesInput))
     ))
   })
   
@@ -85,6 +85,19 @@ shinyServer(function(input, output) {
     }
   })
   
+  output$emdCols = reactiveUI(function(){
+    if ((!is.null(input$computeemDists))&&(input$computeemDists)){
+      choices = getParameterIntersections(input,fileList,fileCols);
+      if (is.null(choices)){
+        return(tagList(tags$b("Assign samples to groups to enable selection of emd parameters.")))
+      } else {
+        return(selectInput("emdCols",label="Cluster EMD Parameters",choices=choices,multiple=T))  
+      }
+    } else {
+      return(tags$span(""))  
+    }
+  })
+  
   output$crossValidationRange = reactiveUI(function(){
     selectedFiles = getSelectedFiles(input)
     nFiles = length(unlist(selectedFiles))
@@ -92,7 +105,7 @@ shinyServer(function(input, output) {
     if ((length(names(selectedFiles))<2)||(!all(unlist(lapply(selectedFiles,length))>1))){
       return(tagList(tags$b("Assign samples to groups to enable specification of cross-validation folds")))
     } else {
-      return(tagList(numericInput(inputId="crossValidationFolds",label="Cross Validation Folds",value=min(5,nFiles),min=2,max=nFiles)))
+      return(tagList(numericInput(inputId="crossValidationFolds",label="Cross Validation Folds",value=min(5,nFiles),min=1,max=nFiles)))
     }
   })
   
@@ -149,6 +162,14 @@ shinyServer(function(input, output) {
           medianVals = tags$span(paste(input$medianCols,collapse=", "))
         }
         features[["Medians"]] = tags$li(tagList(tags$span("Cluster Medians:"),medianVals))
+    }
+    if (!is.null(input$computeemDists)&&input$computeemDists){
+      emdCols = input$emdCols
+      emdVals = tags$span("No EMD Parameters Selected",class="red-error");
+      if (length(input$emdCols)>0){
+        emdVals = tags$span(paste(input$emdCols,collapse=", "))
+      }
+      features[["EMDs"]] = tags$li(tagList(tags$span("Cluster EM Dists:"),emdVals))
     }
     if (length(features)>0){
       featureSetTags = tags$ul(tagList(features))
@@ -358,7 +379,7 @@ stringQuote = function(x){
 getComputedFeatures = function(input){
   features = list();
   featureSelections = reactiveValuesToList(input)
-  for (type in citrus.getFeatureTypes()){
+  for (type in citrus.featureTypes()){
     if ((paste("compute",type,sep="") %in% names(featureSelections))&&(featureSelections[[paste("compute",type,sep="")]])){
       features[[type]]=T
     } else {
@@ -399,6 +420,9 @@ errorCheckInput = function(input){
   } else {
     if (computedFeatures[["medians"]]&&(length(input$medianCols)==0)){
       errors = c(errors,"No cluster median parameters selected")
+    }
+    if (computedFeatures[["emDists"]]&&(length(input$emdCols)==0)){
+      errors = c(errors,"No cluster EMD parameters selected")
     }
   }
   selectedFiles = getSelectedFiles(input)
