@@ -104,6 +104,7 @@ citrus.buildClusterFeatures = function(clusterAssignments,featureTypes,largeEnou
 }
 
 citrus.calculateFeature.emDists = function(foldsFileIds,clusterIds,clusterAssignments,data,foldFileNames,conditions,citrus.dataArray,preCalcFeatures,...){
+  library("emdist")
   addtlArgs = list(...)
   if (!("emdColumns" %in% names(addtlArgs))){
     stop("emdColumns argument must be specified to compute cluster emDists.")
