@@ -367,7 +367,9 @@ getSelectedFiles = function(input){
 
 getParameterIntersections = function(input,fileList,fileCols){
   selectedFiles = unlist(getSelectedFiles(input))
-  return(Reduce(intersect,fileCols[which(fileList %in% selectedFiles)]))
+  params = Reduce(intersect,fileCols[which(fileList %in% selectedFiles)])
+  names(params) = names(fileCols[[which(fileList %in% selectedFiles)[1]]])
+  return(params)
 }
 
 stringQuote = function(x){

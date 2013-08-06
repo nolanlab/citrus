@@ -1,4 +1,4 @@
-citrus.launchUI = function(dataDirectory=NULL){  
+citrus.launchUI = function(dataDirectory=NULL,host="localhost"){  
   
   library("shiny")
   library("brew")
@@ -10,7 +10,7 @@ citrus.launchUI = function(dataDirectory=NULL){
   #sapply(list.files(file.path(system.file(package = "citrus"),"shinyGUI","guiFunctions"),pattern=".R",full.names=T),source)
   
   res = tryCatch({
-    runApp(appDir=file.path(system.file(package = "citrus"),"shinyGUI"),launch.browser=T)  
+    runApp(appDir=file.path(system.file(package = "citrus"),"shinyGUI"),launch.browser=T)
   }, warning = function(w){
     cat(paste(w,"\n"));
   },error = function(e){
@@ -37,7 +37,11 @@ citrus.launchUI = function(dataDirectory=NULL){
 
 citrus.getFileCols = function(fileName,dataDir){
   fcsFile = suppressWarnings(read.FCS(file.path(dataDir,fileName),which.lines=1,emptyValue=F))
-  return(flowCore::colnames(fcsFile))
+  parameterNames = flowCore::colnames(fcsFile)
+  pnames = as.vector(pData(flowCore::parameters(fcsFile))$desc)
+  pnames[sapply(pnames,nchar)<3] = parameterNames[sapply(pnames,nchar)<3]
+  names(parameterNames)=pnames
+  return(parameterNames)
 }
 
 .logOn = function(filePath,messages=F){

@@ -37,7 +37,8 @@ cat(paste("Launching citrus interface with target directory:",dataDir,"\n"));
 # Lousy Fix to keep open mp processes from dying in mac os x
 if (Sys.info()[["sysname"]]=="Darwin"){
   cat("Mac OS X Detected. Setting number of OpenMP threads to 1.\n")
-  Rclusterpp.setThreads(threads=1)  
+  Rclusterpp.setThreads(threads=1)
+  Sys.setenv("OMP_NUM_THREADS"=1)
 }
 
 # Comment to True to debug
