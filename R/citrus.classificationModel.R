@@ -15,7 +15,11 @@ citrus.buildModel.classification = function(features,labels,type,regularizationT
     model = pamr.train(data=pamrData,threshold=regularizationThresholds,remove.zeros=F)
   } else if (type=="glmnet") {
     # NOTE THAT THIS IS BINOMIAL EXPLICITLY. DOES MULTINOMIAL WORK THE SAME, IF ONLY 2 CLASSES PROVIDED?
-    model = glmnet(x=features,y=labels,family="binomial",lambda=regularizationThresholds,alpha=alpha,standardize=standardize)
+    family="binomial"
+    if (length(unique(labels))>2){
+      family="multinomial"
+    }
+    model = glmnet(x=features,y=labels,family=family,lambda=regularizationThresholds,alpha=alpha,standardize=standardize)
   } else {
     stop(paste("Type:",type,"not yet implemented"));
   }
@@ -38,7 +42,11 @@ citrus.cvIteration.classification = function(i,modelType,features,labels,regular
   if (modelType == "pamr"){
     return(pamr.cv(fit=pamrModel,data=features,nfold=nFolds)$error)
   } else if (modelType=="glmnet"){
-    return(cv.glmnet(x=features,y=labels,family="binomial",lambda=regularizationThresholds,type.measure="class",nfolds=nFolds,alpha=alpha,standardize=standardize)$cvm)
+    family="binomial"
+    if (length(unique(labels))>2){
+      family="multinomial"
+    }
+    return(cv.glmnet(x=features,y=labels,family=family,lambda=regularizationThresholds,type.measure="class",nfolds=nFolds,alpha=alpha,standardize=standardize)$cvm)
   } else {
     stop(paste("Model Type",modelType,"unknown."));
   }
