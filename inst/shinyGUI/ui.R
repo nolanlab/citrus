@@ -30,7 +30,7 @@ shinyUI(pageWithSidebar(
       
         tabPanel("Sample Group Setup",
                  if (preload){
-                    disableInput(numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=length(keyFile[,-labelCol]),min=2))
+                    disableInput(numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=length(unique(keyFile[,labelCol]))))
                  } else {
                    numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2,min=2)
                  },
