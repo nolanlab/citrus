@@ -168,3 +168,6 @@ citrus.featureTypes = function(){
 citrus.familyList = function(){
   return(c("classification","survival"))
 }
+citrus.modelTypes = function(){
+  return(c("pamr","glmnet","sam"))
+}
