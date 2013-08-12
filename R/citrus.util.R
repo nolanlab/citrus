@@ -43,7 +43,7 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
   return(results);
 }
 
-citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaMatrix=NULL,fileSampleSize=NULL){
+citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaMatrix=NULL,fileSampleSize=NULL,transformColumns=NULL,transformFactor=5){
   
   if (!is.null(conditionComparaMatrix)){
     allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 
@@ -105,6 +105,10 @@ citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaM
         }
         
       }
+    }
+    
+    if (!is.null(transformColumns)){
+      cda[,transformColumns] = cda[,transformColumns]/transformFactor
     }
     
     results[[paste(conditions,collapse="_vs_")]] = list(folds="all",
