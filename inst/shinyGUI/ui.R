@@ -18,8 +18,8 @@ shinyUI(pageWithSidebar(
     uiOutput("clusteringSummary"),
     tags$em("Cluster Characterization Summary:"),
     uiOutput("featureSummary"),
-    tags$em("Classification Summary:"),
-    uiOutput("classificationSummary"),
+    tags$em("Class Summary:"),
+    uiOutput("Two-Class Summary"),
     tags$hr(),
     tags$em("Sample Summary:"),
     tableOutput("sampleGroupsTable")
@@ -61,10 +61,10 @@ shinyUI(pageWithSidebar(
                 uiOutput("emdCols")
                ),
       
-      tabPanel("Classification Setup",
+      tabPanel("Two-Class Setup",
                uiOutput("crossValidationRange"),
                tags$hr(),
-               uiOutput("classificationModels")
+               uiOutput("twoClassModels")
                ),
       
       tabPanel("Run!",

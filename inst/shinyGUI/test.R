@@ -8,7 +8,7 @@ library("citrus")
 #dataDir = "/Users/rbruggner/Desktop/notime/citrusTestRun/"
 source("/Users/rbruggner/Desktop/work/citrus/R/citrus.launchUI.R")
 source("/Users/rbruggner/Desktop/work/citrus/R/citrus.featureFunctions.R")
-source("/Users/rbruggner/Desktop/work/citrus/R/citrus.classificationModel.R")
+source("/Users/rbruggner/Desktop/work/citrus/R/citrus.classModel.R")
 
 
 #fileList = list.files(dataDir,pattern=".fcs",ignore.case=T)

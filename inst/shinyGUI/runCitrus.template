@@ -26,7 +26,7 @@ cat(paste("emdColumns=c(",paste(sapply(templateData[["emdCols"]],stringQuote),co
 }%>
 transformCols = c(<%cat(paste(sapply(templateData[["transformCols"]],stringQuote),collapse=","))%>)
 minimumClusterSizePercent = <%cat(templateData[["minimumClusterSizePercent"]])%>
-modelTypes = c(<% cat(paste(sapply(templateData[["classificationModels"]],stringQuote),collapse=",")) %>)
+modelTypes = c(<% cat(paste(sapply(templateData[["twoClassModels"]],stringQuote),collapse=",")) %>)
 fileSampleSize = <% cat(templateData[["fileSampleSize"]]) %>
 <% if (templateData[["crossValidationFolds"]]==1){
   templateData[["crossValidationFolds"]]='"all"'
@@ -71,7 +71,7 @@ results = citrus.full(
             fileSampleSize=fileSampleSize,
             labels=labels,
             nFolds=nFolds,
-            family="classification",
+            family="twoClass",
             fileList=fileList,
             modelTypes=modelTypes,
             featureTypes=featureTypes,
