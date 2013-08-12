@@ -21,7 +21,7 @@ citrus.buildModel.twoClass = function(features,labels,type,regularizationThresho
     }
     model = glmnet(x=features,y=labels,family=family,lambda=regularizationThresholds,alpha=alpha,standardize=standardize)
   } else if (type=="sam"){
-    model = SAM(x=t(features),y=labels,resp.type="Two class unpaired",genenames=colnames(features),geneid=colnames(features),nperms=5000)
+    model = SAM(x=t(features),y=labels,resp.type="Two class unpaired",genenames=colnames(features),geneid=colnames(features),nperms=10000)
   } else {
     stop(paste("Type:",type,"not yet implemented"));
   }

@@ -30,6 +30,11 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,labels,nFold
     }
   }
   
+  # No point in running cv if SAM only model
+  if (all(modelTypes=="sam")){
+    nFolds="all"
+  }
+  
   if (!is.null(fileList)){
     preclusterResult = citrus.preCluster(dataDir=dataDir,
                                          outputDir=outputDir,
