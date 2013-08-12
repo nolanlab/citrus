@@ -20,6 +20,8 @@ citrus.buildModel.twoClass = function(features,labels,type,regularizationThresho
       family="multinomial"
     }
     model = glmnet(x=features,y=labels,family=family,lambda=regularizationThresholds,alpha=alpha,standardize=standardize)
+  } else if (type=="sam"){
+    model = SAM(x=t(features),y=labels,resp.type="Two class unpaired",genenames=colnames(features),geneid=colnames(features),nperms=5000)
   } else {
     stop(paste("Type:",type,"not yet implemented"));
   }
@@ -80,6 +82,9 @@ citrus.thresholdCVs.model.quick = function(modelType,features,regularizationThre
       standardize=addtlArgs[["standardize"]]
     }
     errorRates = sapply(1:ncvIterations,paste("citrus.cvIteration",family,sep="."),modelType="glmnet",features=features,labels=labels,regularizationThresholds=typeRegularizationThresholds,nFolds=nFolds,alpha=alpha,standardize=standardize)
+  } else if (modelType=="sam"){
+    warning("No thresholds for SAM.")
+    return(NA)
   } else {
     stop(paste("CV for Model type",modelType,"not implemented"))
   }
@@ -93,6 +98,9 @@ citrus.thresholdCVs.model.quick = function(modelType,features,regularizationThre
 }
 
 citrus.thresholdCVs.twoClass = function(foldModels,leftoutFeatures,foldFeatures,modelTypes,regularizationThresholds,labels,folds,...){
+  # The following operations are not applicable to SAM models
+  foldModels[["sam"]]=NULL
+  
   leftoutPredictions = lapply(modelTypes,citrus.foldTypePredict,foldModels=foldModels,leftoutFeatures=leftoutFeatures)
   names(leftoutPredictions)=modelTypes
   
@@ -113,8 +121,10 @@ citrus.thresholdCVs.twoClass = function(foldModels,leftoutFeatures,foldFeatures,
     }
     res[[modelType]]=df
   }
+  
   return(res)
 }
+
 
 citrus.foldPredict = function(index,models,features){
   citrus.predict.twoClass(models[[index]],features[[index]])
@@ -211,10 +221,3 @@ citrus.calculateTypeErroRate = function(modelType,predictionSuccess,regularizati
   return(list(cvm=thresholdMeans,cvsd=thresholdSEMs))
 } 
 
-citrus.calculateTypeFDRRate = function(modelType,foldModels,foldFeatures,labels){
-  if (modelType=="pamr"){
-    return(pamr.fdr.new(foldModels[[modelType]][[length(foldModels[[modelType]])]],data=list(x=t(foldFeatures[[length(foldModels)]]),y=labels),nperms=1000)$results[,"Median FDR"])
-  } else {
-    return(NULL)
-  }  
-}

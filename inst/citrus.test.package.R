@@ -3,6 +3,7 @@ library("citrus")
 
 # Example 1: Diseased patients have a differing proportion of cells in clusters 2 & 3.
 dataDir = file.path(system.file(package="citrus"),"extdata","example1")
+#dataDir = file.path("~/Desktop/work/citrus/inst/extdata/example1/")
 outputDir = "~/Desktop/notime/tmp/citrusOutput/"
 clusterCols = c(1:2)
 fileSampleSize=1000
@@ -10,13 +11,15 @@ fileSampleSize=1000
 labels = c(rep("healthy",10),rep("diseased",10))
 labels = as.factor(labels)
 nFolds=5
+nFolds="all"
 fileList = data.frame(unstim=list.files(dataDir,pattern=".fcs",ignore.case=T))
 featureTypes=c("densities")
 modelTypes=c("pamr","glmnet")
+#modelTypes=("sam")
 minimumClusterSizePercent=0.05
 plot=T
 returnResults=T
-family="classification"
+family="twoClass"
 transformCols=NULL
 conditionComparaMatrix=NULL
 transformFactor=NULL

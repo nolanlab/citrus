@@ -1,7 +1,9 @@
 citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds,thresholdCVRates,foldModels,cvMinima,family){  
+    if (modelType=="sam"){
+      return()
+    }
     nAllFolds = length(foldModels[[modelType]])
     modelOutputDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
-    dir.create(modelOutputDir)
     pdf(file.path(modelOutputDir,"ModelErrorRate.pdf"),width=6,height=6)
     thresholds=regularizationThresholds[[modelType]]
     errorRates=thresholdCVRates[[modelType]][,"cvm"]
@@ -325,7 +327,10 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
   dev.off()
 }
 
-
+citrus.createPlotOutputDirectory = function(modelType,outputDir){
+  modelOutputDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
+  dir.create(modelOutputDir,showWarnings=F,recursive=T)
+}
 
 
 # Plot
@@ -339,7 +344,8 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus
     nAllFolds = length(citrus.featureObject[[conditionName]]$foldFeatures)
     # Make condition output directoy
     conditionOutputDir = file.path(outputDir,conditionName)
-    dir.create(conditionOutputDir,showWarnings=T,recursive=T)
+    sapply(modelTypes,citrus.createPlotOutputDirectory,outputDir=conditionOutputDir)
+    
     
     if ("errorRate" %in% plotTypes){
       cat("Plotting Error Rate\n")
