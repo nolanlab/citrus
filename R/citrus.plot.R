@@ -1,7 +1,9 @@
 citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds,thresholdCVRates,foldModels,cvMinima,family){  
+    if (modelType=="sam"){
+      return()
+    }
     nAllFolds = length(foldModels[[modelType]])
     modelOutputDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
-    dir.create(modelOutputDir)
     pdf(file.path(modelOutputDir,"ModelErrorRate.pdf"),width=6,height=6)
     thresholds=regularizationThresholds[[modelType]]
     errorRates=thresholdCVRates[[modelType]][,"cvm"]
@@ -121,7 +123,7 @@ citrus.plotModelDifferentialFeatures.survival = function(modelType,differentialF
   }
 }
 
-citrus.plotModelDifferentialFeatures.classification = function(modelType,differentialFeatures,features,outputDir,labels,...){
+citrus.plotModelDifferentialFeatures.twoClass = function(modelType,differentialFeatures,features,outputDir,labels,...){
   for (cvPoint in names(differentialFeatures[[modelType]])){
     modelTypeDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
     nonzeroFeatureNames = differentialFeatures[[modelType]][[cvPoint]][["features"]]
@@ -164,7 +166,7 @@ citrus.overlapDensityPlot = function(clusterDataList,backgroundData){
     combined=rbind(combined,data.frame(value=as.vector(clusterDataList[[clusterName]]),marker=as.vector(sapply(colnames(clusterDataList[[clusterName]]),rep,nrow(clusterDataList[[clusterName]]))),clusterId=clusterName,dplot="cluster",check.names=F,check.rows=F))
     combined=rbind(combined,data.frame(value=as.vector(backgroundData),marker=as.vector(sapply(colnames(clusterDataList[[clusterName]]),rep,nrow(backgroundData))),clusterId=clusterName,dplot="background",check.names=F,check.rows=F))
   }
-  p = ggplot(combined) + geom_density(aes(x=value,fill=dplot,colour=dplot),alpha=.6) + facet_grid(clusterId~marker,scales="free_y")
+  p = ggplot(combined) + geom_density(aes(x=value, y = ..scaled..,fill=dplot,colour=dplot),alpha=.6) + facet_grid(clusterId~marker,scales="free")
   print(p)
 }
 
@@ -178,7 +180,7 @@ citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterC
   }
   for (cvPoint in names(differentialFeatures[[modelType]])){
     nonzeroClusters = as.numeric(differentialFeatures[[modelType]][[cvPoint]][["clusters"]])
-    pdf(file=file.path(outputDir,paste(modelType,"_results/clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=(2.2*length(clusterCols)+2),height=(2.2*length(nonzeroClusters)))
+    pdf(file=file.path(outputDir,paste(modelType,"_results/clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=(2.2*length(clusterCols)+2),height=(2*length(nonzeroClusters)))
     clusterDataList=list();
     for (nonzeroCluster in sort(nonzeroClusters)){
       if (nrow(data[clusterChildren[[nonzeroCluster]],])>5000){
@@ -325,7 +327,10 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
   dev.off()
 }
 
-
+citrus.createPlotOutputDirectory = function(modelType,outputDir){
+  modelOutputDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
+  dir.create(modelOutputDir,showWarnings=F,recursive=T)
+}
 
 
 # Plot
@@ -339,7 +344,8 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus
     nAllFolds = length(citrus.featureObject[[conditionName]]$foldFeatures)
     # Make condition output directoy
     conditionOutputDir = file.path(outputDir,conditionName)
-    dir.create(conditionOutputDir,showWarnings=T,recursive=T)
+    sapply(modelTypes,citrus.createPlotOutputDirectory,outputDir=conditionOutputDir)
+    
     
     if ("errorRate" %in% plotTypes){
       cat("Plotting Error Rate\n")

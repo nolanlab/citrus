@@ -292,22 +292,29 @@ citrus.removeFeatures = function(index,foldFeatures,nonOverlappingFeatures){
 
 
 citrus.getCVMinima = function(modelType,thresholdCVRates,fdrRate=0.01){
-  errorRates = thresholdCVRates[[modelType]]$cvm
-  SEMs = thresholdCVRates[[modelType]]$cvsd
-  FDRRates = thresholdCVRates[[modelType]]$fdr
   cvPoints=list();
-  cvPoints[["cv.min.index"]] = min(which(errorRates==min(errorRates,na.rm=T)))
-  cvPoints[["cv.min"]] = thresholdCVRates[[modelType]]$threshold[cvPoints[["cv.min.index"]]]
-  cvPoints[["cv.1se.index"]] = min(which(errorRates<=(errorRates[cvPoints[["cv.min.index"]]]+SEMs[cvPoints[["cv.min.index"]]])))
-  cvPoints[["cv.1se"]] = thresholdCVRates[[modelType]]$threshold[cvPoints[["cv.1se.index"]]]
-  if (!is.null(FDRRates)) {
-    if (any(FDRRates<fdrRate)){
-      if (length(intersect(which(FDRRates<0.01),which(errorRates==min(errorRates,na.rm=T))))>0){
-        cvPoints[["cv.fdr.constrained.index"]] = max(intersect(which(FDRRates<0.01),which(errorRates==min(errorRates,na.rm=T))))
-        cvPoints[["cv.fdr.constrained"]] = thresholdCVRates[[modelType]]$threshold[cvPoints[["cv.fdr.constrained.index"]]]
+  if (modelType=="sam"){
+    cvPoints[["fdr_0.5"]]=50
+    cvPoints[["fdr_0.10"]]=10
+    cvPoints[["fdr_0.05"]]=5
+    cvPoints[["fdr_0.01"]]=1
+  } else {
+    errorRates = thresholdCVRates[[modelType]]$cvm
+    SEMs = thresholdCVRates[[modelType]]$cvsd
+    FDRRates = thresholdCVRates[[modelType]]$fdr
+    cvPoints[["cv.min.index"]] = min(which(errorRates==min(errorRates,na.rm=T)))
+    cvPoints[["cv.min"]] = thresholdCVRates[[modelType]]$threshold[cvPoints[["cv.min.index"]]]
+    cvPoints[["cv.1se.index"]] = min(which(errorRates<=(errorRates[cvPoints[["cv.min.index"]]]+SEMs[cvPoints[["cv.min.index"]]])))
+    cvPoints[["cv.1se"]] = thresholdCVRates[[modelType]]$threshold[cvPoints[["cv.1se.index"]]]
+    if (!is.null(FDRRates)) {
+      if (any(FDRRates<fdrRate)){
+        if (length(intersect(which(FDRRates<0.01),which(errorRates==min(errorRates,na.rm=T))))>0){
+          cvPoints[["cv.fdr.constrained.index"]] = max(intersect(which(FDRRates<0.01),which(errorRates==min(errorRates,na.rm=T))))
+          cvPoints[["cv.fdr.constrained"]] = thresholdCVRates[[modelType]]$threshold[cvPoints[["cv.fdr.constrained.index"]]]
+        }
       }
+      
     }
-    
   }
   return(cvPoints)
 }
@@ -344,7 +351,18 @@ citrus.extractModelFeatures = function(modelType,cvMinima,foldModels,foldFeature
         res[[cvPoint]][["features"]] = NULL;
         res[[cvPoint]][["clusters"]] = NULL;
       }
-      
+    } else if (modelType=="sam"){
+      sigGenes = rbind(finalModel$siggenes.table$genes.up,finalModel$siggenes.table$genes.lo)
+      sigGenes = sigGenes[as.numeric(sigGenes[,"q-value(%)"])<threshold,]
+      sigGenes = sigGenes[order(abs(as.numeric(sigGenes[,"Fold Change"]))),]
+      f = sigGenes[,"Gene Name"]
+      if (length(f)>0){
+        res[[cvPoint]][["features"]] = f
+        res[[cvPoint]][["clusters"]] = sort(unique(as.numeric(do.call("rbind",strsplit(f,split=" "))[,2])))  
+      } else {
+        res[[cvPoint]][["features"]] = NULL;
+        res[[cvPoint]][["clusters"]] = NULL;
+      }
     }
   }
   return(res)

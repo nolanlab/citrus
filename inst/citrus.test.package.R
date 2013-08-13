@@ -3,6 +3,7 @@ library("citrus")
 
 # Example 1: Diseased patients have a differing proportion of cells in clusters 2 & 3.
 dataDir = file.path(system.file(package="citrus"),"extdata","example1")
+#dataDir = file.path("~/Desktop/work/citrus/inst/extdata/example1/")
 outputDir = "~/Desktop/notime/tmp/citrusOutput/"
 clusterCols = c(1:2)
 fileSampleSize=1000
@@ -10,13 +11,15 @@ fileSampleSize=1000
 labels = c(rep("healthy",10),rep("diseased",10))
 labels = as.factor(labels)
 nFolds=5
+nFolds="all"
 fileList = data.frame(unstim=list.files(dataDir,pattern=".fcs",ignore.case=T))
 featureTypes=c("densities")
 modelTypes=c("pamr","glmnet")
+#modelTypes=("sam")
 minimumClusterSizePercent=0.05
 plot=T
 returnResults=T
-family="classification"
+family="twoClass"
 transformCols=NULL
 conditionComparaMatrix=NULL
 transformFactor=NULL
@@ -32,6 +35,7 @@ res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,filePopulationLis
 # No results should be visible from the unstim files.
 rm(list=ls(all=T))
 dataDir = file.path(system.file(package="citrus"),"extdata","example3")
+#dataDir = file.path("~/Desktop/work/citrus/inst/extdata/example3/")
 outputDir = "~/Desktop/notime/tmp/citrusOutput/"
 clusterCols = c("LineageMarker1","LineageMarker2")
 medianCols = c("FunctionalMarker1","FunctionalMarker2")
@@ -39,21 +43,22 @@ labels = c(rep("healthy",10),rep("diseased",10))
 labels = as.factor(labels)
 nFolds=5
 fileList = cbind(unstim=list.files(dataDir,pattern="unstim"),stim1=list.files(dataDir,pattern="stim1"))
-fileSampleSize=200
+fileSampleSize=1000
 featureTypes=c("densities","medians","emDists")
 featureTypes=c("emDists")
-family="classification"
+family="twoClass"
 modelTypes="glmnet"
+modelTypes="sam"
 minimumClusterSizePercent=0.05
 conditionComparaMatrix=matrix(F,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
 conditionComparaMatrix[3]=T
 
 # Results should be bad
-res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,labels=labels,nFolds=5,family="classification",fileList=fileList,modelTypes=c("glmnet","pamr"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix)
+res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,labels=labels,nFolds=5,family=family,fileList=fileList,modelTypes=modelTypes,featureTypes=c("densities"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix)
 # Results should be pretty good
-res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,labels=labels,nFolds=5,family="classification",fileList=fileList,modelTypes=c("glmnet","pamr"),featureTypes=c("medians"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix,medianColumns=medianCols)
+res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,labels=labels,nFolds=5,family=family,fileList=fileList,modelTypes=modelTypes,featureTypes=c("medians"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix,medianColumns=medianCols)
 # Results should be pretty good
-res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,labels=labels,nFolds=5,family="classification",fileList=fileList,modelTypes=c("glmnet","pamr"),featureTypes=c("emDists"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix,emdColumns=medianCols)
+res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,labels=labels,nFolds=5,family=family,fileList=fileList,modelTypes=modelTypes,featureTypes=c("emDists"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix,emdColumns=medianCols)
 
 # Same but quicker
 res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,labels=labels,nFolds="all",family="classification",fileList=fileList,modelTypes=c("glmnet","pamr"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix)

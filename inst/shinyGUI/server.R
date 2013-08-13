@@ -186,23 +186,23 @@ shinyServer(function(input, output) {
     )
   })
   
-  output$classificationSummary = reactiveUI(function(){
+  output$twoClassSummary = reactiveUI(function(){
     if (is.null(input$crossValidationFolds)){
       cvTag = tagList(tags$span("Cross Validation Folds:"),tags$span("None",class="red-error"))
     } else {
       cvTag = tagList(tags$span("Cross Validation Folds:"),tags$span(input$crossValidationFolds))
     }
     if (sum(getSelectedModels(input))==0){
-      mTag = tagList(tags$span("Classification Models:"),tags$span("None",class="red-error"))
+      mTag = tagList(tags$span("Two-Class Models:"),tags$span("None",class="red-error"))
     } else {
-      mTag = tags$span(paste("Classification Models:",paste(citrus.getModelTypes()[getSelectedModels(input)],collapse=", ")))
+      mTag = tags$span(paste("Two-Class Models:",paste(citrus.modelTypes()[getSelectedModels(input)],collapse=", ")))
     }
     return(tags$ul(tagList(tags$li(cvTag),tags$li(mTag))))
     
   })
   
-  output$classificationModels = reactiveUI(function(){
-    tagList(tags$span("Classification Models:"),lapply(citrus.getModelTypes(),serialClassificationModel))  
+  output$twoClassModels = reactiveUI(function(){
+    tagList(tags$span("Two-Class Models:"),lapply(citrus.modelTypes(),serialTwoClassModel))  
   })
   
   output$run = reactiveUI(function(){
@@ -238,7 +238,7 @@ shinyServer(function(input, output) {
 ##############################
 # UI OUTPUT CONTROLS 
 ##############################
-serialClassificationModel = function(modelName){
+serialTwoClassModel = function(modelName){
   checkboxInput(modelName,modelName,value=T)
 }
 
@@ -301,7 +301,7 @@ writeRunCitrusFile = function(input,templateFile=NULL){
   templateData[["preload"]]=preload
   templateData[["dataDir"]]=dataDir
   templateData[["computedFeatures"]] = names(getComputedFeatures(input))[unlist(getComputedFeatures(input))]
-  templateData[["classificationModels"]] = citrus.getModelTypes()[getSelectedModels(input)]
+  templateData[["twoClassModels"]] = citrus.modelTypes()[getSelectedModels(input)]
   if (preload){
     templateData[["keyFile"]]=keyFile
     templateData[["conditionComparaMatrix"]]=getConditionComparaMatrix(input,conditions=colnames(keyFile[,-labelCol]))
@@ -395,10 +395,10 @@ getComputedFeatures = function(input){
 }
 
 getSelectedModels = function(input){
-  selectedModels = rep(FALSE,length(citrus.getModelTypes()))
-  names(selectedModels) = citrus.getModelTypes();
+  selectedModels = rep(FALSE,length(citrus.modelTypes()))
+  names(selectedModels) = citrus.modelTypes();
   input = reactiveValuesToList(input)
-  for (modelType in citrus.getModelTypes()){
+  for (modelType in citrus.modelTypes()){
     if ((modelType %in% names(input))&&(input[[modelType]])){
       selectedModels[[modelType]]=T
     }
@@ -436,7 +436,7 @@ errorCheckInput = function(input){
     errors = c(errors,"2 or more samples must be assigned to each group")
   }
   if (!any(getSelectedModels(input))){
-    errors = c(errors,"At least one classification model must be selected")
+    errors = c(errors,"At least one differential model must be selected")
   }
   
   

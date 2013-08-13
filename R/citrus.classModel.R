@@ -1,4 +1,4 @@
-citrus.buildModel.classification = function(features,labels,type,regularizationThresholds,...){
+citrus.buildModel.twoClass = function(features,labels,type,regularizationThresholds,...){
   
   addtlArgs = list(...)
   alpha=1
@@ -20,6 +20,8 @@ citrus.buildModel.classification = function(features,labels,type,regularizationT
       family="multinomial"
     }
     model = glmnet(x=features,y=labels,family=family,lambda=regularizationThresholds,alpha=alpha,standardize=standardize)
+  } else if (type=="sam"){
+    model = SAM(x=t(features),y=labels,resp.type="Two class unpaired",genenames=colnames(features),geneid=colnames(features),nperms=10000)
   } else {
     stop(paste("Type:",type,"not yet implemented"));
   }
@@ -38,7 +40,7 @@ citrus.buildFoldModels = function(index,folds,foldFeatures,labels,type,regulariz
   do.call(paste("citrus.buildModel",family,sep="."),args=list(features=foldFeatures[[index]],labels=labels,type=type,regularizationThresholds=regularizationThresholds,...=...))
 }
 
-citrus.cvIteration.classification = function(i,modelType,features,labels,regularizationThresholds,nFolds,pamrModel=NULL,alpha=NULL,standardize=NULL){
+citrus.cvIteration.twoClass = function(i,modelType,features,labels,regularizationThresholds,nFolds,pamrModel=NULL,alpha=NULL,standardize=NULL){
   if (modelType == "pamr"){
     return(pamr.cv(fit=pamrModel,data=features,nfold=nFolds)$error)
   } else if (modelType=="glmnet"){
@@ -80,6 +82,9 @@ citrus.thresholdCVs.model.quick = function(modelType,features,regularizationThre
       standardize=addtlArgs[["standardize"]]
     }
     errorRates = sapply(1:ncvIterations,paste("citrus.cvIteration",family,sep="."),modelType="glmnet",features=features,labels=labels,regularizationThresholds=typeRegularizationThresholds,nFolds=nFolds,alpha=alpha,standardize=standardize)
+  } else if (modelType=="sam"){
+    warning("No thresholds for SAM.")
+    return(NA)
   } else {
     stop(paste("CV for Model type",modelType,"not implemented"))
   }
@@ -92,7 +97,10 @@ citrus.thresholdCVs.model.quick = function(modelType,features,regularizationThre
   return(results)
 }
 
-citrus.thresholdCVs.classification = function(foldModels,leftoutFeatures,foldFeatures,modelTypes,regularizationThresholds,labels,folds,...){
+citrus.thresholdCVs.twoClass = function(foldModels,leftoutFeatures,foldFeatures,modelTypes,regularizationThresholds,labels,folds,...){
+  # The following operations are not applicable to SAM models
+  foldModels[["sam"]]=NULL
+  
   leftoutPredictions = lapply(modelTypes,citrus.foldTypePredict,foldModels=foldModels,leftoutFeatures=leftoutFeatures)
   names(leftoutPredictions)=modelTypes
   
@@ -113,18 +121,20 @@ citrus.thresholdCVs.classification = function(foldModels,leftoutFeatures,foldFea
     }
     res[[modelType]]=df
   }
+  
   return(res)
 }
 
+
 citrus.foldPredict = function(index,models,features){
-  citrus.predict.classification(models[[index]],features[[index]])
+  citrus.predict.twoClass(models[[index]],features[[index]])
 }
 
 citrus.foldScore = function(index,folds,predictions,labels){
   return(predictions[[index]]==labels[folds[[index]]])
 }
 
-citrus.predict.classification = function(model,features){
+citrus.predict.twoClass = function(model,features){
   if ("glmnet" %in% class(model)){
     predictions = predict(model,newx=features,type="class")
   } else if (class(model)=="pamrtrained"){
@@ -137,7 +147,7 @@ citrus.predict.classification = function(model,features){
 }
 
 
-citrus.generateRegularizationThresholds.classification = function(features,labels,modelTypes,n,...){
+citrus.generateRegularizationThresholds.twoClass = function(features,labels,modelTypes,n,...){
   if (length(modelTypes)<1){
     stop("no regularzation threshold types specified.")
   }
@@ -211,14 +221,3 @@ citrus.calculateTypeErroRate = function(modelType,predictionSuccess,regularizati
   return(list(cvm=thresholdMeans,cvsd=thresholdSEMs))
 } 
 
-citrus.calculateTypeFDRRate = function(modelType,foldModels,foldFeatures,labels){
-  if (modelType=="pamr"){
-    return(pamr.fdr.new(foldModels[[modelType]][[length(foldModels[[modelType]])]],data=list(x=t(foldFeatures[[length(foldModels)]]),y=labels),nperms=1000)$results[,"Median FDR"])
-  } else {
-    return(NULL)
-  }  
-}
-
-citrus.getModelTypes = function(){
-  return(c("pamr","glmnet"))
-}

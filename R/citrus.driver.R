@@ -7,10 +7,10 @@
 #' @param fileSampleSize Number of events to be sampled from each analyzed file. Files with fewer events contribute all of their events. 
 #' @param labels Outcome variable to regress against. Should be groups for classification or survival time. 
 #' @param nFolds Number of cross validation folds used to assess model accuracy. Set this value to "all" for quick analysis.
-#' @param family Type of regression to perform. Valid options are \code{classification} or \code{survival}.
+#' @param family Type of regression to perform. Valid options are \code{twoClass}, \code{survival}, or \code{quantitative}.
 #' @param fileList A matrix containing file names. 1 condition per column. See details.
 #' @param filePopulationList A list with each named entry consisting of a matrix of file names. Samples in rows and 1 population per column.
-#' @param modelTypes A vector of classification models to construct. Valid options are \code{pamr} and \code{glmnet}.
+#' @param modelTypes A vector of models to construct. Valid options are \code{pamr}, \code{glmnet},\code{sam}.
 #' @param featureTypes A vector of descriptive feature types to be calculated for each cluster. Valid arguments are \code{densities}, \code{medians}, and \code{emDists}. See details.
 #' @param minimumClusterSizePercent Specifies the minimum cluster size to be analyzed as a percentage of the total aggregate datasize. A value etween \code{0} and \code{1}.
 #' @param transformCols A vector of integer or parameter names to be transformed before analysis. 
@@ -28,6 +28,11 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,labels,nFold
     if ((ncol(labels)!=2)||(!all(colnames(labels) %in% c("time","event")))){
       stop("Incorrect labeling for files. Expecting 'time' and 'event' label columns.")
     }
+  }
+  
+  # No point in running cv if SAM only model
+  if (all(modelTypes=="sam")){
+    nFolds="all"
   }
   
   if (!is.null(fileList)){
