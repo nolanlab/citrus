@@ -45,7 +45,7 @@ fileList = data.frame(<%
                         labelAssignments = labelAssignments[,-labelCol,drop=F]
                         cat(paste(sapply(colnames(labelAssignments),convertColToDefinition,df=labelAssignments),collapse=",\n"))
                       %>)
-labels = c(<%cat(paste(sapply(labels,stringQuote),collapse=","))%>)
+labels = as.factor(c(<%cat(paste(sapply(labels,stringQuote),collapse=","))%>))
 
 <% if (templateData[["preload"]]){
   cat(

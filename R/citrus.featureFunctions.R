@@ -354,6 +354,7 @@ citrus.extractModelFeatures = function(modelType,cvMinima,foldModels,foldFeature
     } else if (modelType=="sam"){
       sigGenes = rbind(finalModel$siggenes.table$genes.up,finalModel$siggenes.table$genes.lo)
       sigGenes = sigGenes[as.numeric(sigGenes[,"q-value(%)"])<threshold,]
+      sigGenes = sigGenes[order(abs(as.numeric(sigGenes[,"Fold Change"]))),]
       f = sigGenes[,"Gene Name"]
       if (length(f)>0){
         res[[cvPoint]][["features"]] = f
