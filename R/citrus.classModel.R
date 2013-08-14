@@ -10,6 +10,12 @@ citrus.buildModel.twoClass = function(features,labels,type,regularizationThresho
     standardize=addtlArgs[["standardize"]]
   }
   
+  if (c("thisFoldIndex","finalModelIndex") %in% names(addtlArgs)){
+    if ((type=="sam")&&(addtlArgs[["thisFoldIndex"]]!=addtlArgs[["finalModelIndex"]])){
+      return(NULL)
+    }
+  }
+  
   if (type=="pamr"){
     pamrData = list(x=t(features),y=labels)
     model = pamr.train(data=pamrData,threshold=regularizationThresholds,remove.zeros=F)
@@ -37,7 +43,7 @@ citrus.buildFoldModels = function(index,folds,foldFeatures,labels,type,regulariz
       labels = labels[-folds[[index]]]
     }
   }
-  do.call(paste("citrus.buildModel",family,sep="."),args=list(features=foldFeatures[[index]],labels=labels,type=type,regularizationThresholds=regularizationThresholds,...=...))
+  do.call(paste("citrus.buildModel",family,sep="."),args=list(features=foldFeatures[[index]],labels=labels,type=type,regularizationThresholds=regularizationThresholds,finalModelIndex=length(folds),thisFoldIndex=index,...=...))
 }
 
 citrus.cvIteration.twoClass = function(i,modelType,features,labels,regularizationThresholds,nFolds,pamrModel=NULL,alpha=NULL,standardize=NULL){
