@@ -99,7 +99,12 @@ citrus.thresholdCVs.model.quick = function(modelType,features,regularizationThre
 
 citrus.thresholdCVs.twoClass = function(foldModels,leftoutFeatures,foldFeatures,modelTypes,regularizationThresholds,labels,folds,...){
   # The following operations are not applicable to SAM models
-  foldModels[["sam"]]=NULL
+  if ("sam" %in% modelTypes){
+    modelTypes = modelTypes[modelTypes!="sam"]
+    if (length(modelTypes)<1){
+      return(NULL)
+    }
+  }
   
   leftoutPredictions = lapply(modelTypes,citrus.foldTypePredict,foldModels=foldModels,leftoutFeatures=leftoutFeatures)
   names(leftoutPredictions)=modelTypes
@@ -221,3 +226,10 @@ citrus.calculateTypeErroRate = function(modelType,predictionSuccess,regularizati
   return(list(cvm=thresholdMeans,cvsd=thresholdSEMs))
 } 
 
+citrus.calculateTypeFDRRate = function(modelType,foldModels,foldFeatures,labels){
+  if (modelType=="pamr"){
+    return(pamr.fdr.new(foldModels[[modelType]][[length(foldModels[[modelType]])]],data=list(x=t(foldFeatures[[length(foldModels)]]),y=labels),nperms=1000)$results[,"Median FDR"])
+  } else {
+    return(NULL)
+  }  
+}
