@@ -89,6 +89,10 @@ citrus.plotModelDifferentialFeatures.survival = function(modelType,differentialF
   for (cvPoint in names(differentialFeatures[[modelType]])){
     modelTypeDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
     nonzeroFeatureNames = differentialFeatures[[modelType]][[cvPoint]][["features"]]
+    
+    # Write features to file for easy parsing
+    write.table(features[,nonzeroFeatureNames],file=file.path(modelTypeDir,paste("features_",cvPoint,".csv",sep="")),quote=F,sep=",")
+    
     pchs = rep(13,nrow(s))
     pchs[as.logical(s[,2])]=20
     pdf(file.path(modelTypeDir,paste("features_",cvPoint,".pdf",sep="")))
@@ -127,6 +131,10 @@ citrus.plotModelDifferentialFeatures.twoClass = function(modelType,differentialF
   for (cvPoint in names(differentialFeatures[[modelType]])){
     modelTypeDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
     nonzeroFeatureNames = differentialFeatures[[modelType]][[cvPoint]][["features"]]
+
+    # Write features to file for easy parsing
+    write.table(features[,nonzeroFeatureNames],file=file.path(modelTypeDir,paste("features_",cvPoint,".csv",sep="")),quote=F,sep=",")
+
     for (nonzeroFeatureName in nonzeroFeatureNames){
       df = data.frame(value=features[,nonzeroFeatureName],labels=as.factor(labels),featureName=nonzeroFeatureName)
       if (which(nonzeroFeatureNames==nonzeroFeatureName)==1){
