@@ -10,7 +10,7 @@ citrus.buildModel.twoClass = function(features,labels,type,regularizationThresho
     standardize=addtlArgs[["standardize"]]
   }
   
-  if (c("thisFoldIndex","finalModelIndex") %in% names(addtlArgs)){
+  if (all(c("thisFoldIndex","finalModelIndex") %in% names(addtlArgs))){
     if ((type=="sam")&&(addtlArgs[["thisFoldIndex"]]!=addtlArgs[["finalModelIndex"]])){
       return(NULL)
     }

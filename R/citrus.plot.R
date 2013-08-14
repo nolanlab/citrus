@@ -178,14 +178,10 @@ citrus.overlapDensityPlot = function(clusterDataList,backgroundData){
   print(p)
 }
 
-citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterChildren,citrus.dataArray,conditions,clusterCols,clusterColLabels=NULL){
+citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterChildren,citrus.dataArray,conditions,clusterCols){
   data = citrus.dataArray$data[citrus.dataArray$data[,"fileId"] %in% citrus.dataArray$fileIds[,conditions],]
   clusterChildren = clusterChildren[[length(clusterChildren)]]
-  if (!is.null(clusterColLabels)){
-    if (length(clusterColLabels)!=length(clusterCols)){
-      stop("clusterColsLabels length must equal length of clusterCols");
-    }
-  }
+  
   for (cvPoint in names(differentialFeatures[[modelType]])){
     nonzeroClusters = as.numeric(differentialFeatures[[modelType]][[cvPoint]][["clusters"]])
     pdf(file=file.path(outputDir,paste(modelType,"_results/clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=(2.2*length(clusterCols)+2),height=(2*length(nonzeroClusters)))
@@ -196,9 +192,18 @@ citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterC
       } else {
         clusterDataList[[as.character(nonzeroCluster)]]=data[clusterChildren[[nonzeroCluster]],clusterCols]
       }
-      if (!is.null(clusterColLabels)){
-        colnames(clusterDataList[[as.character(nonzeroCluster)]])=clusterColLabels	
+      
+      colLabels = citrus.dataArray$fileChannelNames[[conditions[1]]][[1]]
+      reagentNames = citrus.dataArray$fileReagentNames[[conditions[1]]][[1]]
+      displayNames = colLabels
+      displayNames[nchar(reagentNames)>1] = reagentNames[nchar(reagentNames)>1]
+      if (is.numeric(clusterCols)){
+        colnames(clusterDataList[[as.character(nonzeroCluster)]])=displayNames[clusterCols]  
+      } else {
+        colnames(clusterDataList[[as.character(nonzeroCluster)]])=displayNames[colLabels%in%clusterCols]
       }
+      
+      
     }
     if (nrow(data)>2500){
       bgData = data[sample(1:nrow(data),2500),clusterCols]
@@ -344,10 +349,7 @@ citrus.createPlotOutputDirectory = function(modelType,outputDir){
 # Plot
 citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus.featureObject,citrus.regressionResult,modelTypes,family,labels,plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph"),...){
   addtlArgs = list(...)
-  clusterColLabels=NULL;
-  if ("clusterColLabels" %in% names(addtlArgs)){
-    clusterColLabels=addtlArgs[["clusterColLabels"]]
-  }
+  
   for (conditionName in names(citrus.regressionResult)){
     nAllFolds = length(citrus.featureObject[[conditionName]]$foldFeatures)
     # Make condition output directoy
@@ -367,7 +369,7 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus
     
     if ("stratifyingClusters" %in% plotTypes){
       cat("Plotting Stratifying Clusters\n")
-      lapply(modelTypes,citrus.plotClusters,differentialFeatures=citrus.regressionResult[[conditionName]]$differentialFeatures,outputDir=conditionOutputDir,clusterChildren=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments,citrus.dataArray=citrus.preclusterResult[[conditionName]]$citrus.dataArray,conditions=citrus.preclusterResult[[conditionName]]$conditions,clusterCols=citrus.preclusterResult[[conditionName]]$clusterColumns,clusterColLabels=clusterColLabels)
+      lapply(modelTypes,citrus.plotClusters,differentialFeatures=citrus.regressionResult[[conditionName]]$differentialFeatures,outputDir=conditionOutputDir,clusterChildren=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments,citrus.dataArray=citrus.preclusterResult[[conditionName]]$citrus.dataArray,conditions=citrus.preclusterResult[[conditionName]]$conditions,clusterCols=citrus.preclusterResult[[conditionName]]$clusterColumns)
     }
     
     
