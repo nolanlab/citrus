@@ -169,9 +169,12 @@ citrus.fileEventCount = function(dataDir,emptyValue=T){
 citrus.featureTypes = function(){
   return(c("densities","medians","emDists"))
 }
+
 citrus.familyList = function(){
   return(c("twoClass","survival","quantiative"))
 }
+
 citrus.modelTypes = function(){
   return(c("pamr","glmnet","sam"))
 }
+

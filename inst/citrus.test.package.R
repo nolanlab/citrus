@@ -124,5 +124,7 @@ testFileList = fileList[11:20,]
 preClusterResult = citrus.preCluster(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=100,fileList=trainFileList,nFolds=4,conditionComparaMatrix=conditionComparaMatrix)
 mappingResults = citrus.mapFileDataToClustering(dataDir=dataDir,newFileList=testFileList,fileSampleSize=1000,preClusterResult=preClusterResult)
 
+trainFeatures = citrus.buildFeatures(preclusterResult=preClusterResult,outputDir="/dev/null",featureTypes=c("densities"))
+
 # FIX THIS
-mappedFeatures = citrus.buildFeatures(preclusterResult=mappingResults,outputDir="/dev/null",featureTypes="densities",)
+mappedFeatures = citrus.buildFeatures(preclusterResult=mappingResults,outputDir="/dev/null",featureTypes="densities",largeEnoughClusters=preClusterResult)

@@ -8,8 +8,8 @@ citrus.mapFileDataToClustering = function(dataDir,newFileList,sampleSize,preClus
     if (is.null(mappingColumns)){
       mappingColumns = preClusterResult[[conditionName]]$clusterColumns
     }
-    mappingResult[[conditionName]]$foldClusterAssignments = list()
-    mappingResult[[conditionName]]$foldClusterAssignments[["mappingResult"]] = citrus.mapDataToClusterSpace(data=preClusterResult[[conditionName]]$citrus.dataArray$data[,mappingColumns],
+    mappingResult[[conditionName]]$foldsClusterAssignments = list()
+    mappingResult[[conditionName]]$foldsClusterAssignments[["mappingResult"]] = citrus.mapDataToClusterSpace(data=preClusterResult[[conditionName]]$citrus.dataArray$data[,mappingColumns],
                                  clusterAssignments=preClusterResult[[conditionName]]$foldsClusterAssignments[[which(preClusterResult[[conditionName]]$folds=="all")]],
                                  newData=mappingResult[[conditionName]]$citrus.dataArray$data[,mappingColumns])
     mappingResult[[conditionName]]$folds = list("mappingResult")
