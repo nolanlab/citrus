@@ -1,4 +1,4 @@
-citrus.mapFileDataToClustering = function(dataDir,newFileList,preClusterResult,fileSampleSize,mappingColumns=NULL,transformCols=NULL,transformFactor=5,emptyValue=T){
+citrus.mapFileDataToClustering = function(dataDir,newFileList,preClusterResult,fileSampleSize,mappingColumns=NULL,transformCols=NULL,transformFactor=5,emptyValue=T,...){
   conditions = strsplit(names(preClusterResult),"_vs_")
   mappingResult = list()
   for (conditionName in names(preClusterResult)){
@@ -13,7 +13,7 @@ citrus.mapFileDataToClustering = function(dataDir,newFileList,preClusterResult,f
     mappingResult[[conditionName]]$foldsClusterAssignments = list()
     mappingResult[[conditionName]]$foldsClusterAssignments[["mappingResult"]] = citrus.mapDataToClusterSpace(data=preClusterResult[[conditionName]]$citrus.dataArray$data[,mappingColumns],
                                  clusterAssignments=preClusterResult[[conditionName]]$foldsClusterAssignments[[which(preClusterResult[[conditionName]]$folds=="all")]],
-                                 newData=mappingResult[[conditionName]]$citrus.dataArray$data[,mappingColumns])
+                                 newData=mappingResult[[conditionName]]$citrus.dataArray$data[,mappingColumns],...)
     mappingResult[[conditionName]]$folds = list("mappingResult")
     mappingResult[[conditionName]]$conditions = conditions
     mappingResult[[conditionName]]$clusterColumns = preClusterResult[[conditionName]]$clusterColumns
@@ -65,7 +65,6 @@ citrus.mapDataToClusterSpace = function(data,clusterAssignments,newData,...){
   } else {
     return(lapply(clusterAssignments,citrus.mapNeighborsToCluster,nearestNeighborMap=nnMap))
   }
-  
 }  
 
 citrus.mapNeighborsToCluster = function(clusterMembers,nearestNeighborMap){
