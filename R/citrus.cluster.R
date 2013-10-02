@@ -8,6 +8,8 @@ citrus.mapFileDataToClustering = function(dataDir,newFileList,preClusterResult,f
     if (is.null(mappingColumns)){
       mappingColumns = preClusterResult[[conditionName]]$clusterColumns
     }
+    
+    cat(paste("Mapping",nrow(mappingResult[[conditionName]]$citrus.dataArray$data),"events to existing cluster space.\n"));
     mappingResult[[conditionName]]$foldsClusterAssignments = list()
     mappingResult[[conditionName]]$foldsClusterAssignments[["mappingResult"]] = citrus.mapDataToClusterSpace(data=preClusterResult[[conditionName]]$citrus.dataArray$data[,mappingColumns],
                                  clusterAssignments=preClusterResult[[conditionName]]$foldsClusterAssignments[[which(preClusterResult[[conditionName]]$folds=="all")]],
@@ -55,9 +57,15 @@ citrus.mapFoldDataToClusterSpace = function(index,citrus.dataArray,foldClusterAs
   return(citrus.mapDataToClusterSpace(data=citrus.dataArray$data[citrus.dataArray$data[,"fileId"]%in%foldFileIds,clusterCols],clusterAssignments=foldClusterAssignments[[index]],newData=citrus.dataArray$data[citrus.dataArray$data[,"fileId"]%in%leftoutFileIds,clusterCols]))  
 }
 
-citrus.mapDataToClusterSpace = function(data,clusterAssignments,newData){  
+citrus.mapDataToClusterSpace = function(data,clusterAssignments,newData,...){  
   nnMap = citrus.assignToCluster(tbl=newData,cluster_data=data,cluster_assign=rep(1,nrow(data)))
-  return(lapply(clusterAssignments,citrus.mapNeighborsToCluster,nearestNeighborMap=nnMap))
+  addtlArgs = list(...)
+  if ("snowCluster" %in% names(addtlArgs)){
+    return(parLapply(addtlArgs[["snowCluster"]],clusterAssignments,citrus.mapNeighborsToCluster,nearestNeighborMap=nnMap))
+  } else {
+    return(lapply(clusterAssignments,citrus.mapNeighborsToCluster,nearestNeighborMap=nnMap))
+  }
+  
 }  
 
 citrus.mapNeighborsToCluster = function(clusterMembers,nearestNeighborMap){
