@@ -119,12 +119,17 @@ minimumClusterSizePercent=0.05
 conditionComparaMatrix=matrix(T,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
 conditionComparaMatrix[2]=F
 
-trainFileList = fileList[1:10,]
-testFileList = fileList[11:20,]
-preClusterResult = citrus.preCluster(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=100,fileList=trainFileList,nFolds=4,conditionComparaMatrix=conditionComparaMatrix)
+trainFileList = fileList[seq(from=1,to=19,by=2),]
+testFileList = fileList[seq(from=2,to=20,by=2),]
+preClusterResult = citrus.preCluster(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=1000,fileList=trainFileList,nFolds="all",conditionComparaMatrix=conditionComparaMatrix)
 mappingResults = citrus.mapFileDataToClustering(dataDir=dataDir,newFileList=testFileList,fileSampleSize=1000,preClusterResult=preClusterResult)
 
-trainFeatures = citrus.buildFeatures(preclusterResult=preClusterResult,outputDir="/dev/null",featureTypes=c("densities"))
+trainFeatures = citrus.buildFeatures(preclusterResult=preClusterResult,outputDir=outputDir,featureTypes=c("densities","medians"),medianColumns=medianCols)
+trainLargeEnoughClusters = lapply(names(trainFeatures),.extractConditionLargeEnoughClusters,foldFeatures=trainFeatures)
+names(trainLargeEnoughClusters) = names(trainFeatures)
 
+cvm = cv.glmnet(x=trainFeatures$unstim_vs_stim1$foldFeatures[[1]],y=as.factor(rep(c("H","D"),each=5)),family="binomial",type.measure="class")
+plot(cvm)
 # FIX THIS
-mappedFeatures = citrus.buildFeatures(preclusterResult=mappingResults,outputDir="/dev/null",featureTypes="densities",largeEnoughClusters=preClusterResult)
+mappedFeatures = citrus.buildFeatures(preclusterResult=mappingResults,outputDir=outputDir,featureTypes=c("densities","medians"),largeEnoughClusters=trainLargeEnoughClusters,medianColumns=medianCols)
+predict(cvm,newx=mappedFeatures$unstim_vs_stim1$foldFeatures[[1]],type="class")

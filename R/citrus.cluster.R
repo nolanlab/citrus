@@ -1,4 +1,4 @@
-citrus.mapFileDataToClustering = function(dataDir,newFileList,sampleSize,preClusterResult,fileSampleSize,mappingColumns=NULL,transformCols=NULL,transformFactor=5,emptyValue=T){
+citrus.mapFileDataToClustering = function(dataDir,newFileList,preClusterResult,fileSampleSize,mappingColumns=NULL,transformCols=NULL,transformFactor=5,emptyValue=T){
   conditions = strsplit(names(preClusterResult),"_vs_")
   mappingResult = list()
   for (conditionName in names(preClusterResult)){
