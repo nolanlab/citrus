@@ -122,7 +122,8 @@ conditionComparaMatrix[2]=F
 trainFileList = fileList[seq(from=1,to=19,by=2),]
 testFileList = fileList[seq(from=2,to=20,by=2),]
 preClusterResult = citrus.preCluster(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=1000,fileList=trainFileList,nFolds="all",conditionComparaMatrix=conditionComparaMatrix)
-mappingResults = citrus.mapFileDataToClustering(dataDir=dataDir,newFileList=testFileList,fileSampleSize=1000,preClusterResult=preClusterResult)
+mappingResults = citrus.mapFileDataToClustering(dataDir=dataDir,newFileList=testFileList,fileSampleSize=1000,preClusterResult=preClusterResult,)
+
 
 trainFeatures = citrus.buildFeatures(preclusterResult=preClusterResult,outputDir=outputDir,featureTypes=c("densities","medians"),medianColumns=medianCols)
 trainLargeEnoughClusters = lapply(names(trainFeatures),.extractConditionLargeEnoughClusters,foldFeatures=trainFeatures)
@@ -133,3 +134,5 @@ plot(cvm)
 # FIX THIS
 mappedFeatures = citrus.buildFeatures(preclusterResult=mappingResults,outputDir=outputDir,featureTypes=c("densities","medians"),largeEnoughClusters=trainLargeEnoughClusters,medianColumns=medianCols)
 predict(cvm,newx=mappedFeatures$unstim_vs_stim1$foldFeatures[[1]],type="class")
+
+
