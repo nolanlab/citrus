@@ -1,14 +1,14 @@
 shinyServer(function(input, output) {
   
-  output$groupNameInput = reactiveUI(function() {
+  output$groupNameInput = renderUI({
     return(tagList(lapply(1:input$numberOfGroups,serialGroupNameInput)))
   })
   
-  output$sampleGroupSelector = reactiveUI(function(){
+  output$sampleGroupSelector = renderUI({
     return(tagList(lapply(getGroupNames(input),serialGroupSelectors,fileList=fileList)))
   })
   
-  output$sampleGroupsTable = reactiveTable(function(){
+  output$sampleGroupsTable = renderTable({
     if (preload){
       return(keyFile)
     } else {
@@ -16,7 +16,7 @@ shinyServer(function(input, output) {
     }
   })
   
-  output$conditionComparaMatrixInput = reactiveUI(function(){
+  output$conditionComparaMatrixInput = renderUI({
     if (preload){
       conditions = c("index",colnames(keyFile[,-labelCol]))
       rowList = list()
@@ -46,7 +46,7 @@ shinyServer(function(input, output) {
     return("SHOULD NOT BE USED");
   })
   
-  output$clusterCols = reactiveUI(function(){
+  output$clusterCols = renderUI({
     choices = getParameterIntersections(input,fileList,fileCols);
     if (is.null(choices)){
       return(tagList(tags$b("Assign files to groups to enable selection of clustering parameters.")))
@@ -55,7 +55,7 @@ shinyServer(function(input, output) {
     }
   })
   
-  output$transformCols = reactiveUI(function(){
+  output$transformCols = renderUI({
     choices = getParameterIntersections(input,fileList,fileCols);
     if (is.null(choices)){
       return(tagList(tags$b("Assign samples to groups to enable selection of transform parameters.")))
@@ -64,7 +64,7 @@ shinyServer(function(input, output) {
     }
   })
   
-  output$calculatedFeatures = reactiveUI(function(){
+  output$calculatedFeatures = renderUI({
     return(tagList(
                     tags$span("Calculated Cluster Features:",class="control-label"),
                     tags$br(),
@@ -72,7 +72,7 @@ shinyServer(function(input, output) {
     ))
   })
   
-  output$medianCols = reactiveUI(function(){
+  output$medianCols = renderUI({
     if ((!is.null(input$computemedians))&&(input$computemedians)){
       choices = getParameterIntersections(input,fileList,fileCols);
       if (is.null(choices)){
@@ -85,7 +85,7 @@ shinyServer(function(input, output) {
     }
   })
   
-  output$emdCols = reactiveUI(function(){
+  output$emdCols = renderUI({
     if ((!is.null(input$computeemDists))&&(input$computeemDists)){
       choices = getParameterIntersections(input,fileList,fileCols);
       if (is.null(choices)){
@@ -98,7 +98,7 @@ shinyServer(function(input, output) {
     }
   })
   
-  output$crossValidationRange = reactiveUI(function(){
+  output$crossValidationRange = renderUI({
     selectedFiles = getSelectedFiles(input)
     nFiles = length(unlist(selectedFiles))
     
@@ -109,7 +109,7 @@ shinyServer(function(input, output) {
     }
   })
   
-  output$groupSummary = reactiveUI(function(){
+  output$groupSummary = renderUI({
     selectedFiles=getSelectedFiles(input)
     groupNames = getGroupNames(input)
     return(
@@ -119,7 +119,7 @@ shinyServer(function(input, output) {
     )
   })
   
-  output$conditionSummary = reactiveUI(function(){
+  output$conditionSummary = renderUI({
     if (preload){
       comparaConditions = getComparaConditions(input,conditions=colnames(keyFile[,-labelCol]))
       if (length(comparaConditions)==0){
@@ -131,7 +131,7 @@ shinyServer(function(input, output) {
     }
   })
   
-  output$clusteringSummary = reactiveUI(function(){
+  output$clusteringSummary = renderUI({
     if (is.null(input$clusterCols)){
       ccTag = tags$li(tagList(tags$span("Clustering Parameters:"),tags$span("None Selected",class="red-error")))
     } else {
@@ -145,11 +145,11 @@ shinyServer(function(input, output) {
     return(tags$ul(tagList(tags$li(paste("Events sampled per file:",input$fileSampleSize)),ccTag,tcTag)));  
   })
   
-  output$workingDirectorySummary = reactiveUI(function(){
+  output$workingDirectorySummary = renderUI({
     return(tagList(tags$span(dataDir),tags$br(),tags$br()))
   })
   
-  output$featureSummary = reactiveUI(function(){
+  output$featureSummary = renderUI({
     featureSetTags = tags$span("None",class="red-error")
     features=list();
     if (!is.null(input$computedensities)&&input$computedensities){
@@ -186,7 +186,7 @@ shinyServer(function(input, output) {
     )
   })
   
-  output$twoClassSummary = reactiveUI(function(){
+  output$twoClassSummary = renderUI({
     if (is.null(input$crossValidationFolds)){
       cvTag = tagList(tags$span("Cross Validation Folds:"),tags$span("None",class="red-error"))
     } else {
@@ -201,11 +201,11 @@ shinyServer(function(input, output) {
     
   })
   
-  output$twoClassModels = reactiveUI(function(){
+  output$twoClassModels = renderUI({
     tagList(tags$span("Two-Class Models:"),lapply(citrus.modelTypes(),serialTwoClassModel))  
   })
   
-  output$run = reactiveUI(function(){
+  output$run = renderUI({
     errors = errorCheckInput(input)
     if ((!is.null(input$runCitrus))&&(input$runCitrus)){
       if (length(errors)==0){
