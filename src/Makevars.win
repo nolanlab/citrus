@@ -1,0 +1,24 @@
+PKG_CPPFLAGS =	-Wall -I../inst/include/ $(SHLIB_OPENMP_CXXFLAGS)
+PKG_LIBS = $(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" -e "Rcpp:::LdFlags()") $(SHLIB_OPENMP_CXXFLAGS)
+
+## we place it inside the inst/ directory so that it gets installed by the package
+USERDIR	= 	../inst/lib$(R_ARCH)
+STATICLIB =	libRclusterpp.a
+USERLIB	= 	$(USERDIR)/$(STATICLIB)
+
+RM = 		rm -f
+
+.PHONY: 	all clean
+
+all: 		userlib $(SHLIB)
+
+clean:
+		${RM} $(OBJECTS) $(SHLIB)
+
+$(USERLIB):	$(OBJECTS)
+
+userlib:	$(STATICLIB)
+		-mkdir -p $(USERDIR)
+		-mv $(STATICLIB) $(USERLIB) 
+
+$(STATICLIB):	$(OBJECTS)
