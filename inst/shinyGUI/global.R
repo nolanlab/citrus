@@ -8,6 +8,7 @@ if (!exists("dataDir")){
   if (is.null(dataDirFile)){
     stop("File Selection Canceled")
   }
+  dataDir = dirname(dataDirFile)
 } else {
   if (!file.exists(dataDir)){
     stop(paste("Directory",dataDir,"not found. Exiting."))
