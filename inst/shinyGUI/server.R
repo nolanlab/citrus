@@ -175,11 +175,10 @@ shinyServer(function(input, output) {
       featureSetTags = tags$ul(tagList(features))
     } 
     featureSetTags = tagList(tags$span("Computed Cluster Features:"),featureSetTags)
-    
     return(
       tags$ul(
         tagList(
-          tags$li(paste("Minimum Cluster Size: ",input$minClusterSize,"%",sep="")),
+          tags$li(paste("Minimum Cluster Size: ",input$minimumClusterSizePercent,"%",sep="")),
           tags$li(featureSetTags)
           )
         )

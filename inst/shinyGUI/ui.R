@@ -19,7 +19,7 @@ shinyUI(pageWithSidebar(
     tags$em("Cluster Characterization Summary:"),
     uiOutput("featureSummary"),
     tags$em("Class Summary:"),
-    uiOutput("Two-Class Summary"),
+    uiOutput("twoClassSummary"),
     tags$hr(),
     tags$em("Sample Summary:"),
     tableOutput("sampleGroupsTable")
