@@ -1,2 +1,3 @@
+CXX=@CXX@
 PKG_CXXFLAGS=-I../inst/include @OPENMP_CXXFLAGS@
 PKG_LIBS=`$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` @OPENMP_CXXFLAGS@
