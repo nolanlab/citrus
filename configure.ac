@@ -1,6 +1,6 @@
 AC_PREREQ(2.62)
 
-AC_INIT([Rclusterpp], 0.2.0)
+AC_INIT([Citrus], 0.5)
 
 AC_PROG_CXX()
 AC_LANG_PUSH(C++)
