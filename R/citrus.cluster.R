@@ -60,7 +60,7 @@ citrus.traverseMergeOrder = function(node,mergeOrder){
 }
 
 
-citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds=5,folds=NULL,transformCols=NULL,conditionComparaMatrix=NULL,balanceFactor=NULL,transformFactor=5,...){
+citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds=5,folds=NULL,transformCols=NULL,clusterConditions=NULL,conditionComparaMatrix=NULL,balanceFactor=NULL,transformFactor=5,...){
   
   addtlArgs = list(...)
   
@@ -74,7 +74,9 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
     emptyValue = addtlArgs[["emptyValue"]]
   }
 
-  if (!is.null(conditionComparaMatrix)){
+  if (!is.null(clusterConditions)){
+	allConditions = as.list(clusterConditions)
+  } else if (!is.null(conditionComparaMatrix)){
     allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 
   } else {
     allConditions = as.list(colnames(fileList))
