@@ -75,7 +75,7 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
   }
 
   if (!is.null(clusterConditions)){
-	allConditions = as.list(clusterConditions)
+    allConditions = list(clusterConditions)
   } else if (!is.null(conditionComparaMatrix)){
     allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 
   } else {
