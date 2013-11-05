@@ -244,7 +244,18 @@ citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterC
   .petalPlot(xpos=coordinates[x,1],coordinates[x,2],d=weights[x,],scale=scale)
 }
 
-.petalPlot = function(xpos,ypos,d,scale=1,segCol=NULL,labels=NULL){
+.petalPlot = function(xpos,ypos,d,scale=1,segCol=NULL,labels=NULL,theme="black"){
+  if (theme=="black"){
+    bg="black"
+    stroke="white"
+    strokea=rgb(1,1,1,.4)
+  } else if (theme=="white"){
+    bg="white"
+    stroke="black"
+    strokea=rgb(0,0,0,.4)
+  } else {
+    stop("Unrecognized theme option. Choices are 'white' or 'black'")
+  }
   res=360
   nSegments = length(d)
   if (is.null(segCol)){
@@ -261,14 +272,14 @@ citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterC
     seg.x = c(xpos,xpos+x[segPoints[i]:segPoints[i+1]]*d[i]*scale)
     seg.y = c(ypos,ypos+y[segPoints[i]:segPoints[i+1]]*d[i]*scale)
     polygon(seg.x,seg.y,col=segCol[i],border=borCol[i])
-    lines(c(xpos,xpos+x[segPoints[i]]*scale),c(ypos,ypos+y[segPoints[i]]*scale),col=rgb(1,1,1,.4))
+    lines(c(xpos,xpos+x[segPoints[i]]*scale),c(ypos,ypos+y[segPoints[i]]*scale),col=strokea)
   }
-  lines((x*scale)+xpos,(y*scale)+ypos,col=rgb(1,1,1,.4))
-  lines((x*.5*scale)+xpos,(y*.5*scale)+ypos,col=rgb(1,1,1,.4))
+  lines((x*scale)+xpos,(y*scale)+ypos,col=strokea)
+  lines((x*.5*scale)+xpos,(y*.5*scale)+ypos,col=strokea)
   
   if (!is.null(labels)){
     labelPoints = segPoints[-length(segPoints)]+segPoints[2]/2
-    text(x=c(x[labelPoints]*scale+xpos),y=c(y[labelPoints]*scale+ypos),labels,col="white")
+    text(x=c(x[labelPoints]*scale+xpos),y=c(y[labelPoints]*scale+ypos),labels,col=stroke)
   }
   
 }
@@ -297,25 +308,47 @@ citrus.createHierarchyGraph = function(largeEnoughClusters,mergeOrder,clusterAss
   return(g)
 }
 
-citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph,layout){
-  pdf(file=outputFile,width=15,height=15,bg="black")
+citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph,layout,theme="black"){
+  if (theme=="black"){
+    bg="black"
+    stroke="white"
+    strokea=rgb(1,1,1,.5)
+  } else if (theme=="white"){
+    bg="white"
+    stroke="black"
+    strokea=rgb(0,0,0,.5)
+  } else {
+    stop("Unrecognized theme option. Choices are 'white' or 'black'")
+  }
+  pdf(file=outputFile,width=15,height=15,bg=bg)
   for (target in 1:ncol(clusterMedians)){
     ct = seq(from=(min(clusterMedians[,target])-0.01),to=(max(clusterMedians[,target])+0.01),length.out=20)
-    cols = topo.colors(20)[sapply(clusterMedians[,target],findInterval,vec=ct)]
-    par(col.main="white")  
-    plot.igraph(graph,layout=layout,vertex.color=cols,main=colnames(clusterMedians)[target],edge.color="white",vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=rgb(1,1,1,.5),vertex.label.cex=.7,vertex.label.family="Helvetica")
+    cols = .graphColorPalette(20)[sapply(clusterMedians[,target],findInterval,vec=ct)]
+    par(col.main=stroke)  
+    plot.igraph(graph,layout=layout,vertex.color=cols,main=colnames(clusterMedians)[target],edge.color=stroke,vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica")
     
     # Legend
-    legend_image <- as.raster(matrix(rev(topo.colors(20)), ncol=1))
+    legend_image <- as.raster(matrix(rev(.graphColorPalette(20)), ncol=1))
     rasterImage(legend_image, 1.1, -.5, 1.15,.5)
-    text(x=1.15, y = seq(-.5,.5,l=5), labels = .decimalFormat(ct[c(1,floor((length(ct)/4)*1:4))]) ,pos=4,col="white")
+    text(x=1.15, y = seq(-.5,.5,l=5), labels = .decimalFormat(ct[c(1,floor((length(ct)/4)*1:4))]) ,pos=4,col=stroke)
   }
   dev.off()  
 }
 
 
-citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureClusterMatrix,largeEnoughClusters,graph,layout,petalPlots=F,clusterMedians=NULL){
-  pdf(file=outputFile,width=15,height=15,bg="black")
+citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureClusterMatrix,largeEnoughClusters,graph,layout,petalPlots=F,clusterMedians=NULL,theme="black"){
+  if (theme=="black"){
+    bg="black"
+    stroke="white"
+    strokea=rgb(1,1,1,.5)
+  } else if (theme=="white"){
+    bg="white"
+    stroke="black"
+    strokea=rgb(0,0,0,.5)
+  } else {
+    stop("Unrecognized theme option. Choices are 'white' or 'black'")
+  }
+  pdf(file=outputFile,width=15,height=15,bg=bg)
   for (feature in unique(featureClusterMatrix[,"feature"])){
     fGroup = list();
     featureClusters = as.numeric(featureClusterMatrix[featureClusterMatrix[,"feature"]==feature,"cluster"])
@@ -325,16 +358,16 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
     for (groupId in unique(groupAssignments)){
       fGroup[[groupId]]=match(get.vertex.attribute(subgraph,"label")[groupAssignments==groupId],get.vertex.attribute(graph,"label"))
     }
-    par(col.main="white")
+    par(col.main=stroke)
     if (petalPlots){
       if (is.null(clusterMedians)){
         stop("clusterMedians argument must be supplied to plot petals")
       }
       add.vertex.shape("petal", clip=vertex.shapes("circle")$clip,plot=.petalVertex, parameters=list(vertex.scale=.04,vertex.weights=apply(clusterMedians,2,.scaleToOne)))
-      plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color="white",vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=rgb(1,1,1,.5),vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=rgb(0,0,.5,.3),mark.col=topo.colors(length(fGroup),alpha=.3),vertex.shape="petal")
+      plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color=stroke,vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=rgb(0,0,.5,.3),mark.col=.graphColorPalette(length(fGroup),alpha=.3),vertex.shape="petal")
       .petalPlot(xpos=1,ypos=-1,d=rep(1,ncol(clusterMedians)),scale=.2,labels=colnames(clusterMedians))
     } else {
-      plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color="white",vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=rgb(1,1,1,.5),vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=rgb(0,0,.5,.5),mark.col=topo.colors(length(fGroup),alpha=.8))    
+      plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color=stroke,vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=rgb(0,0,.5,.5),mark.col=.graphColorPalette(length(fGroup),alpha=.8))    
     }
   }
   dev.off()
@@ -391,5 +424,9 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus
     }
     
   }
-  
+}
+
+.graphColorPalette=function(x,alpha=1){
+  #rainbow(x,alpha=.8,start=.65,end=.15)
+  topo.colors(x,alpha=alpha)
 }
