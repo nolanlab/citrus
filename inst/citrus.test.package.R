@@ -50,8 +50,8 @@ family="twoClass"
 modelTypes="glmnet"
 modelTypes="sam"
 minimumClusterSizePercent=0.05
-conditionComparaMatrix=matrix(F,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
-conditionComparaMatrix[3]=T
+conditionComparaMatrix=matrix(T,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
+conditionComparaMatrix[2]=F
 
 # Results should be bad
 res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize,labels=labels,nFolds=5,family=family,fileList=fileList,modelTypes=modelTypes,featureTypes=c("densities"),minimumClusterSizePercent=0.05,conditionComparaMatrix=conditionComparaMatrix)
@@ -95,4 +95,44 @@ conditionComparaMatrix=matrix(F,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),
 conditionComparaMatrix[3]=T
 res=citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels,nFolds=5,family,modelTypes="glmnet",featureTypes="emDists",minimumClusterSizePercent=minimumClusterSizePercent,conditionComparaMatrix=conditionComparaMatrix,plot=T,returnResults=T,emdColumns=medianCols)
 res=citrus.quick(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels,family,modelTypes="glmnet",featureTypes="emDists",minimumClusterSizePercent=minimumClusterSizePercent,conditionComparaMatrix=conditionComparaMatrix,plot=T,returnResults=T,emdColumns=medianCols)
+
+
+
+# Testing the new file mapping example
+rm(list=ls(all=T))
+dataDir = file.path(system.file(package="citrus"),"extdata","example3")
+#dataDir = file.path("~/Desktop/work/citrus/inst/extdata/example3/")
+outputDir = "~/Desktop/notime/tmp/citrusOutput/"
+clusterCols = c("LineageMarker1","LineageMarker2")
+medianCols = c("FunctionalMarker1","FunctionalMarker2")
+labels = c(rep("healthy",10),rep("diseased",10))
+labels = as.factor(labels)
+nFolds=5
+fileList = cbind(unstim=list.files(dataDir,pattern="unstim"),stim1=list.files(dataDir,pattern="stim1"))
+fileSampleSize=1000
+featureTypes=c("densities","medians","emDists")
+featureTypes=c("emDists")
+family="twoClass"
+modelTypes="glmnet"
+modelTypes="sam"
+minimumClusterSizePercent=0.05
+conditionComparaMatrix=matrix(T,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
+conditionComparaMatrix[2]=F
+
+trainFileList = fileList[seq(from=1,to=19,by=2),]
+testFileList = fileList[seq(from=2,to=20,by=2),]
+preClusterResult = citrus.preCluster(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=1000,fileList=trainFileList,nFolds="all",conditionComparaMatrix=conditionComparaMatrix)
+mappingResults = citrus.mapFileDataToClustering(dataDir=dataDir,newFileList=testFileList,fileSampleSize=1000,preClusterResult=preClusterResult,)
+
+
+trainFeatures = citrus.buildFeatures(preclusterResult=preClusterResult,outputDir=outputDir,featureTypes=c("densities","medians"),medianColumns=medianCols)
+trainLargeEnoughClusters = lapply(names(trainFeatures),.extractConditionLargeEnoughClusters,foldFeatures=trainFeatures)
+names(trainLargeEnoughClusters) = names(trainFeatures)
+
+cvm = cv.glmnet(x=trainFeatures$unstim_vs_stim1$foldFeatures[[1]],y=as.factor(rep(c("H","D"),each=5)),family="binomial",type.measure="class")
+plot(cvm)
+# FIX THIS
+mappedFeatures = citrus.buildFeatures(preclusterResult=mappingResults,outputDir=outputDir,featureTypes=c("densities","medians"),largeEnoughClusters=trainLargeEnoughClusters,medianColumns=medianCols)
+predict(cvm,newx=mappedFeatures$unstim_vs_stim1$foldFeatures[[1]],type="class")
+
 

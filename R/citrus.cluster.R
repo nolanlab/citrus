@@ -1,3 +1,27 @@
+citrus.mapFileDataToClustering = function(dataDir,newFileList,preClusterResult,fileSampleSize,mappingColumns=NULL,transformCols=NULL,transformFactor=5,emptyValue=T,...){
+  conditions = strsplit(names(preClusterResult),"_vs_")
+  mappingResult = list()
+  for (conditionName in names(preClusterResult)){
+    conditions = strsplit(conditionName,"_vs_")[[1]]
+    mappingResult[[conditionName]]$citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=newFileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize,transformFactor=transformFactor,emptyValue=emptyValue)
+    
+    if (is.null(mappingColumns)){
+      mappingColumns = preClusterResult[[conditionName]]$clusterColumns
+    }
+    
+    cat(paste("Mapping",nrow(mappingResult[[conditionName]]$citrus.dataArray$data),"events to existing cluster space.\n"));
+    mappingResult[[conditionName]]$foldsClusterAssignments = list()
+    mappingResult[[conditionName]]$foldsClusterAssignments[["mappingResult"]] = citrus.mapDataToClusterSpace(data=preClusterResult[[conditionName]]$citrus.dataArray$data[,mappingColumns],
+                                 clusterAssignments=preClusterResult[[conditionName]]$foldsClusterAssignments[[which(preClusterResult[[conditionName]]$folds=="all")]],
+                                 newData=mappingResult[[conditionName]]$citrus.dataArray$data[,mappingColumns],...)
+    mappingResult[[conditionName]]$folds = list("mappingResult")
+    mappingResult[[conditionName]]$conditions = conditions
+    mappingResult[[conditionName]]$clusterColumns = preClusterResult[[conditionName]]$clusterColumns
+  }
+  return(mappingResult)
+}
+
+
 citrus.foldCluster = function(foldMembership,citrus.dataArray,clusterCols,conditions){
   if ((length(foldMembership)==1) && (foldMembership=="all")){
     cat("Clustering All\n")
@@ -33,9 +57,14 @@ citrus.mapFoldDataToClusterSpace = function(index,citrus.dataArray,foldClusterAs
   return(citrus.mapDataToClusterSpace(data=citrus.dataArray$data[citrus.dataArray$data[,"fileId"]%in%foldFileIds,clusterCols],clusterAssignments=foldClusterAssignments[[index]],newData=citrus.dataArray$data[citrus.dataArray$data[,"fileId"]%in%leftoutFileIds,clusterCols]))  
 }
 
-citrus.mapDataToClusterSpace = function(data,clusterAssignments,newData){  
+citrus.mapDataToClusterSpace = function(data,clusterAssignments,newData,...){  
   nnMap = citrus.assignToCluster(tbl=newData,cluster_data=data,cluster_assign=rep(1,nrow(data)))
-  return(lapply(clusterAssignments,citrus.mapNeighborsToCluster,nearestNeighborMap=nnMap))
+  addtlArgs = list(...)
+  if ("snowCluster" %in% names(addtlArgs)){
+    return(parLapply(addtlArgs[["snowCluster"]],clusterAssignments,citrus.mapNeighborsToCluster,nearestNeighborMap=nnMap))
+  } else {
+    return(lapply(clusterAssignments,citrus.mapNeighborsToCluster,nearestNeighborMap=nnMap))
+  }
 }  
 
 citrus.mapNeighborsToCluster = function(clusterMembers,nearestNeighborMap){

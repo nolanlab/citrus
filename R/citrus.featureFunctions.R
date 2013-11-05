@@ -1,5 +1,9 @@
+.extractConditionLargeEnoughClusters = function(condition,foldFeatures){
+  foldFeatures[[condition]]$foldLargeEnoughClusters[[which(foldFeatures[[condition]]$folds=="all")]]
+}
 
-citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densities"),minimumClusterSizePercent=0.05,returnResults=T,...){  
+citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densities"),minimumClusterSizePercent=0.05,largeEnoughClusters=NULL,returnResults=T,...){  
+  
   addtlArgs = list(...)
   
   # Error check before we actually start the work.
@@ -32,8 +36,13 @@ citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densi
     nAllFolds=length(folds)
     nFolds=nAllFolds-1
     
-    cat("Calculating Fold Large Enough Clusters\n")
-    foldLargeEnoughClusters = lapply(1:nAllFolds,citrus.calculateFoldLargeEnoughClusters,foldsClusterAssignments=preclusterResult[[conditionName]]$foldsClusterAssignments,folds=folds,citrus.dataArray=preclusterResult[[conditionName]]$citrus.dataArray,minimumClusterSizePercent=minimumClusterSizePercent)
+    if (is.null(largeEnoughClusters)){
+      cat("Calculating Fold Large Enough Clusters\n")
+      foldLargeEnoughClusters = lapply(1:nAllFolds,citrus.calculateFoldLargeEnoughClusters,foldsClusterAssignments=preclusterResult[[conditionName]]$foldsClusterAssignments,folds=folds,citrus.dataArray=preclusterResult[[conditionName]]$citrus.dataArray,minimumClusterSizePercent=minimumClusterSizePercent)  
+    } else {
+      foldLargeEnoughClusters = list(mappingResult=largeEnoughClusters[[conditionName]])
+    }
+    
     
     cat("Calculating Features\n")
     foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=preclusterResult[[conditionName]]$citrus.dataArray,foldsClusterAssignments=preclusterResult[[conditionName]]$foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,...)
@@ -43,7 +52,7 @@ citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densi
     #foldFeatures = lapply(1:nAllFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=preclusterResult[[conditionName]]$citrus.dataArray,foldsClusterAssignments=preclusterResult[[conditionName]]$foldsClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,emdColumns=emdColumns)
     
     #Normalize features... Sometimes EMD's aren't calculated. Need a better way to handle this.
-    if (folds[[1]][1]!="all"){
+    if (!(folds[[1]][1] %in% c("all","mappingResult"))){
       leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=preclusterResult[[conditionName]]$citrus.dataArray,foldsClusterAssignments=preclusterResult[[conditionName]]$leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,...)
       #leftoutFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,featureTypes=featureTypes,folds=folds,citrus.dataArray=citrus.dataArray,foldsClusterAssignments=leftoutClusterAssignments,foldLargeEnoughClusters=foldLargeEnoughClusters,conditions=conditions,calculateLeaveoutData=T,emdColumns=emdColumns)
 
@@ -71,7 +80,7 @@ citrus.getFeatureSetNames = function(){
 }
 
 citrus.buildFoldFeatures = function(index,featureTypes=c("densities"),folds,citrus.dataArray,foldsClusterAssignments,foldLargeEnoughClusters,conditions,calculateLeaveoutData=F,...){
-  if ((length(folds[[index]])==1) && (folds[[index]]=="all")){
+  if ((length(folds[[index]])==1) && (folds[[index]] %in% c("all","mappingResult"))){
     foldsFileIds=as.vector(citrus.dataArray$fileIds[,conditions])
   } else if (calculateLeaveoutData){
     foldsFileIds=as.vector(citrus.dataArray$fileIds[folds[[index]],conditions])
