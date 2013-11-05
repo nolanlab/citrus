@@ -325,7 +325,7 @@ citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph
     ct = seq(from=(min(clusterMedians[,target])-0.01),to=(max(clusterMedians[,target])+0.01),length.out=20)
     cols = topo.colors(20)[sapply(clusterMedians[,target],findInterval,vec=ct)]
     par(col.main=stroke)  
-    plot.igraph(graph,layout=layout,vertex.color=cols,main=colnames(clusterMedians)[target],edge.color=stroke,vertex.label.color=stroke,edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica")
+    plot.igraph(graph,layout=layout,vertex.color=cols,main=colnames(clusterMedians)[target],edge.color=stroke,vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica")
     
     # Legend
     legend_image <- as.raster(matrix(rev(topo.colors(20)), ncol=1))
@@ -364,10 +364,10 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
         stop("clusterMedians argument must be supplied to plot petals")
       }
       add.vertex.shape("petal", clip=vertex.shapes("circle")$clip,plot=.petalVertex, parameters=list(vertex.scale=.04,vertex.weights=apply(clusterMedians,2,.scaleToOne)))
-      plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color=stroke,vertex.label.color=stroke,edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=rgb(0,0,.5,.3),mark.col=topo.colors(length(fGroup),alpha=.3),vertex.shape="petal")
+      plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color=stroke,vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=rgb(0,0,.5,.3),mark.col=topo.colors(length(fGroup),alpha=.3),vertex.shape="petal")
       .petalPlot(xpos=1,ypos=-1,d=rep(1,ncol(clusterMedians)),scale=.2,labels=colnames(clusterMedians))
     } else {
-      plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color=stroke,vertex.label.color=stroke,edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=rgb(0,0,.5,.5),mark.col=topo.colors(length(fGroup),alpha=.8))    
+      plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color=stroke,vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=rgb(0,0,.5,.5),mark.col=topo.colors(length(fGroup),alpha=.8))    
     }
   }
   dev.off()
