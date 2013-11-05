@@ -427,6 +427,6 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus
 }
 
 .graphColorPalette=function(x){
-  topo.colors(x)
   #rainbow(x,alpha=.8,start=.65,end=.15)
+  topo.colors(x)
 }
