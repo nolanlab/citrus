@@ -112,6 +112,76 @@ citrus.buildClusterFeatures = function(clusterAssignments,featureTypes,largeEnou
   return(do.call("cbind",features))
 }
 
+
+citrus.calculateFeature.CVs = function(foldsFileIds,clusterIds,clusterAssignments,data,citrus.dataArray,...){
+  addtlArgs = list(...)
+  if ("snowCluster" %in% names(addtlArgs)){
+    features = t(parSapply(addtlArgs[["snowCluster"]],foldsFileIds,citrus.calculateFileClustersCVs,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))    
+  } else {
+    features = t(sapply(foldsFileIds,citrus.calculateFileClustersCVs,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))    
+  }
+  
+  rownames(features) = citrus.dataArray$fileNames[foldsFileIds]
+  return(features)
+}
+
+citrus.calculateFileClustersCVs = function(fileId,clusterIds,clusterAssignments,data,...){
+  addtlArgs = list(...)
+  if (!("cvColumns" %in% names(addtlArgs))){
+    stop("cvColumns argument must be specified to compute cluster CVs.")
+  }
+  unlist(lapply(clusterIds,citrus.calculateFileClusterCV,clusterAssignments=clusterAssignments,fileId=fileId,data=data,cvColumns=addtlArgs[["cvColumns"]]))
+}
+
+.cv = function(x){
+  sd(x)/mean(x)
+}
+
+citrus.calculateFileClusterCV = function(clusterId,clusterAssignments,fileId,data,cvColumns){
+  include = data[clusterAssignments[[clusterId]],]
+  
+  # Are there zero cells assigned to our cluster?
+  if (length(clusterAssignments[[clusterId]])==0){
+    cvs = rep(0,length(cvColumns))
+    
+  } else if (length(clusterAssignments[[clusterId]])==1) {
+    # Are there 1 cells assigned to our cluster?
+    
+    if (fileId==include["fileId"]){
+      cvs = rep(0,length(cvColumns))
+    } else {
+      cvs = include[cvColumns]
+    }
+    
+  } else {
+    # Are there more than 1 cells assigned to our cluster?
+    
+    include = include[include[,"fileId"]==fileId,cvColumns]
+    if (length(cvColumns)>1){
+      # do we have data?
+      if (length(include)>0){
+        if (is.null(nrow(include))){
+          cvs = include  
+        } else {
+          cvs = apply(include,2,.cv) 
+        }
+      } else {
+        cvs = (rep(0,length(cvColumns)))
+      }
+    } else if (length(cvColumns)==1){
+      if (length(include)>0){
+        cvs = .cv(include)
+      } else {
+        cvs=0
+      }
+    }
+  }
+  
+  names(cvs) = paste(paste(paste("cluster",clusterId),cvColumns),"cv")
+  return(cvs)
+}
+
+
 citrus.calculateFeature.emDists = function(foldsFileIds,clusterIds,clusterAssignments,data,foldFileNames,conditions,citrus.dataArray,preCalcFeatures,...){
   library("emdist")
   addtlArgs = list(...)

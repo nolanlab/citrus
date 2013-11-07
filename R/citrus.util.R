@@ -167,7 +167,7 @@ citrus.fileEventCount = function(dataDir,emptyValue=T){
 }
 
 citrus.featureTypes = function(){
-  return(c("densities","medians","emDists"))
+  return(c("densities","medians","emDists","CVs"))
 }
 
 citrus.familyList = function(){
