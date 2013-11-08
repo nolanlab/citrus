@@ -174,46 +174,46 @@ citrus.overlapDensityPlot = function(clusterDataList,backgroundData){
     combined=rbind(combined,data.frame(value=as.vector(clusterDataList[[clusterName]]),marker=as.vector(sapply(colnames(clusterDataList[[clusterName]]),rep,nrow(clusterDataList[[clusterName]]))),clusterId=clusterName,dplot="cluster",check.names=F,check.rows=F))
     combined=rbind(combined,data.frame(value=as.vector(backgroundData),marker=as.vector(sapply(colnames(clusterDataList[[clusterName]]),rep,nrow(backgroundData))),clusterId=clusterName,dplot="background",check.names=F,check.rows=F))
   }
-  p = ggplot(combined) + geom_density(aes(x=value, y = ..scaled..,fill=dplot,colour=dplot),alpha=.6) + facet_grid(clusterId~marker,scales="free")
+  p = ggplot(combined) + geom_density(aes(x=value, y = ..scaled..,fill=dplot,colour=dplot),alpha=.6) + facet_grid(clusterId~marker,scales="free")+theme_bw()
   print(p)
 }
 
-citrus.plotClusters = function(modelType,differentialFeatures,outputDir,clusterChildren,citrus.dataArray,conditions,clusterCols){
-  data = citrus.dataArray$data[citrus.dataArray$data[,"fileId"] %in% citrus.dataArray$fileIds[,conditions],]
-  clusterChildren = clusterChildren[[length(clusterChildren)]]
-  
+citrus.plotModelClusters = function(modelType,differentialFeatures,outputDir,clusterAssignments,citrus.dataArray,conditions,clusterCols){
   for (cvPoint in names(differentialFeatures[[modelType]])){
     nonzeroClusters = as.numeric(differentialFeatures[[modelType]][[cvPoint]][["clusters"]])
-    pdf(file=file.path(outputDir,paste(modelType,"_results/clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=(2.2*length(clusterCols)+2),height=(2*length(nonzeroClusters)))
-    clusterDataList=list();
-    for (nonzeroCluster in sort(nonzeroClusters)){
-      if (nrow(data[clusterChildren[[nonzeroCluster]],])>5000){
-        clusterDataList[[as.character(nonzeroCluster)]]=data[clusterChildren[[nonzeroCluster]],clusterCols][sample(1:nrow(data[clusterChildren[[nonzeroCluster]],]),1000),]
-      } else {
-        clusterDataList[[as.character(nonzeroCluster)]]=data[clusterChildren[[nonzeroCluster]],clusterCols]
-      }
-      
-      colLabels = citrus.dataArray$fileChannelNames[[conditions[1]]][[1]]
-      reagentNames = citrus.dataArray$fileReagentNames[[conditions[1]]][[1]]
-      displayNames = colLabels
-      displayNames[nchar(reagentNames)>1] = reagentNames[nchar(reagentNames)>1]
-      if (is.numeric(clusterCols)){
-        colnames(clusterDataList[[as.character(nonzeroCluster)]])=displayNames[clusterCols]  
-      } else {
-        colnames(clusterDataList[[as.character(nonzeroCluster)]])=displayNames[colLabels%in%clusterCols]
-      }
-      
-      
-    }
-    if (nrow(data)>2500){
-      bgData = data[sample(1:nrow(data),2500),clusterCols]
+    outputFile = file.path(outputDir,paste(modelType,"_results/clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep=""))
+    citrus.plotClusters(outputFile,nonzeroClusters,clusterAssignments=clusterAssignments[[length(clusterAssignments)]],citrus.dataArray,conditions,clusterCols)
+  }
+}
+
+citrus.plotClusters = function(outputFile,nonzeroClusters,clusterAssignments,citrus.dataArray,conditions,clusterCols){
+  data = citrus.dataArray$data[citrus.dataArray$data[,"fileId"] %in% citrus.dataArray$fileIds[,conditions],]
+  pdf(file=outputFile,width=(2.2*length(clusterCols)+2),height=(2*length(nonzeroClusters)))
+  clusterDataList=list();
+  for (nonzeroCluster in sort(nonzeroClusters)){
+    if (nrow(data[clusterAssignments[[nonzeroCluster]],])>5000){
+      clusterDataList[[as.character(nonzeroCluster)]]=data[clusterAssignments[[nonzeroCluster]],clusterCols][sample(1:nrow(data[clusterAssignments[[nonzeroCluster]],]),1000),]
     } else {
-      bgData = data[,clusterCols]
+      clusterDataList[[as.character(nonzeroCluster)]]=data[clusterAssignments[[nonzeroCluster]],clusterCols]
     }
     
-    citrus.overlapDensityPlot(clusterDataList=clusterDataList,backgroundData=bgData)
-    dev.off()
+    colLabels = citrus.dataArray$fileChannelNames[[conditions[1]]][[1]]
+    reagentNames = citrus.dataArray$fileReagentNames[[conditions[1]]][[1]]
+    displayNames = colLabels
+    displayNames[nchar(reagentNames)>1] = reagentNames[nchar(reagentNames)>1]
+    if (is.numeric(clusterCols)){
+      colnames(clusterDataList[[as.character(nonzeroCluster)]])=displayNames[clusterCols]  
+    } else {
+      colnames(clusterDataList[[as.character(nonzeroCluster)]])=displayNames[colLabels%in%clusterCols]
+    }
   }
+  if (nrow(data)>2500){
+    bgData = data[sample(1:nrow(data),2500),clusterCols]
+  } else {
+    bgData = data[,clusterCols]
+  }
+  citrus.overlapDensityPlot(clusterDataList=clusterDataList,backgroundData=bgData)
+  dev.off()
 }
 
 ########################################
@@ -402,7 +402,7 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus
     
     if ("stratifyingClusters" %in% plotTypes){
       cat("Plotting Stratifying Clusters\n")
-      lapply(modelTypes,citrus.plotClusters,differentialFeatures=citrus.regressionResult[[conditionName]]$differentialFeatures,outputDir=conditionOutputDir,clusterChildren=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments,citrus.dataArray=citrus.preclusterResult[[conditionName]]$citrus.dataArray,conditions=citrus.preclusterResult[[conditionName]]$conditions,clusterCols=citrus.preclusterResult[[conditionName]]$clusterColumns)
+      lapply(modelTypes,citrus.plotModelClusters,differentialFeatures=citrus.regressionResult[[conditionName]]$differentialFeatures,outputDir=conditionOutputDir,clusterAssignments=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments,citrus.dataArray=citrus.preclusterResult[[conditionName]]$citrus.dataArray,conditions=citrus.preclusterResult[[conditionName]]$conditions,clusterCols=citrus.preclusterResult[[conditionName]]$clusterColumns)
     }
     
     
