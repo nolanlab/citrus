@@ -45,13 +45,13 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,labels,nFold
                                          transformCols=transformCols,
                                          conditionComparaMatrix=conditionComparaMatrix,
                                          balanceFactor=balanceFactor,
-                                         transformFactor=transformFactor)
+                                         transformFactor=transformFactor,...)
     plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph")
   } else if (!is.null(filePopulationList)){
     if (("densities" %in% featureTypes) && (!is.null(fileSampleSize))){
       stop("File subsampling may not be used with manually gated populations.")
     }
-    preclusterResult = citrus.assembleHandGates(dataDir,filePopulationList,conditionComparaMatrix,fileSampleSize)
+    preclusterResult = citrus.assembleHandGates(dataDir,filePopulationList,conditionComparaMatrix,fileSampleSize,...)
     
     plotTypes=c("errorRate","stratifyingFeatures")
   } else {
