@@ -180,21 +180,21 @@ citrus.overlapDensityPlot = function(clusterDataList,backgroundData){
 
 citrus.plotModelClusters = function(modelType,differentialFeatures,outputDir,clusterAssignments,citrus.dataArray,conditions,clusterCols){
   for (cvPoint in names(differentialFeatures[[modelType]])){
-    nonzeroClusters = as.numeric(differentialFeatures[[modelType]][[cvPoint]][["clusters"]])
+    clusterIds = as.numeric(differentialFeatures[[modelType]][[cvPoint]][["clusters"]])
     outputFile = file.path(outputDir,paste(modelType,"_results/clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep=""))
-    citrus.plotClusters(outputFile,nonzeroClusters,clusterAssignments=clusterAssignments[[length(clusterAssignments)]],citrus.dataArray,conditions,clusterCols)
+    citrus.plotClusters(outputFile,clusterIds,clusterAssignments=clusterAssignments[[length(clusterAssignments)]],citrus.dataArray,conditions,clusterCols)
   }
 }
 
-citrus.plotClusters = function(outputFile,nonzeroClusters,clusterAssignments,citrus.dataArray,conditions,clusterCols){
+citrus.plotClusters = function(outputFile,clusterIds,clusterAssignments,citrus.dataArray,conditions,clusterCols){
   data = citrus.dataArray$data[citrus.dataArray$data[,"fileId"] %in% citrus.dataArray$fileIds[,conditions],]
-  pdf(file=outputFile,width=(2.2*length(clusterCols)+2),height=(2*length(nonzeroClusters)))
+  pdf(file=outputFile,width=(2.2*length(clusterCols)+2),height=(2*length(clusterIds)))
   clusterDataList=list();
-  for (nonzeroCluster in sort(nonzeroClusters)){
-    if (nrow(data[clusterAssignments[[nonzeroCluster]],])>5000){
-      clusterDataList[[as.character(nonzeroCluster)]]=data[clusterAssignments[[nonzeroCluster]],clusterCols][sample(1:nrow(data[clusterAssignments[[nonzeroCluster]],]),1000),]
+  for (clusterId in sort(clusterIds)){
+    if (nrow(data[clusterAssignments[[clusterId]],])>5000){
+      clusterDataList[[as.character(clusterId)]]=data[clusterAssignments[[clusterId]],clusterCols][sample(1:nrow(data[clusterAssignments[[clusterId]],]),1000),]
     } else {
-      clusterDataList[[as.character(nonzeroCluster)]]=data[clusterAssignments[[nonzeroCluster]],clusterCols]
+      clusterDataList[[as.character(clusterId)]]=data[clusterAssignments[[clusterId]],clusterCols]
     }
     
     colLabels = citrus.dataArray$fileChannelNames[[conditions[1]]][[1]]
@@ -202,9 +202,9 @@ citrus.plotClusters = function(outputFile,nonzeroClusters,clusterAssignments,cit
     displayNames = colLabels
     displayNames[nchar(reagentNames)>1] = reagentNames[nchar(reagentNames)>1]
     if (is.numeric(clusterCols)){
-      colnames(clusterDataList[[as.character(nonzeroCluster)]])=displayNames[clusterCols]  
+      colnames(clusterDataList[[as.character(clusterId)]])=displayNames[clusterCols]  
     } else {
-      colnames(clusterDataList[[as.character(nonzeroCluster)]])=displayNames[colLabels%in%clusterCols]
+      colnames(clusterDataList[[as.character(clusterId)]])=displayNames[colLabels%in%clusterCols]
     }
   }
   if (nrow(data)>2500){
