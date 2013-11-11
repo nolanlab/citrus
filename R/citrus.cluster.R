@@ -89,7 +89,7 @@ citrus.traverseMergeOrder = function(node,mergeOrder){
 }
 
 
-citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds=5,folds=NULL,transformCols=NULL,clusterConditions=NULL,conditionComparaMatrix=NULL,balanceFactor=NULL,transformFactor=5,...){
+citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds=5,folds=NULL,transformCols=NULL,clusterConditions=NULL,conditionComparaMatrix=NULL,balanceFactor=NULL,transformFactor=5,scale=F,...){
   
   addtlArgs = list(...)
   
