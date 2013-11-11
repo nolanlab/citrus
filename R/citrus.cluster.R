@@ -1,9 +1,9 @@
-citrus.mapFileDataToClustering = function(dataDir,newFileList,preClusterResult,fileSampleSize,mappingColumns=NULL,transformCols=NULL,transformFactor=5,scale=F,emptyValue=T,...){
+citrus.mapFileDataToClustering = function(dataDir,newFileList,preClusterResult,fileSampleSize,mappingColumns=NULL,transformCols=NULL,transformFactor=5,scaleCols=NULL,emptyValue=T,...){
   conditions = strsplit(names(preClusterResult),"_vs_")
   mappingResult = list()
   for (conditionName in names(preClusterResult)){
     conditions = strsplit(conditionName,"_vs_")[[1]]
-    mappingResult[[conditionName]]$citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=newFileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize,transformFactor=transformFactor,scale=scale,emptyValue=emptyValue)
+    mappingResult[[conditionName]]$citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=newFileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize,transformFactor=transformFactor,scaleCols=scaleCols,emptyValue=emptyValue)
     
     if (is.null(mappingColumns)){
       mappingColumns = preClusterResult[[conditionName]]$clusterColumns
@@ -89,7 +89,7 @@ citrus.traverseMergeOrder = function(node,mergeOrder){
 }
 
 
-citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds=5,folds=NULL,transformCols=NULL,clusterConditions=NULL,conditionComparaMatrix=NULL,balanceFactor=NULL,transformFactor=5,scale=F,...){
+citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds=5,folds=NULL,transformCols=NULL,clusterConditions=NULL,conditionComparaMatrix=NULL,balanceFactor=NULL,transformFactor=5,scaleCols=NULL,...){
   
   addtlArgs = list(...)
   
@@ -130,7 +130,7 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
   for (conditions in allConditions){
     cat(paste("Clustering Condition",paste(conditions,collapse=" vs "),"\n"))
     
-    citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,fileSampleSize=fileSampleSize,transformCols=transformCols,transformFactor=transformFactor,scale=scale,emptyValue=emptyValue)
+    citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,fileSampleSize=fileSampleSize,transformCols=transformCols,transformFactor=transformFactor,emptyValue=emptyValue,scaleCols=scaleCols)
     
     foldsCluster = lapply(folds,citrus.foldCluster,citrus.dataArray=citrus.dataArray,clusterCols=clusterCols,conditions=conditions)
     cat("Assigning Events to Clusters\n")

@@ -1,5 +1,5 @@
 # FILE SAMPLE SIZE SHOULD BE A NAMED VECTOR OR LIST OR SOMETHING THAT'S EASY TO EXTRACT BY NAME
-citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,transformCols=NULL,transformFactor=5,scale=F,emptyValue=T){
+citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,transformCols=NULL,transformFactor=5,scaleCols=NULL,emptyValue=T){
   data = list();
   fileCounter = 1;
   fileNames = c();
@@ -37,8 +37,8 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
     gc();
   }
   data = do.call("rbind",data)
-  if (scale){
-    data[,transformCols] = apply(data[,transformCols],2,scale)
+  if (!is.null(scaleCols)){
+    data[,scaleCols] = apply(data[,scaleCols],2,scale)
   }
   results = list(data=data,fileIds=matrix(1:(fileCounter-1),ncol=length(conditions),dimnames=list(c(),conditions)),fileNames=fileNames,fileChannelNames=fileChannelNames,fileReagentNames=fileReagentNames)
   class(results) = "citrusDataObject"
