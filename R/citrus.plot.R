@@ -367,7 +367,9 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
       plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color=stroke,vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=rgb(0,0,.5,.3),mark.col=.graphColorPalette(length(fGroup),alpha=.3),vertex.shape="petal")
       .petalPlot(xpos=1,ypos=-1,d=rep(1,ncol(clusterMedians)),scale=.2,labels=colnames(clusterMedians))
     } else {
-      plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color=stroke,vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=rgb(0,0,.5,.5),mark.col=.graphColorPalette(length(fGroup),alpha=.8))    
+      vertexFont=rep(1,length(V(graph)))
+      vertexFont[get.vertex.attribute(graph,"label")%in%featureClusterMatrix[,"cluster"]]=4
+      plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color=stroke,vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=rgb(0,0,.5,.5),mark.col=.graphColorPalette(length(fGroup),alpha=.8),vertex.label.font=vertexFont)    
     }
   }
   dev.off()
@@ -416,6 +418,7 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus
       for (modelType in names(citrus.regressionResult[[conditionName]]$differentialFeatures)){
         citrus.plotHierarchicalClusterMedians(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),"markerPlots.pdf"),clusterMedians,graph=g,layout=l)  
         for (cvPoint in names(citrus.regressionResult[[conditionName]]$differentialFeatures[[modelType]])){
+          #featureClusterMatrix = citrus:::.getClusterFeatureMatrix(citrus.regressionResult[[conditionName]]$differentialFeatures[[modelType]][[cvPoint]][["features"]])
           featureClusterMatrix = .getClusterFeatureMatrix(citrus.regressionResult[[conditionName]]$differentialFeatures[[modelType]][[cvPoint]][["features"]])
           citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,largeEnoughClusters=citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],graph=g,layout=l)
           citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePetalPlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,largeEnoughClusters=citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],graph=g,layout=l,petalPlot=T,clusterMedians=clusterMedians)
