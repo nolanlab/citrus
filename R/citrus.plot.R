@@ -427,7 +427,7 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus
           #featureClusterMatrix = citrus:::.getClusterFeatureMatrix(citrus.regressionResult[[conditionName]]$differentialFeatures[[modelType]][[cvPoint]][["features"]])
           featureClusterMatrix = .getClusterFeatureMatrix(citrus.regressionResult[[conditionName]]$differentialFeatures[[modelType]][[cvPoint]][["features"]])
           citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,graph=g,layout=l)
-          citrus.plotHierarchicalClusterFeatureGroups(outputFile=file. path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePetalPlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,graph=g,layout=l,petalPlot=T,clusterMedians=clusterMedians)
+          citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePetalPlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,graph=g,layout=l,petalPlot=T,clusterMedians=clusterMedians)
         }
       }
     }
