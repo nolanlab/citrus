@@ -336,7 +336,7 @@ citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph
 }
 
 
-citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureClusterMatrix,largeEnoughClusters,graph,layout,petalPlots=F,clusterMedians=NULL,theme="black"){
+citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureClusterMatrix,largeEnoughClusters,graph,layout,petalPlots=F,clusterMedians=NULL,theme="black",encircle=T){
   if (theme=="black"){
     bg="black"
     stroke="white"
@@ -368,8 +368,14 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
       .petalPlot(xpos=1,ypos=-1,d=rep(1,ncol(clusterMedians)),scale=.2,labels=colnames(clusterMedians))
     } else {
       vertexFont=rep(1,length(V(graph)))
-      vertexFont[get.vertex.attribute(graph,"label")%in%featureClusterMatrix[,"cluster"]]=4
-      plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color=stroke,vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=rgb(0,0,.5,.5),mark.col=.graphColorPalette(length(fGroup),alpha=.8),vertex.label.font=vertexFont)    
+      vertexFont[get.vertex.attribute(graph,"label")%in%featureClusterMatrix[,"cluster"]]=2
+      vertexColor=rep(rgb(0,0,.5,.5),length(V(graph)))
+      vertexColor[get.vertex.attribute(graph,"label")%in%featureClusterMatrix[,"cluster"]]=rgb(0.5,0,0,.7)
+      if (encircle){
+        plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color=stroke,vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=vertexColor,mark.border=strokea,mark.col=.graphColorPalette(length(fGroup),alpha=.2),vertex.label.font=vertexFont)      
+      } else {
+        plot.igraph(graph,layout=layout,main=feature,edge.color=stroke,vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=vertexColor,vertex.label.font=vertexFont)     
+      }
     }
   }
   dev.off()
