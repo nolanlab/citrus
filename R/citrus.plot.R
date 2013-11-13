@@ -182,13 +182,15 @@ citrus.plotModelClusters = function(modelType,differentialFeatures,outputDir,clu
   for (cvPoint in names(differentialFeatures[[modelType]])){
     clusterIds = as.numeric(differentialFeatures[[modelType]][[cvPoint]][["clusters"]])
     outputFile = file.path(outputDir,paste(modelType,"_results/clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep=""))
-    citrus.plotClusters(outputFile,clusterIds,clusterAssignments=clusterAssignments[[length(clusterAssignments)]],citrus.dataArray,conditions,clusterCols)
+    citrus.plotClusters(clusterIds,clusterAssignments=clusterAssignments[[length(clusterAssignments)]],citrus.dataArray,conditions,clusterCols,outputFile=outputFile)
   }
 }
 
-citrus.plotClusters = function(outputFile,clusterIds,clusterAssignments,citrus.dataArray,conditions,clusterCols){
+citrus.plotClusters = function(clusterIds,clusterAssignments,citrus.dataArray,conditions,clusterCols,outputFile=NULL){
   data = citrus.dataArray$data[citrus.dataArray$data[,"fileId"] %in% citrus.dataArray$fileIds[,conditions],]
-  pdf(file=outputFile,width=(2.2*length(clusterCols)+2),height=(2*length(clusterIds)))
+  if (!is.null(outputFile)){
+    pdf(file=outputFile,width=(2.2*length(clusterCols)+2),height=(2*length(clusterIds)))  
+  }
   clusterDataList=list();
   for (clusterId in sort(clusterIds)){
     if (nrow(data[clusterAssignments[[clusterId]],])>5000){
@@ -213,7 +215,9 @@ citrus.plotClusters = function(outputFile,clusterIds,clusterAssignments,citrus.d
     bgData = data[,clusterCols]
   }
   citrus.overlapDensityPlot(clusterDataList=clusterDataList,backgroundData=bgData)
-  dev.off()
+  if (!is.null(outputFile)){
+    dev.off()  
+  }
 }
 
 ########################################
@@ -352,7 +356,7 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
   for (feature in unique(featureClusterMatrix[,"feature"])){
     fGroup = list();
     featureClusters = featureClusterMatrix[featureClusterMatrix[,"feature"]==feature,"cluster"]
-    featureElements = match(featureClusters,as.numeric(get.vertex.attribute(g,"label",V(g))))
+    featureElements = match(featureClusters,as.numeric(get.vertex.attribute(graph,"label",V(graph))))
     subgraph = induced.subgraph(graph,featureElements)
     groupAssignments = clusters(subgraph)$membership
     for (groupId in unique(groupAssignments)){
