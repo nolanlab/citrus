@@ -9,9 +9,11 @@ citrus.launchUI = function(dataDirectory=NULL,host="localhost",...){
   
   addtlArgs = list(...)
   
-  emptyValue=T
+  emptyValue<<-T
   if ("emptyValue" %in% names(addtlArgs))
     emptyValue <<- addtlArgs[["emptyValue"]]
+  
+    
   
   
   #sapply(list.files(file.path(system.file(package = "citrus"),"shinyGUI","guiFunctions"),pattern=".R",full.names=T),source)
