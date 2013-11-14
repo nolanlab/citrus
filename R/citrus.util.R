@@ -1,10 +1,20 @@
 # FILE SAMPLE SIZE SHOULD BE A NAMED VECTOR OR LIST OR SOMETHING THAT'S EASY TO EXTRACT BY NAME
-citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,transformCols=NULL,transformFactor=5,scaleCols=NULL,emptyValue=T){
+citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,transformCols=NULL,transformFactor=5,scaleCols=NULL,...){
   data = list();
   fileCounter = 1;
   fileNames = c();
   fileChannelNames = list();
   fileReagentNames = list();
+  addtlArgs = list(...)
+  
+  emptyValue=T
+  if ("emptyValue" %in% names(addtlArgs))
+    emptyValue = addtlArgs[["emptyValue"]]
+  
+  dataset=1
+  if ("dataset" %in% names(addtlArgs))
+    dataset=dataset
+    
   for (i in 1:length(conditions)){
     cat(paste("Reading Condition ",conditions[i],"\n"));
     conditionData = list();
@@ -17,7 +27,7 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
         stop(paste("File",filePath,"not found."));
       }
       cat(paste("\tReading file ",fileName,"\n"));
-      suppressWarnings((fcsFile = read.FCS(filePath,emptyValue=emptyValue)))
+      suppressWarnings((fcsFile = read.FCS(filePath,emptyValue=emptyValue,dataset=dataset)))
       fcsData=exprs(fcsFile)
       fileChannelNames[[conditions[i]]][[fileName]]=as.vector(pData(parameters(fcsFile))$name)
       fileReagentNames[[conditions[i]]][[fileName]]=as.vector(pData(parameters(fcsFile))$desc)
@@ -160,11 +170,21 @@ citrus.version = function(){
   return("0.05")
 }
 
-citrus.fileEventCount = function(dataDir,emptyValue=T){
+citrus.fileEventCount = function(dataDir,...){
   lengths = list();
+  addtlArgs = list(...)
+  
+  emptyValue=T
+  if ("emptyValue" %in% names(addtlArgs))
+    emptyValue = addtlArgs[["emptyValue"]]
+  
+  dataset=1
+  if ("dataset" %in% names(addtlArgs))
+    dataset=dataset
+  
   for (fcsFile in list.files(dataDir,pattern=".fcs",ignore.case=T)){
     print(paste("Reading",fcsFile))
-    lengths[[fcsFile]] = suppressWarnings(dim(read.FCS(file.path(dataDir,fcsFile),emptyValue=emptyValue)))
+    lengths[[fcsFile]] = suppressWarnings(dim(read.FCS(file.path(dataDir,fcsFile),emptyValue=emptyValue,dataset=dataset)))
   }
   return(do.call("rbind",lengths))
 }

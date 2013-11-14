@@ -47,6 +47,9 @@ fileList = data.frame(<%
                       %>)
 labels = as.factor(c(<%cat(paste(sapply(labels,stringQuote),collapse=","))%>))
 
+# Dealing with Strangely Formatted FCS Files
+emptyValue = <% cat(templateData[["emptyValue"]]) %>
+
 <% if (templateData[["preload"]]){
   cat(
     paste(
@@ -76,7 +79,8 @@ results = citrus.full(
             modelTypes=modelTypes,
             featureTypes=featureTypes,
             minimumClusterSizePercent=minimumClusterSizePercent,
-            transformCols=transformCols
+            transformCols=transformCols,
+            emptyValue=emptyValue
             <% if ("conditionComparaMatrix" %in% names(templateData)){cat(",conditionComparaMatrix=conditionComparaMatrix")} %>
             <% if ("medianCols" %in% names(templateData)){cat(",medianColumns=medianColumns")} %>
             <% if ("emdCols" %in% names(templateData)){cat(",emdColumns=emdColumns")} %>
