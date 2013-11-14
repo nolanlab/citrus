@@ -64,7 +64,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,labels,nFold
   #regressionResults = citrus.endpointRegress(citrus.featureObject=featureObject,family=family,modelTypes=modelTypes,labels=labels) 
   regressionResults = citrus.endpointRegress(citrus.featureObject=featureObject,family=family,modelTypes=modelTypes,labels=labels,...) 
   if (plot){
-    citrus.plotRegressionResults(outputDir,citrus.preclusterResult=preclusterResult,citrus.featureObject=featureObject,citrus.regressionResult=regressionResults,modelTypes,family,labels,plotTypes)
+    citrus.plotRegressionResults(outputDir,citrus.preclusterResult=preclusterResult,citrus.featureObject=featureObject,citrus.regressionResult=regressionResults,modelTypes,family,labels,plotTypes,mcsp=minimumClusterSizePercent)
   }
   return(list(preclusterResult=preclusterResult,featureObject=featureObject,regressionResults=regressionResults))
 }

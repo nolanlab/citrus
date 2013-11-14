@@ -312,7 +312,7 @@ citrus.createHierarchyGraph = function(largeEnoughClusters,mergeOrder,clusterAss
   return(g)
 }
 
-citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph,layout,theme="black"){
+citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph,layout,theme="black",plotSize=15){
   if (theme=="black"){
     bg="black"
     stroke="white"
@@ -324,7 +324,7 @@ citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph
   } else {
     stop("Unrecognized theme option. Choices are 'white' or 'black'")
   }
-  pdf(file=outputFile,width=15,height=15,bg=bg)
+  pdf(file=outputFile,width=plotSize,height=plotSize,bg=bg)
   for (target in 1:ncol(clusterMedians)){
     ct = seq(from=(min(clusterMedians[,target])-0.01),to=(max(clusterMedians[,target])+0.01),length.out=20)
     cols = .graphColorPalette(20)[sapply(clusterMedians[,target],findInterval,vec=ct)]
@@ -420,22 +420,39 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus
     
     # GO BACK AND MAKE THIS PARALLEL CALLS....
     if ("clusterGraph" %in% plotTypes){
+      mcsp=0.05
+      if ("mcsp" %in% names(addtlArgs)){
+        mcsp=addtlArgs[["mcsp"]]
+      }
+      if (mcsp<0.005){
+        minVertexSize=0
+        plotSize=35
+      } else if (mcsp<0.01){
+        minVertexSize=4
+        plotSize=20
+      } else if (mcsp<0.05){
+        minVertexSize=6
+        plotSize=15
+      } else {
+        minVertexSize=8
+        plotSize=10
+      }
+      
       cat("Plotting Clustering Graph\n")
-      g = citrus.createHierarchyGraph(largeEnoughClusters=citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],mergeOrder=citrus.preclusterResult[[conditionName]]$foldsCluster[[nAllFolds]]$merge,clusterAssignments=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments[[nAllFolds]])
+      g = citrus.createHierarchyGraph(largeEnoughClusters=citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],mergeOrder=citrus.preclusterResult[[conditionName]]$foldsCluster[[nAllFolds]]$merge,clusterAssignments=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments[[nAllFolds]],minVertexSize=minVertexSize)
       l = layout.reingold.tilford(g,root=length(V(g)),circular=T)
       clusterMedians = t(sapply(citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],.getClusterMedians,clusterAssignments=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments[[nAllFolds]],data=citrus.preclusterResult[[conditionName]]$citrus.dataArray$data,clusterCols=citrus.preclusterResult[[conditionName]]$clusterColumns))
       rownames(clusterMedians) = citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]]
       for (modelType in names(citrus.regressionResult[[conditionName]]$differentialFeatures)){
-        citrus.plotHierarchicalClusterMedians(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),"markerPlots.pdf"),clusterMedians,graph=g,layout=l)  
+        citrus.plotHierarchicalClusterMedians(outputFile=file.path(conditionOutputDir,"markerPlots.pdf"),clusterMedians,graph=g,layout=l,plotSize=plotSize)
         for (cvPoint in names(citrus.regressionResult[[conditionName]]$differentialFeatures[[modelType]])){
           #featureClusterMatrix = citrus:::.getClusterFeatureMatrix(citrus.regressionResult[[conditionName]]$differentialFeatures[[modelType]][[cvPoint]][["features"]])
           featureClusterMatrix = .getClusterFeatureMatrix(citrus.regressionResult[[conditionName]]$differentialFeatures[[modelType]][[cvPoint]][["features"]])
-          citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,graph=g,layout=l)
-          citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePetalPlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,graph=g,layout=l,petalPlot=T,clusterMedians=clusterMedians)
+          citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,graph=g,layout=l,plotSize=plotSize)
+          citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePetalPlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,graph=g,layout=l,petalPlot=T,clusterMedians=clusterMedians,plotSize=plotSize)
         }
       }
     }
-    
   }
 }
 
