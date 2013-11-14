@@ -16,7 +16,7 @@ fileList = data.frame(unstim=list.files(dataDir,pattern=".fcs",ignore.case=T))
 featureTypes=c("densities")
 modelTypes=c("pamr","glmnet")
 #modelTypes=("sam")
-minimumClusterSizePercent=0.001
+minimumClusterSizePercent=0.05
 plot=T
 returnResults=T
 family="twoClass"
@@ -24,6 +24,7 @@ transformCols=NULL
 conditionComparaMatrix=NULL
 transformFactor=NULL
 nFolds=5
+
 #res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds=5,family="twoClass",featureTypes=c("densities"),modelTypes=c("pamr","glmnet"))
 res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds="all",family="twoClass",featureTypes=c("densities"),minimumClusterSizePercent=minimumClusterSizePercent,plot=T)
 

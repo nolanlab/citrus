@@ -129,11 +129,7 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
     
     foldsCluster = lapply(folds,citrus.foldCluster,citrus.dataArray=citrus.dataArray,clusterCols=clusterCols,conditions=conditions)
     cat("Assigning Events to Clusters\n")
-    if ("snowCluster" %in% names(addtlArgs)){
-      foldsClusterAssignments = parLapply(addtlArgs[["snowCluster"]],foldsCluster,citrus.calculateCompleteHierarchicalMembership)
-    } else {
-      foldsClusterAssignments = lapply(foldsCluster,citrus.calculateCompleteHierarchicalMembership)  
-    }
+    foldsClusterAssignments = lapply(foldsCluster,citrus.calculateCompleteHierarchicalMembership,...)  
     
     preclusterObject = list(folds=folds,foldsCluster=foldsCluster,foldsClusterAssignments=foldsClusterAssignments,conditions=conditions,citrus.dataArray=citrus.dataArray,clusterColumns=clusterCols)
     if (nFolds!="all"){
