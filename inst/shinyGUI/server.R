@@ -299,7 +299,6 @@ writeRunCitrusFile = function(input,templateFile=NULL){
   templateData[["citrusVersion"]] = citrus.version();
   templateData[["preload"]]=preload
   templateData[["dataDir"]]=dataDir
-  templateData[["emptyValue"]]=emptyValue
   templateData[["computedFeatures"]] = names(getComputedFeatures(input))[unlist(getComputedFeatures(input))]
   templateData[["twoClassModels"]] = citrus.modelTypes()[getSelectedModels(input)]
   if (preload){

@@ -6,14 +6,6 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
   fileChannelNames = list();
   fileReagentNames = list();
   addtlArgs = list(...)
-  
-  emptyValue=T
-  if ("emptyValue" %in% names(addtlArgs))
-    emptyValue = addtlArgs[["emptyValue"]]
-  
-  dataset=1
-  if ("dataset" %in% names(addtlArgs))
-    dataset=addtlArgs[["dataset"]]
     
   for (i in 1:length(conditions)){
     cat(paste("Reading Condition ",conditions[i],"\n"));
@@ -27,7 +19,8 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
         stop(paste("File",filePath,"not found."));
       }
       cat(paste("\tReading file ",fileName,"\n"));
-      suppressWarnings((fcsFile = read.FCS(filePath,emptyValue=emptyValue,dataset=dataset)))
+      fcsFile = citrus.readFCS(filePath)
+      
       fcsData=exprs(fcsFile)
       fileChannelNames[[conditions[i]]][[fileName]]=as.vector(pData(parameters(fcsFile))$name)
       fileReagentNames[[conditions[i]]][[fileName]]=as.vector(pData(parameters(fcsFile))$desc)
@@ -90,7 +83,7 @@ citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaM
           fcsFileName = filePopulationList[[condition]][patientId,populationName]
           fileId = baseFileId+patientId
           print(paste("Reading",fcsFileName))
-          fcsFile = read.FCS(file.path(dataDir,fcsFileName))
+          fcsFile = citrus.readFCS(file.path(dataDir,fcsFileName),...)
           fileChannelNames[[fcsFileName]] = colnames(fcsFile)
           fileReagentNames[[fcsFileName]] = pData(parameters(fcsFile))$desc
           fcsFileData = exprs(fcsFile)
@@ -172,19 +165,11 @@ citrus.version = function(){
 
 citrus.fileEventCount = function(dataDir,...){
   lengths = list();
-  addtlArgs = list(...)
   
-  emptyValue=T
-  if ("emptyValue" %in% names(addtlArgs))
-    emptyValue = addtlArgs[["emptyValue"]]
-  
-  dataset=1
-  if ("dataset" %in% names(addtlArgs))
-    dataset=dataset
   
   for (fcsFile in list.files(dataDir,pattern=".fcs",ignore.case=T)){
     print(paste("Reading",fcsFile))
-    lengths[[fcsFile]] = suppressWarnings(dim(read.FCS(file.path(dataDir,fcsFile),emptyValue=emptyValue,dataset=dataset)))
+    lengths[[fcsFile]] = suppressWarnings(dim(citrus.readFCS(file.path(dataDir,fcsFile),...)))
   }
   return(do.call("rbind",lengths))
 }
@@ -201,3 +186,24 @@ citrus.modelTypes = function(){
   return(c("pamr","glmnet","sam"))
 }
 
+citrus.readFCS = function(filePath,...){
+  addtlArgs = list(...)
+  dataset=1
+  if ("dataset" %in% names(addtlArgs))
+    dataset=addtlArgs[["dataset"]]
+  
+  which.lines=NULL
+  if ("which.lines" %in% names(addtlArgs))
+    which.lines=addtlArgs[["which.lines"]]
+  
+  fcs = tryCatch({
+    suppressWarnings(read.FCS(filePath,dataset=dataset,which.lines=which.lines))
+  }, error = function(e){
+    if (grepl("Please set argument 'emptyValue' as",e$message)){
+      suppressWarnings(read.FCS(filePath,dataset=dataset,which.lines=which.lines,emptyValue=F))
+    } else {
+      stop(e$message)
+    }
+  }) 
+  return(fcs)
+}

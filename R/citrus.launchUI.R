@@ -7,15 +7,6 @@ citrus.launchUI = function(dataDirectory=NULL,host="localhost",...){
     dataDir <<-dataDirectory
   }
   
-  addtlArgs = list(...)
-  
-  emptyValue<<-T
-  if ("emptyValue" %in% names(addtlArgs))
-    emptyValue <<- addtlArgs[["emptyValue"]]
-  
-    
-  
-  
   #sapply(list.files(file.path(system.file(package = "citrus"),"shinyGUI","guiFunctions"),pattern=".R",full.names=T),source)
   
   res = tryCatch({
@@ -45,17 +36,8 @@ citrus.launchUI = function(dataDirectory=NULL,host="localhost",...){
 }
 
 citrus.getFileCols = function(fileName,dataDir,...){
-  addtlArgs = list(...)
   
-  emptyValue=T
-  if ("emptyValue" %in% names(addtlArgs))
-    emptyValue = addtlArgs[["emptyValue"]]
-  
-  dataset=1
-  if ("dataset" %in% names(addtlArgs))
-    dataset=dataset
-  
-  fcsFile = suppressWarnings(read.FCS(file.path(dataDir,fileName),which.lines=1,emptyValue=emptyValue,dataset=dataset))
+  fcsFile = citrus.readFCS(file.path(dataDir,fileName),which.lines=1)
   parameterNames = flowCore::colnames(fcsFile)
   pnames = as.vector(pData(flowCore::parameters(fcsFile))$desc)
   pnames[sapply(pnames,nchar)<3] = parameterNames[sapply(pnames,nchar)<3]

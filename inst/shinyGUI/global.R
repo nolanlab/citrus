@@ -59,7 +59,7 @@ if (!preload){
   fileGroupAssignments = as.vector(rep(keyFile[,labelCol],ncol(keyFile[,-labelCol])))
 } 
 
-fileCols = lapply(fileList,citrus.getFileCols,dataDir=dataDir,emptyValue=emptyValue)
+fileCols = lapply(fileList,citrus.getFileCols,dataDir=dataDir)
 
 
 disableInput <- function(x) {
