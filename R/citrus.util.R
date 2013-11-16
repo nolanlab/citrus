@@ -13,7 +13,7 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
   
   dataset=1
   if ("dataset" %in% names(addtlArgs))
-    dataset=dataset
+    dataset=addtlArgs[["dataset"]]
     
   for (i in 1:length(conditions)){
     cat(paste("Reading Condition ",conditions[i],"\n"));
