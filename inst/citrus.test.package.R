@@ -26,7 +26,9 @@ transformFactor=NULL
 nFolds=5
 
 #res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds=5,family="twoClass",featureTypes=c("densities"),modelTypes=c("pamr","glmnet"))
-res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds="all",family="twoClass",featureTypes=c("densities"),minimumClusterSizePercent=minimumClusterSizePercent,plot=T)
+res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds="all",family="twoClass",featureTypes=c("densities"),minimumClusterSizePercent=minimumClusterSizePercent,plot=T,mc.cores=4)
+res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds="all",family="twoClass",featureTypes=c("densities"),minimumClusterSizePercent=minimumClusterSizePercent,plot=T,mc.cores=4)
+
 
 filePopulationList = list(unstim=matrix(list.files("~/Desktop/work/citrus/inst/extdata/example4.1",pattern=".fcs"),ncol=3,byrow=T,dimnames=list(NULL,paste("Pop",1:3))))
 res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,filePopulationList=filePopulationList,labels=labels,family="classification",featureTypes=c("densities"),modelTypes=c("glmnet","pamr"),plot=T)

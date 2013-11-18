@@ -40,28 +40,28 @@ citrus.cluster = function(data){
 
 citrus.calculateCompleteHierarchicalMembership = function(clustering,...){
     mergeOrder = clustering$merge
-    if ("snowCluster" %in% names(list(...))){
-      return(parLapply(list(...)[["snowCluster"]],as.list(1:nrow(mergeOrder)),citrus.traverseMergeOrder,mergeOrder=mergeOrder))
+    if ("mc.cores" %in% names(list(...))){
+      return(mclapply(as.list(1:nrow(mergeOrder)),citrus.traverseMergeOrder,mergeOrder=mergeOrder,mc.cores=list(...)[["mc.cores"]]))
     } else {
       return(lapply(as.list(1:nrow(mergeOrder)),citrus.traverseMergeOrder,mergeOrder=mergeOrder))
     }
     
 }
 
-citrus.mapFoldDataToClusterSpace = function(index,citrus.dataArray,foldClusterAssignments,folds,conditions,clusterCols){
+citrus.mapFoldDataToClusterSpace = function(index,citrus.dataArray,foldClusterAssignments,folds,conditions,clusterCols,...){
   if ((length(folds[[index]])==1) && (folds[[index]]=="all")){
     return(NULL)
   }
   foldFileIds = as.vector(citrus.dataArray$fileIds[-folds[[index]],conditions])
   leftoutFileIds = as.vector(citrus.dataArray$fileIds[folds[[index]],conditions])
-  return(citrus.mapDataToClusterSpace(data=citrus.dataArray$data[citrus.dataArray$data[,"fileId"]%in%foldFileIds,clusterCols],clusterAssignments=foldClusterAssignments[[index]],newData=citrus.dataArray$data[citrus.dataArray$data[,"fileId"]%in%leftoutFileIds,clusterCols]))  
+  return(citrus.mapDataToClusterSpace(data=citrus.dataArray$data[citrus.dataArray$data[,"fileId"]%in%foldFileIds,clusterCols],clusterAssignments=foldClusterAssignments[[index]],newData=citrus.dataArray$data[citrus.dataArray$data[,"fileId"]%in%leftoutFileIds,clusterCols],...))  
 }
 
 citrus.mapDataToClusterSpace = function(data,clusterAssignments,newData,...){  
   nnMap = citrus.assignToCluster(tbl=newData,cluster_data=data,cluster_assign=rep(1,nrow(data)))
   addtlArgs = list(...)
-  if ("snowCluster" %in% names(addtlArgs)){
-    return(parLapply(addtlArgs[["snowCluster"]],clusterAssignments,citrus.mapNeighborsToCluster,nearestNeighborMap=nnMap))
+  if ("mc.cores" %in% names(addtlArgs)){
+    return(mclapply(clusterAssignments,citrus.mapNeighborsToCluster,nearestNeighborMap=nnMap,mc.cores=addtlArgs[["mc.cores"]]))
   } else {
     return(lapply(clusterAssignments,citrus.mapNeighborsToCluster,nearestNeighborMap=nnMap))
   }
@@ -134,12 +134,7 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
     preclusterObject = list(folds=folds,foldsCluster=foldsCluster,foldsClusterAssignments=foldsClusterAssignments,conditions=conditions,citrus.dataArray=citrus.dataArray,clusterColumns=clusterCols)
     if (nFolds!="all"){
       cat("Assigning Leftout Events to Clusters\n")
-      if ("snowCluster" %in% names(addtlArgs)){
-        leftoutClusterAssignments = parLapply(addtlArgs[["snowCluster"]],1:nFolds,citrus.mapFoldDataToClusterSpace,citrus.dataArray=citrus.dataArray,foldClusterAssignments=foldsClusterAssignments,folds=folds,conditions=conditions,clusterCols=clusterCols)
-      } else {
-        leftoutClusterAssignments = lapply(1:nFolds,citrus.mapFoldDataToClusterSpace,citrus.dataArray=citrus.dataArray,foldClusterAssignments=foldsClusterAssignments,folds=folds,conditions=conditions,clusterCols=clusterCols)  
-      }
-      
+      leftoutClusterAssignments = lapply(1:nFolds,citrus.mapFoldDataToClusterSpace,citrus.dataArray=citrus.dataArray,foldClusterAssignments=foldsClusterAssignments,folds=folds,conditions=conditions,clusterCols=clusterCols,...)  
       preclusterObject$leftoutClusterAssignments=leftoutClusterAssignments
     }
     save(preclusterObject,file=file.path(outputDir,paste("citrus.Cluster.",paste(conditions,collapse="_vs_"),".rDat",sep="")))

@@ -75,10 +75,6 @@ citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densi
   
 }
 
-citrus.getFeatureSetNames = function(){
-  return(c("densities","medians"))
-}
-
 citrus.buildFoldFeatures = function(index,featureTypes=c("densities"),folds,citrus.dataArray,foldsClusterAssignments,foldLargeEnoughClusters,conditions,calculateLeaveoutData=F,...){
   if ((length(folds[[index]])==1) && (folds[[index]] %in% c("all","mappingResult"))){
     foldsFileIds=as.vector(citrus.dataArray$fileIds[,conditions])
@@ -115,8 +111,8 @@ citrus.buildClusterFeatures = function(clusterAssignments,featureTypes,largeEnou
 
 citrus.calculateFeature.CVs = function(foldsFileIds,clusterIds,clusterAssignments,data,citrus.dataArray,...){
   addtlArgs = list(...)
-  if ("snowCluster" %in% names(addtlArgs)){
-    features = t(parSapply(addtlArgs[["snowCluster"]],foldsFileIds,citrus.calculateFileClustersCVs,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))    
+  if ("mc.cores" %in% names(addtlArgs)){
+    features = do.call("rbind",mclapply(foldsFileIds,citrus.calculateFileClustersCVs,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))    
   } else {
     features = t(sapply(foldsFileIds,citrus.calculateFileClustersCVs,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))    
   }
@@ -201,8 +197,8 @@ citrus.calculateFeature.emDists = function(foldsFileIds,clusterIds,clusterAssign
   
   referenceFileIds = foldsFileIds[foldsFileIds %in% citrus.dataArray$fileIds[,conditions[1]]]
   targetFileIds = foldsFileIds[foldsFileIds %in% citrus.dataArray$fileIds[,conditions[2]]]
-  if ("snowCluster" %in% names(addtlArgs)){
-    features = t(parSapply(addtlArgs[["snowCluster"]],1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=completeClusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=addtlArgs[["emdColumns"]]))
+  if ("mc.cores" %in% names(addtlArgs)){
+    features = do.call("rbind",mclapply(1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=completeClusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=addtlArgs[["emdColumns"]],mc.cores=addtlArgs[["mc.cores"]]))
   } else {
     features = t(sapply(1:length(referenceFileIds),citrus.calculateFileClustersEMDist,clusterIds=completeClusterIds,clusterAssignments=clusterAssignments,referenceFileIds=referenceFileIds,targetFileIds=targetFileIds,data=data,emdColumns=addtlArgs[["emdColumns"]]))
   }
@@ -249,8 +245,8 @@ citrus.calculateFileClusterParameterEMDist = function(emdColumn,referenceData,ta
 
 citrus.calculateFeature.densities = function(foldsFileIds,clusterIds,clusterAssignments,data,citrus.dataArray,...){
   addtlArgs = list(...)
-  if ("snowCluster" %in% names(addtlArgs)){
-    features = t(parSapply(addtlArgs[["snowCluster"]],foldsFileIds,citrus.calculateFileClustersDensities,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))      
+  if ("mc.cores" %in% names(addtlArgs)){
+    features = do.call("rbind",mclapply(foldsFileIds,citrus.calculateFileClustersDensities,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))
   } else {
     features = t(sapply(foldsFileIds,citrus.calculateFileClustersDensities,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))
   }
@@ -272,8 +268,8 @@ citrus.calculateFileClusterDensity = function(clusterId,clusterAssignments,fileI
 
 citrus.calculateFeature.medians = function(foldsFileIds,clusterIds,clusterAssignments,data,citrus.dataArray,...){
   addtlArgs = list(...)
-  if ("snowCluster" %in% names(addtlArgs)){
-    features = t(parSapply(addtlArgs[["snowCluster"]],foldsFileIds,citrus.calculateFileClustersMedians,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))    
+  if ("mc.cores" %in% names(addtlArgs)){
+    features = do.call("rbind",mclapply(foldsFileIds,citrus.calculateFileClustersMedians,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))    
   } else {
     features = t(sapply(foldsFileIds,citrus.calculateFileClustersMedians,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))    
   }
