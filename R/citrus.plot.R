@@ -340,7 +340,7 @@ citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph
 }
 
 
-citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureClusterMatrix,graph,layout,petalPlots=F,clusterMedians=NULL,theme="black",encircle=T,plotSize=15){
+citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureClusterMatrix,graph,layout,petalPlots=F,clusterMedians=NULL,featureClusterCols=NULL,theme="black",encircle=T,plotSize=15){
   if (theme=="black"){
     bg="black"
     stroke="white"
@@ -373,13 +373,27 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
     } else {
       vertexFont=rep(1,length(V(graph)))
       vertexFont[get.vertex.attribute(graph,"label")%in%featureClusters]=2
-      vertexColor=rep(rgb(0,0,.5,.5),length(V(graph)))
-      vertexColor[get.vertex.attribute(graph,"label")%in%featureClusters]=rgb(0.5,0,0,.7)
+      if (is.null(featureClusterCols){
+        vertexColor=rep(rgb(0,0,.5,.5),length(V(graph)))
+        vertexColor[get.vertex.attribute(graph,"label")%in%featureClusters]=rgb(0.5,0,0,.7)
+      } else {
+        vertexColor=rep(rgb(0,0,0),length(V(graph)))
+        cp = rgb(1,0,0,seq(0,1,by=.05))
+        ct = seq(from=(min(featureClusterCols)-0.01),to=(max(featureClusterCols)+0.01),length.out=20)
+        vertexColor[match(names(featureClusterCols),get.vertex.attribute(graph,"label")] = cp[sapply(featureClusterCols,findInterval,vec=ct)]
+      }
+      
       if (encircle){
         plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color=stroke,vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=vertexColor,mark.border=strokea,mark.col=.graphColorPalette(length(fGroup),alpha=.2),vertex.label.font=vertexFont)      
       } else {
         plot.igraph(graph,layout=layout,main=feature,edge.color=stroke,vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=vertexColor,vertex.label.font=vertexFont)     
       }
+      if (!is.null(featureClusterCols)){
+        legend_image <- as.raster(matrix(rev(cp), ncol=1))
+        rasterImage(legend_image, 1.1, -.5, 1.15,.5)
+        text(x=1.15, y = seq(-.5,.5,l=5), labels = .decimalFormat(ct[c(1,floor((length(ct)/4)*1:4))]) ,pos=4,col=stroke)  
+      }
+          
     }
   }
   dev.off()
