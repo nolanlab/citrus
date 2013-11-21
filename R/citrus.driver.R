@@ -15,12 +15,11 @@
 #' @param minimumClusterSizePercent Specifies the minimum cluster size to be analyzed as a percentage of the total aggregate datasize. A value etween \code{0} and \code{1}.
 #' @param transformCols A vector of integer or parameter names to be transformed before analysis. 
 #' @param plot Logical value indicating whether or not Citrus output plots should be created. Defaults to \code{TRUE}.
-#' @param returnResults Logical value indicating whether or not caluclated clusters and features should be returned. Defaults to FALSE.
 #' @param ... Further arguments to be passed to Citrus subcomponents. 
 #' @details Details about the cluster conditions matrix, fold features, etc.
 #' @author Robert Bruggner
 #' @references http://github.com/nolanlab/citrus/
-citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,labels,nFolds,family,fileList=NULL,filePopulationList=NULL,modelTypes=c("glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,conditionComparaMatrix=NULL,plot=T,returnResults=F,transformFactor=5,...){
+citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,labels,nFolds,family,fileList=NULL,filePopulationList=NULL,modelTypes=c("glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,conditionComparaMatrix=NULL,plot=T,transformFactor=5,...){
   
   balanceFactor=NULL
   if (family=="survival"){
@@ -69,7 +68,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,labels,nFold
   return(list(preclusterResult=preclusterResult,featureObject=featureObject,regressionResults=regressionResults))
 }
 
-citrus.endpointRegress = function(citrus.featureObject,family,modelTypes,labels,returnResults=T,...){
+citrus.endpointRegress = function(citrus.featureObject,family,modelTypes,labels,...){
   
   if (!(family %in% citrus.familyList())){
     stop("'family' argument must specified and one of the following: ",paste(citrus.familyList(),collapse=", "))
@@ -138,11 +137,8 @@ citrus.endpointRegress = function(citrus.featureObject,family,modelTypes,labels,
     regressionRes[[conditionName]] = list(differentialFeatures=differentialFeatures,cvMinima=cvMinima,thresholdCVRates=thresholdCVRates,foldModels=foldModels,regularizationThresholds=regularizationThresholds)
     
   }
-  if (returnResults){
-    return(regressionRes)
-  } else {
-    return()
-  }
+  return(regressionRes)
+  
 }
 
 citrus.mapAndPredict = function(citrusResult,dataDir,newFileList,fileSampleSize,mappingColumns=NULL,transformCols=NULL,transformFactor=5){
