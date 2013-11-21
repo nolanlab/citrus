@@ -373,14 +373,14 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
     } else {
       vertexFont=rep(1,length(V(graph)))
       vertexFont[get.vertex.attribute(graph,"label")%in%featureClusters]=2
-      if (is.null(featureClusterCols){
+      if (is.null(featureClusterCols)){
         vertexColor=rep(rgb(0,0,.5,.5),length(V(graph)))
         vertexColor[get.vertex.attribute(graph,"label")%in%featureClusters]=rgb(0.5,0,0,.7)
       } else {
         vertexColor=rep(rgb(0,0,0),length(V(graph)))
         cp = rgb(1,0,0,seq(0,1,by=.05))
         ct = seq(from=(min(featureClusterCols)-0.01),to=(max(featureClusterCols)+0.01),length.out=20)
-        vertexColor[match(names(featureClusterCols),get.vertex.attribute(graph,"label")] = cp[sapply(featureClusterCols,findInterval,vec=ct)]
+        vertexColor[ match(names(featureClusterCols),get.vertex.attribute(graph,"label")) ] = cp[sapply(featureClusterCols,findInterval,vec=ct)]
       }
       
       if (encircle){
