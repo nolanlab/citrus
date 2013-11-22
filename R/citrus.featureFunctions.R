@@ -24,9 +24,9 @@ citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densi
     stop(paste("Output directory",outputDir,"not found."))
   }
   
-  featureRes = lapply(names(preclusterResult),citrus.buildConditionFeatures,preclusterResult=preclusterResult,featureTypes=featureTypes,largeEnoughClusters=largeEnoughClusters)
+  featureRes = lapply(names(preclusterResult),citrus.buildConditionFeatures,preclusterResult=preclusterResult,featureTypes=featureTypes,largeEnoughClusters=largeEnoughClusters,...)
   
-  ffreturn(featureRes)
+  return(featureRes)
 }
 
 citrus.buildConditionFeatures = function(conditionName,preclusterResult,featureTypes,largeEnoughClusters,...){
@@ -82,7 +82,7 @@ citrus.buildClusterFeatures = function(clusterAssignments,featureTypes,largeEnou
   features = list()
   for (featureType in sort(featureTypes)){
     #features[[featureType]]=do.call(paste("citrus.calculateFeature",featureType,sep="."),args=list(foldsFileIds=foldsFileIds,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],conditions=conditions,citrus.dataArray=citrus.dataArray,emdColumns=emdColumns,preCalcFeatures=features))
-    features[[featureType]] = do.call(paste("citrus.calculateFeature",featureType,sep="."),args=list(foldsFileIds=foldsFileIds,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],conditions=conditions,citrus.dataArray=citrus.dataArray,preCalcFeatures=features,...))
+    features[[featureType]] = do.call(paste("citrus.calculateFeature",featureType,sep="."),args=list(foldsFileIds=foldsFileIds,clusterIds=largeEnoughClusters,clusterAssignments=clusterAssignments,data=citrus.dataArray$data[(citrus.dataArray$data[,"fileId"]%in%foldsFileIds),],conditions=conditions,citrus.dataArray=citrus.dataArray,preCalcFeatures=features,...=...))
   }
   for (featureType in sort(featureTypes)){
     # ASSUME THAT WANT FEATURE DIFFERENCES. MAY BE BAD ASSUMPTION
