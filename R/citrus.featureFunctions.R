@@ -25,7 +25,7 @@ citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densi
   }
   
   featureRes = lapply(names(preclusterResult),citrus.buildConditionFeatures,preclusterResult=preclusterResult,featureTypes=featureTypes,largeEnoughClusters=largeEnoughClusters,...)
-  
+  names(featureRes) = names(preclusterResult)
   return(featureRes)
 }
 
