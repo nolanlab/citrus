@@ -122,24 +122,29 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
   }
   folds[[nAllFolds]]="all"
   
-  for (conditions in allConditions){
-    cat(paste("Clustering Condition",paste(conditions,collapse=" vs "),"\n"))
-    
-    citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,fileSampleSize=fileSampleSize,transformCols=transformCols,transformFactor=transformFactor,scaleCols=scaleCols,...)
-    
-    foldsCluster = lapply(folds,citrus.foldCluster,citrus.dataArray=citrus.dataArray,clusterCols=clusterCols,conditions=conditions)
-    cat("Assigning Events to Clusters\n")
-    foldsClusterAssignments = lapply(foldsCluster,citrus.calculateCompleteHierarchicalMembership,...)  
-    
-    preclusterObject = list(folds=folds,foldsCluster=foldsCluster,foldsClusterAssignments=foldsClusterAssignments,conditions=conditions,citrus.dataArray=citrus.dataArray,clusterColumns=clusterCols)
-    if (nFolds!="all"){
-      cat("Assigning Leftout Events to Clusters\n")
-      leftoutClusterAssignments = lapply(1:nFolds,citrus.mapFoldDataToClusterSpace,citrus.dataArray=citrus.dataArray,foldClusterAssignments=foldsClusterAssignments,folds=folds,conditions=conditions,clusterCols=clusterCols,...)  
-      preclusterObject$leftoutClusterAssignments=leftoutClusterAssignments
-    }
-    save(preclusterObject,file=file.path(outputDir,paste("citrus.Cluster.",paste(conditions,collapse="_vs_"),".rDat",sep="")))
-    res[[paste(conditions,collapse="_vs_")]]=preclusterObject
-  }
-  return(res)
+  results = lapply(allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformFactor=transformFactor,scaleCols=scaleCols,outputDir=outputDir,...)
+  names(results) = lapply(allConditions,paste,collapse="_vs_")
+  return(results)
 }
 
+citrus.preClusterCondition = function(conditions,dataDir,fileList,folds,nFolds,fileSampleSize,transformCols,transformFactor,scaleCols,outputDir,...){
+  
+  cat(paste("Clustering Condition",paste(conditions,collapse=" vs "),"\n"))
+  
+  citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,fileSampleSize=fileSampleSize,transformCols=transformCols,transformFactor=transformFactor,scaleCols=scaleCols,...)
+  
+  foldsCluster = lapply(folds,citrus.foldCluster,citrus.dataArray=citrus.dataArray,clusterCols=clusterCols,conditions=conditions)
+  cat("Assigning Events to Clusters\n")
+  foldsClusterAssignments = lapply(foldsCluster,citrus.calculateCompleteHierarchicalMembership,...)  
+  
+  preclusterObject = list(folds=folds,foldsCluster=foldsCluster,foldsClusterAssignments=foldsClusterAssignments,conditions=conditions,citrus.dataArray=citrus.dataArray,clusterColumns=clusterCols)
+  if (nFolds!="all"){
+    cat("Assigning Leftout Events to Clusters\n")
+    leftoutClusterAssignments = lapply(1:nFolds,citrus.mapFoldDataToClusterSpace,citrus.dataArray=citrus.dataArray,foldClusterAssignments=foldsClusterAssignments,folds=folds,conditions=conditions,clusterCols=clusterCols,...)  
+    preclusterObject$leftoutClusterAssignments=leftoutClusterAssignments
+  }
+  
+  return(preclusterObject)
+  
+}
+  

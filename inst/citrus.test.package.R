@@ -51,7 +51,7 @@ featureTypes=c("densities","medians","emDists")
 featureTypes=c("emDists")
 family="twoClass"
 modelTypes="glmnet"
-modelTypes="sam"
+modelTypes=c("pamr","glmnet")
 minimumClusterSizePercent=0.05
 conditionComparaMatrix=matrix(T,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
 conditionComparaMatrix[2]=F
@@ -124,18 +124,24 @@ conditionComparaMatrix[2]=F
 
 trainFileList = fileList[seq(from=1,to=19,by=2),]
 testFileList = fileList[seq(from=2,to=20,by=2),]
-preClusterResult = citrus.preCluster(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=1000,fileList=trainFileList,nFolds="all",conditionComparaMatrix=conditionComparaMatrix)
-mappingResults = citrus.mapFileDataToClustering(dataDir=dataDir,newFileList=testFileList,fileSampleSize=1000,preClusterResult=preClusterResult,)
+preClusterResult = citrus.preCluster(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=1000,fileList=trainFileList,nFolds="all",conditionComparaMatrix=conditionComparaMatrix,mc.cores=4)
+mappingResults = citrus.mapFileDataToClustering(dataDir=dataDir,newFileList=testFileList,fileSampleSize=1000,preClusterResult=preClusterResult,mc.cores=4)
 
-trainFeatures = citrus.buildFeatures(preclusterResult=preClusterResult,outputDir=outputDir,featureTypes=c("CVs"),cvColumns=medianCols)
-
-
-trainFeatures = citrus.buildFeatures(preclusterResult=preClusterResult,outputDir=outputDir,featureTypes=c("densities","medians"),medianColumns=medianCols)
+trainFeatures = citrus.buildFeatures(preclusterResult=preClusterResult,outputDir=outputDir,featureTypes=c("medians"),minimumClusterSizePercent=0.01,medianColumns=medianCols)
 trainLargeEnoughClusters = lapply(names(trainFeatures),.extractConditionLargeEnoughClusters,foldFeatures=trainFeatures)
 names(trainLargeEnoughClusters) = names(trainFeatures)
+trainFeatures
 
-cvm = cv.glmnet(x=trainFeatures$unstim_vs_stim1$foldFeatures[[1]],y=as.factor(rep(c("H","D"),each=5)),family="binomial",type.measure="class")
+f = trainFeatures$unstim_vs_stim1$foldFeatures[[1]]
+cvm = cv.glmnet(x=f,y=as.factor(rep(c("H","D"),each=5)),family="binomial",type.measure="class")
 plot(cvm)
+fastICA(X=f,n.comp=2)
+cvm = cv.glmnet(x=fastICA(f,n.comp=3)$S,y=as.factor(rep(c("H","D"),each=5)),family="binomial",type.measure="class")
+plot(cvm)
+
+
+library("fastICA")
+
 # FIX THIS
 mappedFeatures = citrus.buildFeatures(preclusterResult=mappingResults,outputDir=outputDir,featureTypes=c("densities","medians"),largeEnoughClusters=trainLargeEnoughClusters,medianColumns=medianCols)
 predict(cvm,newx=mappedFeatures$unstim_vs_stim1$foldFeatures[[1]],type="class")
