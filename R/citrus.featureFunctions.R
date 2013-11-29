@@ -24,12 +24,12 @@ citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densi
     stop(paste("Output directory",outputDir,"not found."))
   }
   
-  featureRes = lapply(names(preclusterResult),citrus.buildConditionFeatures,preclusterResult=preclusterResult,featureTypes=featureTypes,largeEnoughClusters=largeEnoughClusters,...)
+  featureRes = lapply(names(preclusterResult),citrus.buildConditionFeatures,preclusterResult=preclusterResult,featureTypes=featureTypes,minimumClusterSizePercent=minimumClusterSizePercent,largeEnoughClusters=largeEnoughClusters,...)
   names(featureRes) = names(preclusterResult)
   return(featureRes)
 }
 
-citrus.buildConditionFeatures = function(conditionName,preclusterResult,featureTypes,largeEnoughClusters,...){
+citrus.buildConditionFeatures = function(conditionName,preclusterResult,featureTypes,minimumClusterSizePercent,largeEnoughClusters,...){
   cat(paste("Building features for condition",conditionName,"\n"))
   conditions=preclusterResult[[conditionName]]$conditions
   
