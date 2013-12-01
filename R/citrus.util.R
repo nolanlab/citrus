@@ -208,7 +208,7 @@ citrus.readFCS = function(filePath,...){
   return(fcs)
 }
 
-citrus.exportClusters = function(conditionClusterIds,preclusterResult,outputDir,sampleIds=NULL){
+citrus.exportConditionClusters = function(conditionClusterIds,preclusterResult,outputDir,sampleIds=NULL){
   for (conditionName in names(conditionClusterIds)){
     for (clusterId in conditionClusterIds[[conditionName]]){
       nFolds = length(preclusterResult[[conditionName]]$foldsCluster)

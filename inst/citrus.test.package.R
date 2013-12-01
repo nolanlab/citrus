@@ -132,7 +132,7 @@ trainLargeEnoughClusters = lapply(names(trainFeatures),.extractConditionLargeEno
 names(trainLargeEnoughClusters) = names(trainFeatures)
 trainFeatures
 
-citrus.exportClusters(conditionClusterIds=list(unstim_vs_stim1=c(15800,12222),stim1=c(8839,9987)),preclusterResult=preClusterResult,outputDir=outputDir,sampleIds=c(6,10))
+citrus.exportConditionClusters(conditionClusterIds=list(unstim_vs_stim1=c(15800,12222),stim1=c(8839,9987)),preclusterResult=preClusterResult,outputDir=outputDir,sampleIds=c(6,10))
 f = trainFeatures$unstim_vs_stim1$foldFeatures[[1]]
 cvm = cv.glmnet(x=f,y=as.factor(rep(c("H","D"),each=5)),family="binomial",type.measure="class")
 plot(cvm)
