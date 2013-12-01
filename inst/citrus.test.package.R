@@ -105,7 +105,7 @@ res=citrus.quick(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels,fa
 rm(list=ls(all=T))
 dataDir = file.path(system.file(package="citrus"),"extdata","example3")
 #dataDir = file.path("~/Desktop/work/citrus/inst/extdata/example3/")
-outputDir = "~/Desktop/notime/tmp/citrusOutput/"
+outputDir = "~/Desktop/notime/citrusOutput/"
 clusterCols = c("LineageMarker1","LineageMarker2")
 medianCols = c("FunctionalMarker1","FunctionalMarker2")
 labels = c(rep("healthy",10),rep("diseased",10))
@@ -132,6 +132,7 @@ trainLargeEnoughClusters = lapply(names(trainFeatures),.extractConditionLargeEno
 names(trainLargeEnoughClusters) = names(trainFeatures)
 trainFeatures
 
+citrus.exportClusters(conditionClusterIds=list(unstim_vs_stim1=c(15800,12222),stim1=c(8839,9987)),preclusterResult=preClusterResult,outputDir=outputDir,sampleIds=c(6,10))
 f = trainFeatures$unstim_vs_stim1$foldFeatures[[1]]
 cvm = cv.glmnet(x=f,y=as.factor(rep(c("H","D"),each=5)),family="binomial",type.measure="class")
 plot(cvm)

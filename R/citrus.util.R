@@ -209,13 +209,28 @@ citrus.readFCS = function(filePath,...){
 }
 
 citrus.exportClusters = function(conditionClusterIds,preclusterResult,outputDir,sampleIds=NULL){
-  stop("Not Yet implemented");
+  for (conditionName in names(conditionClusterIds)){
+    for (clusterId in conditionClusterIds[[conditionName]]){
+      nFolds = length(preclusterResult[[conditionName]]$foldsCluster)
+      outputFile = file.path(outputDir,paste0(conditionName,"-cluster_",clusterId,".fcs"))
+      citrus.exportCluster(clusterId,
+                           data=preclusterResult[[conditionName]]$citrus.dataArray$data,
+                           clusterAssignments=preclusterResult[[conditionName]]$foldsClusterAssignments[[nFolds]],
+                           outputFile=outputFile,
+                           sampleIds=sampleIds)
+    }
+  }
 }
 
 citrus.exportCluster = function(clusterId,data,clusterAssignments,outputFile,sampleIds=NULL){
-  clusterData = flowFramedata[clusterAssignments[[clusterId]],]
-  if (!is.null(sampleId)){
-    clusterData = clusterData[clusterdata[,"fileId"]%in%sampleId,]
+  clusterData = data[clusterAssignments[[clusterId]],]
+  if (!is.null(sampleIds)){
+    clusterData = clusterData[clusterData[,"fileId"]%in%sampleIds,]
   }
-  write.FCS(x=flowFrame(exprs=clusterData),filename=outputFile)
+  if (nrow(clusterData)==0){
+    warning(paste("No data for cluster ",clusterId,"in selected files. Not writing to disk."))
+  } else {
+    write.FCS(x=flowFrame(exprs=clusterData),filename=outputFile)  
+  }
+  
 }
