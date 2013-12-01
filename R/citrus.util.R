@@ -207,3 +207,15 @@ citrus.readFCS = function(filePath,...){
   }) 
   return(fcs)
 }
+
+citrus.exportClusters = function(conditionClusterIds,preclusterResult,outputDir,sampleIds=NULL){
+  stop("Not Yet implemented");
+}
+
+citrus.exportCluster = function(clusterId,data,clusterAssignments,outputFile,sampleIds=NULL){
+  clusterData = flowFramedata[clusterAssignments[[clusterId]],]
+  if (!is.null(sampleId)){
+    clusterData = clusterData[clusterdata[,"fileId"]%in%sampleId,]
+  }
+  write.FCS(x=flowFrame(exprs=clusterData),filename=outputFile)
+}
