@@ -89,7 +89,7 @@ citrus.traverseMergeOrder = function(node,mergeOrder){
 }
 
 
-citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds=5,folds=NULL,transformCols=NULL,clusterConditions=NULL,conditionComparaMatrix=NULL,balanceFactor=NULL,transformFactor=5,scaleCols=NULL,...){
+citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds=5,folds=NULL,transformCols=NULL,clusterConditions=NULL,conditionComparaMatrix=NULL,balanceFactor=NULL,transformFactor=5,scaleCols=NULL,conditionCluster=NULL,...){
   
   addtlArgs = list(...)
   
@@ -122,7 +122,12 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
   }
   folds[[nAllFolds]]="all"
   
-  results = lapply(allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformFactor=transformFactor,scaleCols=scaleCols,outputDir=outputDir,...)
+  if (!is.null(conditionCluster)){
+    results = parLapply(conditionCluster,allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformFactor=transformFactor,scaleCols=scaleCols,outputDir=outputDir,...)  
+  } else {
+    results = lapply(allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformFactor=transformFactor,scaleCols=scaleCols,outputDir=outputDir,...)  
+  }
+    
   names(results) = lapply(allConditions,paste,collapse="_vs_")
   return(results)
 }
