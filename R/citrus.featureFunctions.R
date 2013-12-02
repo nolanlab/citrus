@@ -2,7 +2,7 @@
   foldFeatures[[condition]]$foldLargeEnoughClusters[[which(foldFeatures[[condition]]$folds=="all")]]
 }
 
-citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densities"),minimumClusterSizePercent=0.05,largeEnoughClusters=NULL,...){  
+citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densities"),minimumClusterSizePercent=0.05,largeEnoughClusters=NULL,conditionCluster=NULL,...){  
   
   addtlArgs = list(...)
   
@@ -24,7 +24,12 @@ citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densi
     stop(paste("Output directory",outputDir,"not found."))
   }
   
-  featureRes = lapply(names(preclusterResult),citrus.buildConditionFeatures,preclusterResult=preclusterResult,featureTypes=featureTypes,minimumClusterSizePercent=minimumClusterSizePercent,largeEnoughClusters=largeEnoughClusters,...)
+  if (!is.null(conditionCluster)){
+    featureRes = parLapply(conditionCluster,names(preclusterResult),citrus.buildConditionFeatures,preclusterResult=preclusterResult,featureTypes=featureTypes,minimumClusterSizePercent=minimumClusterSizePercent,largeEnoughClusters=largeEnoughClusters,...)      
+  } else {
+    featureRes = lapply(names(preclusterResult),citrus.buildConditionFeatures,preclusterResult=preclusterResult,featureTypes=featureTypes,minimumClusterSizePercent=minimumClusterSizePercent,largeEnoughClusters=largeEnoughClusters,...)  
+  }
+  
   names(featureRes) = names(preclusterResult)
   return(featureRes)
 }
