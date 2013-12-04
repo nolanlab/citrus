@@ -214,6 +214,7 @@ citrus.plotClusters = function(clusterIds,clusterAssignments,citrus.dataArray,co
   } else {
     bgData = data[,clusterCols]
   }
+  colnames(bgData) = colnames(clusterDataList[[1]])
   citrus.overlapDensityPlot(clusterDataList=clusterDataList,backgroundData=bgData)
   if (!is.null(outputFile)){
     dev.off()  
