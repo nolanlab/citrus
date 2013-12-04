@@ -366,7 +366,6 @@ citrus.removeFeatures = function(index,foldFeatures,nonOverlappingFeatures){
 citrus.getCVMinima = function(modelType,thresholdCVRates,fdrRate=0.01){
   cvPoints=list();
   if (modelType=="sam"){
-    cvPoints[["fdr_0.5"]]=50
     cvPoints[["fdr_0.10"]]=10
     cvPoints[["fdr_0.05"]]=5
     cvPoints[["fdr_0.01"]]=1
