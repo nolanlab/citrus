@@ -171,10 +171,10 @@ scaleToRange =function(x,scale){
 citrus.overlapDensityPlot = function(clusterDataList,backgroundData){
   combined = data.frame(check.names=F,check.rows=F)
   for (clusterName in names(clusterDataList)){
-    combined=rbind(combined,data.frame(value=as.vector(clusterDataList[[clusterName]]),marker=as.vector(sapply(colnames(clusterDataList[[clusterName]]),rep,nrow(clusterDataList[[clusterName]]))),clusterId=clusterName,dplot="cluster",check.names=F,check.rows=F))
-    combined=rbind(combined,data.frame(value=as.vector(backgroundData),marker=as.vector(sapply(colnames(clusterDataList[[clusterName]]),rep,nrow(backgroundData))),clusterId=clusterName,dplot="background",check.names=F,check.rows=F))
+    combined=rbind(combined,cbind(melt(clusterDataList[[clusterName]],varnames=c("row","marker")),clusterId=clusterName,src="Cluster"))
   }
-  p = ggplot(combined) + geom_density(aes(x=value, y = ..scaled..,fill=dplot,colour=dplot),alpha=.6) + facet_grid(clusterId~marker,scales="free")+theme_bw()
+  p = ggplot(data=combined,aes(x=value, y = ..scaled..,fill=src)) + geom_density() + facet_grid(clusterId~marker,scales="free")+geom_density(data=cbind(melt(backgroundData,varnames=c("row","marker")),src="Background"))+theme_bw()+scale_fill_manual(values = c("Background" = rgb(.3,.3,1,.2), "Cluster" = rgb(1,.3,.3,.5)))
+
   print(p)
 }
 
@@ -191,10 +191,10 @@ citrus.plotClusters = function(clusterIds,clusterAssignments,citrus.dataArray,co
   if (!is.null(outputFile)){
     pdf(file=outputFile,width=(2.2*length(clusterCols)+2),height=(2*length(clusterIds)))  
   }
-  clusterDataList=list();
+  clusterDataList = list();
   for (clusterId in sort(clusterIds)){
-    if (nrow(data[clusterAssignments[[clusterId]],])>5000){
-      clusterDataList[[as.character(clusterId)]]=data[clusterAssignments[[clusterId]],clusterCols][sample(1:nrow(data[clusterAssignments[[clusterId]],]),1000),]
+    if (length(clusterAssignments[[clusterId]])>2500){
+      clusterDataList[[as.character(clusterId)]]=data[clusterAssignments[[clusterId]],clusterCols][sample(1:length(clusterAssignments[[clusterId]]),2500),]
     } else {
       clusterDataList[[as.character(clusterId)]]=data[clusterAssignments[[clusterId]],clusterCols]
     }
