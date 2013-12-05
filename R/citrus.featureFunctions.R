@@ -25,16 +25,16 @@ citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densi
   }
   
   if (!is.null(conditionCluster)){
-    featureRes = parLapply(conditionCluster,names(preclusterResult),citrus.buildConditionFeatures,preclusterResult=preclusterResult,featureTypes=featureTypes,minimumClusterSizePercent=minimumClusterSizePercent,largeEnoughClusters=largeEnoughClusters,...)      
+    featureRes = parLapply(conditionCluster,names(preclusterResult),citrus.buildConditionFeatures,preclusterResult=preclusterResult,featureTypes=featureTypes,minimumClusterSizePercent=minimumClusterSizePercent,largeEnoughClusters=largeEnoughClusters,outputDir=outputDir,...)      
   } else {
-    featureRes = lapply(names(preclusterResult),citrus.buildConditionFeatures,preclusterResult=preclusterResult,featureTypes=featureTypes,minimumClusterSizePercent=minimumClusterSizePercent,largeEnoughClusters=largeEnoughClusters,...)  
+    featureRes = lapply(names(preclusterResult),citrus.buildConditionFeatures,preclusterResult=preclusterResult,featureTypes=featureTypes,minimumClusterSizePercent=minimumClusterSizePercent,largeEnoughClusters=largeEnoughClusters,outputDir=outputDir,...)  
   }
   
   names(featureRes) = names(preclusterResult)
   return(featureRes)
 }
 
-citrus.buildConditionFeatures = function(conditionName,preclusterResult,featureTypes,minimumClusterSizePercent,largeEnoughClusters,...){
+citrus.buildConditionFeatures = function(conditionName,preclusterResult,featureTypes,minimumClusterSizePercent,largeEnoughClusters,outputDir,...){
   cat(paste("Building features for condition",conditionName,"\n"))
   conditions=preclusterResult[[conditionName]]$conditions
   
