@@ -89,7 +89,7 @@ citrus.thresholdCVs.model.quick = function(modelType,features,regularizationThre
     }
     errorRates = sapply(1:ncvIterations,paste("citrus.cvIteration",family,sep="."),modelType="glmnet",features=features,labels=labels,regularizationThresholds=typeRegularizationThresholds,nFolds=nFolds,alpha=alpha,standardize=standardize)
   } else if (modelType=="sam"){
-    warning("No thresholds for SAM.")
+    warning("No thresholds for SAM. This is Normal.")
     return(NA)
   } else {
     stop(paste("CV for Model type",modelType,"not implemented"))
