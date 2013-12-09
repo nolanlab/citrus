@@ -174,7 +174,8 @@ citrus.overlapDensityPlot = function(clusterDataList,backgroundData){
     combined=rbind(combined,cbind(melt(clusterDataList[[clusterName]],varnames=c("row","marker")),clusterId=clusterName,src="Cluster"))
   }
   p = ggplot(data=combined,aes(x=value, y = ..scaled..,fill=src)) + geom_density() + facet_grid(clusterId~marker,scales="free")+geom_density(data=cbind(melt(backgroundData,varnames=c("row","marker")),src="Background"))+theme_bw()+scale_fill_manual(values = c("Background" = rgb(.3,.3,1,.2), "Cluster" = rgb(1,.3,.3,.5)))
-
+  p = p+theme(legend.position="bottom",axis.text.y=element_blank(),axis.ticks.y=element_blank(),axis.title=element_blank())
+  p = p+labs(fill="Distribution:")
   print(p)
 }
 
