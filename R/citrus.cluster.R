@@ -108,7 +108,7 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
   
   if (is.null(balanceFactor)){
     balanceFactor = as.factor(sample(c(0,1),nrow(fileList),replace=T))
-  } else if (levels(balanceFactor)==1){
+  } else if (length(levels(balanceFactor))==1){
     balanceFactor = as.factor(sample(c(0,1),length(balanceFactor),replace=T))
   }
   if (nFolds=="all"){
