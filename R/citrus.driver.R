@@ -19,7 +19,7 @@
 #' @details Details about the cluster conditions matrix, fold features, etc.
 #' @author Robert Bruggner
 #' @references http://github.com/nolanlab/citrus/
-citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,labels,nFolds,family,fileList=NULL,filePopulationList=NULL,modelTypes=c("glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,transformCols=NULL,conditionComparaMatrix=NULL,plot=T,transformFactor=5,...){
+citrus.full = function(dataDir,outputDir,clusterCols,labels,nFolds,family,fileList=NULL,filePopulationList=NULL,modelTypes=c("glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,fileSampleSize=NULL,transformCols=NULL,conditionComparaMatrix=NULL,plot=T,transformFactor=5,...){
   
   balanceFactor=NULL
   if (family=="survival"){
@@ -27,6 +27,10 @@ citrus.full = function(dataDir,outputDir,clusterCols,fileSampleSize,labels,nFold
     if ((ncol(labels)!=2)||(!all(colnames(labels) %in% c("time","event")))){
       stop("Incorrect labeling for files. Expecting 'time' and 'event' label columns.")
     }
+  }
+  
+  if (is.null(fileSampleSize)){
+    fileSampleSize = 50/minimumClusterSizePercent
   }
   
   # No point in running cv if SAM only model
