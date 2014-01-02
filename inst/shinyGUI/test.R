@@ -1,10 +1,7 @@
 rm(list=ls(all=T))
+library("citrus")
 library("shiny")
 library("brew")
-library("flowCore")
-library("Rclusterpp")
-library("citrus")
-
 #dataDir = "/Users/rbruggner/Desktop/notime/citrusTestRun/"
 source("/Users/rbruggner/Desktop/work/citrus/R/citrus.launchUI.R")
 source("/Users/rbruggner/Desktop/work/citrus/R/citrus.featureFunctions.R")

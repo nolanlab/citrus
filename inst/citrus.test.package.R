@@ -4,7 +4,7 @@ library("citrus")
 # Example 1: Diseased patients have a differing proportion of cells in clusters 2 & 3.
 dataDir = file.path(system.file(package="citrus"),"extdata","example1")
 #dataDir = file.path("~/Desktop/work/citrus/inst/extdata/example1/")
-outputDir = "~/Desktop/notime/tmp/citrusOutput/"
+outputDir = "~/Desktop/notime/citrusOutput/"
 clusterCols = c(1:2)
 fileSampleSize=1000
 
@@ -25,8 +25,13 @@ conditionComparaMatrix=NULL
 transformFactor=NULL
 nFolds=5
 
+
 #res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds=5,family="twoClass",featureTypes=c("densities"),modelTypes=c("pamr","glmnet"))
+outfile="~/Desktop/notime/glmnetprofile.out"
+Rprof(outfile)
 res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds="all",family="twoClass",featureTypes=c("densities"),minimumClusterSizePercent=minimumClusterSizePercent,plot=T,mc.cores=4)
+Rprof(NULL)
+summaryRprof(outfile)
 res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds="all",family="twoClass",featureTypes=c("densities"),minimumClusterSizePercent=minimumClusterSizePercent,plot=T,mc.cores=4)
 
 

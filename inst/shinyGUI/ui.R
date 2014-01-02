@@ -51,8 +51,7 @@ shinyUI(pageWithSidebar(
                
       tabPanel("Clustering Setup",
                numericInput(inputId="fileSampleSize","Events Sampled Per File",min=1,value=1000),
-               uiOutput("clusterCols"),
-               uiOutput("transformCols")
+               tags$table(tags$tr(tags$td(uiOutput("clusterCols")),tags$td(uiOutput("transformCols")),tags$td(uiOutput("scaleCols"))))
                ),
       
       tabPanel("Cluster Characterization",

@@ -51,7 +51,7 @@ shinyServer(function(input, output) {
     if (is.null(choices)){
       return(tagList(tags$b("Assign files to groups to enable selection of clustering parameters.")))
     } else {
-      return(selectInput("clusterCols",label="Clustering Parameters",choices=choices,multiple=T))  
+      return(checkboxGroupInput("clusterCols",label="Cluster",choices=choices))  
     }
   })
   
@@ -60,9 +60,19 @@ shinyServer(function(input, output) {
     if (is.null(choices)){
       return(tagList(tags$b("Assign samples to groups to enable selection of transform parameters.")))
     } else {
-      return(selectInput("transformCols",label="Transform Parameters",choices=choices,multiple=T))  
+      return(checkboxGroupInput("transformCols",label="Transform",choices=choices))  
     }
   })
+  
+  output$scaleCols = renderUI({
+    choices = getParameterIntersections(input,fileList,fileCols);
+    if (is.null(choices)){
+      return(tagList(tags$b("Assign samples to groups to enable selection of transform parameters.")))
+    } else {
+      return(checkboxGroupInput("scaleCols",label="Scale",choices=choices))  
+    }
+  })
+  
   
   output$calculatedFeatures = renderUI({
     return(tagList(
@@ -78,7 +88,7 @@ shinyServer(function(input, output) {
       if (is.null(choices)){
         return(tagList(tags$b("Assign samples to groups to enable selection of median parameters.")))
       } else {
-        return(selectInput("medianCols",label="Cluster Median Parameters",choices=choices,multiple=T))  
+        return(tagList(tags$hr(),checkboxGroupInput("medianCols",label="Cluster Median Parameters:",choices=choices)))  
       }
     } else {
       return(tags$span(""))  
