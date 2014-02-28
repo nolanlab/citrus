@@ -22,7 +22,7 @@ citrus.mapFileDataToClustering = function(dataDir,newFileList,preClusterResult,f
 }
 
 
-citrus.foldCluster = function(foldMembership,citrus.dataArray,clusterCols,conditions){
+citrus.foldCluster = function(foldMembership,citrus.dataArray,clusterCols,conditions,...){
   if ((length(foldMembership)==1) && (foldMembership=="all")){
     cat("Clustering All\n")
     includeFileIds = as.vector(citrus.dataArray$fileIds[,conditions])
@@ -30,22 +30,39 @@ citrus.foldCluster = function(foldMembership,citrus.dataArray,clusterCols,condit
     includeFileIds = as.vector(citrus.dataArray$fileIds[-foldMembership,conditions])
     cat(paste("Clustering fileIds",paste(includeFileIds,collapse=", "),"\n"))
   }
-  return(citrus.cluster(citrus.dataArray$data[citrus.dataArray$data[,"fileId"] %in% includeFileIds,clusterCols]))
+  return(citrus.cluster(citrus.dataArray$data[citrus.dataArray$data[,"fileId"] %in% includeFileIds,clusterCols],...))
 }
 
-citrus.cluster = function(data){
+citrus.cluster = function(data,...){
   cat(paste("Clustering",nrow(data),"events\n"));
-  return(Rclusterpp.hclust(data))
+  
+  clusterType="hierarchical"
+  if ("clusterType" %in% names(list(...))){
+    clusterType = list(...)[["clusterType"]]
+  }
+  if (clusterType=="hierarchical"){
+    return(Rclusterpp.hclust(data))  
+  } else {
+    stop(paste("Don't know how to cluster using",clusterType))
+  }
+  
 }
 
 citrus.calculateCompleteHierarchicalMembership = function(clustering,...){
+  clusterType="hierarchical"
+  if ("clusterType" %in% names(list(...))){
+    clusterType = list(...)[["clusterType"]]
+  }
+  if (clusterType=="hierarchical"){
     mergeOrder = clustering$merge
     if ("mc.cores" %in% names(list(...))){
       return(mclapply(as.list(1:nrow(mergeOrder)),citrus.traverseMergeOrder,mergeOrder=mergeOrder,mc.cores=list(...)[["mc.cores"]]))
     } else {
       return(lapply(as.list(1:nrow(mergeOrder)),citrus.traverseMergeOrder,mergeOrder=mergeOrder))
     }
-    
+  } else {
+    stop(paste("Don't know how to caclulate complete clustering for clusterType",clusterType))
+  }
 }
 
 citrus.mapFoldDataToClusterSpace = function(index,citrus.dataArray,foldClusterAssignments,folds,conditions,clusterCols,...){
@@ -88,6 +105,21 @@ citrus.traverseMergeOrder = function(node,mergeOrder){
   return(c(leftAtom,rightAtom));
 }
 
+citrus.getClusterDecendants = function(node,mergeOrder){
+  left = mergeOrder[node,1]
+  right = mergeOrder[node,2]
+  if (left>0){
+    left = c(left,citrus.getClusterDecendants(left,mergeOrder))
+  } else {
+    left = c()
+  }
+  if (right>0){
+    right = c(right,citrus.getClusterDecendants(right,mergeOrder))
+  } else {
+    right = c()
+  }
+  return(c(left,right))
+}
 
 citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds=5,folds=NULL,transformCols=NULL,clusterConditions=NULL,conditionComparaMatrix=NULL,balanceFactor=NULL,transformFactor=5,scaleCols=NULL,conditionCluster=NULL,...){
   
@@ -138,7 +170,7 @@ citrus.preClusterCondition = function(conditions,dataDir,fileList,clusterCols,fo
   
   citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,fileSampleSize=fileSampleSize,transformCols=transformCols,transformFactor=transformFactor,scaleCols=scaleCols,...)
   
-  foldsCluster = lapply(folds,citrus.foldCluster,citrus.dataArray=citrus.dataArray,clusterCols=clusterCols,conditions=conditions)
+  foldsCluster = lapply(folds,citrus.foldCluster,citrus.dataArray=citrus.dataArray,clusterCols=clusterCols,conditions=conditions,...)
   cat("Assigning Events to Clusters\n")
   foldsClusterAssignments = lapply(foldsCluster,citrus.calculateCompleteHierarchicalMembership,...)  
   
