@@ -121,6 +121,15 @@ citrus.getClusterDecendants = function(node,mergeOrder){
   return(c(left,right))
 }
 
+citrus.getClusterAncestors = function(node,mergeOrder){
+  parent = which(mergeOrder==node,arr.ind=T)[1]
+  if (is.na(parent)){
+    return(c())
+  } else {
+    return(c(parent,citrus.getClusterAncestors(parent,mergeOrder)))
+  }
+}
+
 citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds=5,folds=NULL,transformCols=NULL,clusterConditions=NULL,conditionComparaMatrix=NULL,balanceFactor=NULL,transformFactor=5,scaleCols=NULL,conditionCluster=NULL,...){
   
   addtlArgs = list(...)
