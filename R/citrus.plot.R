@@ -463,6 +463,19 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus
       g = citrus.createHierarchyGraph(largeEnoughClusters=citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],mergeOrder=citrus.preclusterResult[[conditionName]]$foldsCluster[[nAllFolds]]$merge,clusterAssignments=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments[[nAllFolds]],minVertexSize=minVertexSize)
       l = layout.reingold.tilford(g,root=length(V(g)),circular=T)
       clusterMedians = t(sapply(citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],.getClusterMedians,clusterAssignments=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments[[nAllFolds]],data=citrus.preclusterResult[[conditionName]]$citrus.dataArray$data,clusterCols=citrus.preclusterResult[[conditionName]]$clusterColumns))
+      
+      ### CHECK TO SEE IF THIS MAKES MARKERPLOT NAMES CORRECTLY 
+      colLabels = citrus.preclusterResult[[conditionName]]$citrus.dataArray$fileChannelNames[[conditionName]][[1]]
+      reagentNames = citrus.preclusterResult[[conditionName]]$citrus.dataArray$fileReagentNames[[conditionName]][[1]]
+      displayNames = colLabels
+      displayNames[nchar(reagentNames)>1] = reagentNames[nchar(reagentNames)>1]
+      if (is.numeric(citrus.preclusterResult[[conditionName]]$clusterColumns)){
+        colnames(clusterMedians)=displayNames[citrus.preclusterResult[[conditionName]]$clusterColumns]  
+      } else {
+        colnames(clusterMedians)=displayNames[colLabels%in%citrus.preclusterResult[[conditionName]]$clusterColumns]
+      }
+      ###
+      
       rownames(clusterMedians) = citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]]
       for (modelType in names(citrus.regressionResult[[conditionName]]$differentialFeatures)){
         citrus.plotHierarchicalClusterMedians(outputFile=file.path(conditionOutputDir,"markerPlots.pdf"),clusterMedians,graph=g,layout=l,plotSize=plotSize,theme=theme)
