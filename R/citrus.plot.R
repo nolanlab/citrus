@@ -479,6 +479,7 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus
       rownames(clusterMedians) = citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]]
       for (modelType in names(citrus.regressionResult[[conditionName]]$differentialFeatures)){
         citrus.plotHierarchicalClusterMedians(outputFile=file.path(conditionOutputDir,"markerPlots.pdf"),clusterMedians,graph=g,layout=l,plotSize=plotSize,theme=theme)
+        write.csv(clusterMedians,file=file.path(conditionOutputDir,"clusterMarkerMedianValues.csv"),quote=F)
         for (cvPoint in names(citrus.regressionResult[[conditionName]]$differentialFeatures[[modelType]])){
           featureClusterMatrix = .getClusterFeatureMatrix(citrus.regressionResult[[conditionName]]$differentialFeatures[[modelType]][[cvPoint]][["features"]])
           citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,graph=g,layout=l,plotSize=plotSize,theme=theme)
