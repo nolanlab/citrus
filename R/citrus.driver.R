@@ -11,7 +11,7 @@
 #' @param fileList A matrix containing file names. 1 condition per column. See details.
 #' @param filePopulationList A list with each named entry consisting of a matrix of file names. Samples in rows and 1 population per column.
 #' @param modelTypes A vector of models to construct. Valid options are \code{pamr}, \code{glmnet},\code{sam}.
-#' @param featureTypes A vector of descriptive feature types to be calculated for each cluster. Valid arguments are \code{densities}, \code{medians}, and \code{emDists}. See details.
+#' @param featureTypes A vector of descriptive feature types to be calculated for each cluster. Valid arguments are \code{abundances}, \code{medians}, and \code{emDists}. See details.
 #' @param minimumClusterSizePercent Specifies the minimum cluster size to be analyzed as a percentage of the total aggregate datasize. A value etween \code{0} and \code{1}.
 #' @param transformCols A vector of integer or parameter names to be transformed before analysis. 
 #' @param plot Logical value indicating whether or not Citrus output plots should be created. Defaults to \code{TRUE}.
@@ -19,7 +19,7 @@
 #' @details Details about the cluster conditions matrix, fold features, etc.
 #' @author Robert Bruggner
 #' @references http://github.com/nolanlab/citrus/
-citrus.full = function(dataDir,outputDir,clusterCols,labels,nFolds,family,fileList=NULL,filePopulationList=NULL,modelTypes=c("glmnet"),featureTypes=c("densities"),minimumClusterSizePercent=0.05,fileSampleSize=NULL,transformCols=NULL,conditionComparaMatrix=NULL,plot=T,transformFactor=5,...){
+citrus.full = function(dataDir,outputDir,clusterCols,labels,nFolds,family,fileList=NULL,filePopulationList=NULL,modelTypes=c("glmnet"),featureTypes=c("abundances"),minimumClusterSizePercent=0.05,fileSampleSize=NULL,transformCols=NULL,conditionComparaMatrix=NULL,plot=T,transformFactor=5,...){
   
   balanceFactor=NULL
   if (family=="survival"){
@@ -51,7 +51,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,labels,nFolds,family,fileLi
                                          transformFactor=transformFactor,...)
     plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph")
   } else if (!is.null(filePopulationList)){
-    if (("densities" %in% featureTypes) && (!is.null(fileSampleSize))){
+    if (("abundances" %in% featureTypes) && (!is.null(fileSampleSize))){
       stop("File subsampling may not be used with manually gated populations.")
     }
     preclusterResult = citrus.assembleHandGates(dataDir,filePopulationList,conditionComparaMatrix,fileSampleSize,...)
@@ -149,5 +149,5 @@ citrus.mapAndPredict = function(citrusResult,dataDir,newFileList,fileSampleSize,
   mappingResults = citrus.mapFileDataToClustering(dataDir=dataDir,newFileList=newFileList,fileSampleSize=fileSampleSize,preClusterResult=citrusResult$preClusterResult,mappingColumns=mappingColumns,transformCols=transformColumns,transformFactor=transformFactor)
   modelLargeEnoughClusters = lapply(names(citrusResult),.extractConditionLargeEnoughClusters,foldFeatures=trainFeatures)
   
-  mappedFeatures = citrus.buildFeatures(preclusterResult=mappingResults,outputDir=outputDir,featureTypes=c("densities","medians"),largeEnoughClusters=trainLargeEnoughClusters,medianColumns=medianCols)
+  mappedFeatures = citrus.buildFeatures(preclusterResult=mappingResults,outputDir=outputDir,featureTypes=c("abundances","medians"),largeEnoughClusters=trainLargeEnoughClusters,medianColumns=medianCols)
 }

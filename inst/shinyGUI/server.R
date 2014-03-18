@@ -162,8 +162,8 @@ shinyServer(function(input, output) {
   output$featureSummary = renderUI({
     featureSetTags = tags$span("None",class="red-error")
     features=list();
-    if (!is.null(input$computedensities)&&input$computedensities){
-      features[["Densities"]] = tags$li("Cluster Densities")
+    if (!is.null(input$computeabundances)&&input$computeabundances){
+      features[["Abundances"]] = tags$li("Cluster Abundances")
     }
     if (!is.null(input$computemedians)&&input$computemedians){
         medianCols = input$medianCols
@@ -269,7 +269,7 @@ serialGroupSummary = function(groupName,selectedFiles){
 
 serialFeaturesInput = function(featureType){
   value = F
-  if (featureType=="densities"){
+  if (featureType=="abundances"){
     value=T
   }
   checkboxInput(inputId=paste("compute",featureType,sep=""),label=paste("Cluster",featureType),value=value)

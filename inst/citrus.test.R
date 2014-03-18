@@ -20,7 +20,7 @@ sapply(list.files("Desktop/work/citrus/R/",pattern=".R",full.names=T),source)
 fileList = cbind(unstim=list.files(dataDir,pattern="unstim"),stim1=list.files(dataDir,pattern="stim1"),class=c(rep("healthy",10),rep("diseased",10)))
 conditionComparaMatrix=matrix(T,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
 conditionComparaMatrix[2]=F
-featureTypes=c("densities","medians")
+featureTypes=c("abundances","medians")
 minimumClusterSizePercent=0.1
 transformCols=NULL
 family="classification"

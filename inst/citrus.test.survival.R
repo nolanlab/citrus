@@ -22,7 +22,7 @@ fileList = data.frame(unstim=list.files(dataDir,pattern="unstim"),stim1=list.fil
 #fileList = data.frame(unstim=list.files(dataDir,pattern="unstim"),stim1=list.files(dataDir,pattern="stim1"),class=rep(c("healthy","diseased"),each=10))
 conditionComparaMatrix=matrix(T,ncol=2,nrow=2,dimnames=list(c("unstim","stim1"),c("unstim","stim1")))
 conditionComparaMatrix[2]=F
-featureTypes=c("densities","medians")
+featureTypes=c("abundances","medians")
 transformCols=NULL
 family="survival"
 modelTypes="glmnet"

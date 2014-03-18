@@ -2,7 +2,7 @@
   foldFeatures[[condition]]$foldLargeEnoughClusters[[which(foldFeatures[[condition]]$folds=="all")]]
 }
 
-citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("densities"),minimumClusterSizePercent=0.05,largeEnoughClusters=NULL,conditionCluster=NULL,...){  
+citrus.buildFeatures = function(preclusterResult,outputDir,featureTypes=c("abundances"),minimumClusterSizePercent=0.05,largeEnoughClusters=NULL,conditionCluster=NULL,...){  
   
   addtlArgs = list(...)
   
@@ -72,7 +72,7 @@ citrus.buildConditionFeatures = function(conditionName,preclusterResult,featureT
   return(conditionResults)
 }
 
-citrus.buildFoldFeatures = function(index,featureTypes=c("densities"),folds,citrus.dataArray,foldsClusterAssignments,foldLargeEnoughClusters,conditions,calculateLeaveoutData=F,...){
+citrus.buildFoldFeatures = function(index,featureTypes=c("abundances"),folds,citrus.dataArray,foldsClusterAssignments,foldLargeEnoughClusters,conditions,calculateLeaveoutData=F,...){
   if ((length(folds[[index]])==1) && (folds[[index]] %in% c("all","mappingResult"))){
     foldsFileIds=as.vector(citrus.dataArray$fileIds[,conditions])
   } else if (calculateLeaveoutData){
@@ -185,10 +185,10 @@ citrus.calculateFeature.emDists = function(foldsFileIds,clusterIds,clusterAssign
     warning("Only know how to calculate EMD Features for two conditions.")
     return(NULL)
   }
-  if ("densities" %in% names(preCalcFeatures)){
-    df = preCalcFeatures[["densities"]]
+  if ("abundances" %in% names(preCalcFeatures)){
+    df = preCalcFeatures[["abundances"]]
   } else {
-    df = citrus.calculateFeature.densities(foldsFileIds,clusterIds,clusterAssignments,data,citrus.dataArray,...)
+    df = citrus.calculateFeature.abundances(foldsFileIds,clusterIds,clusterAssignments,data,citrus.dataArray,...)
   }
   completeClusterIds = clusterIds[apply(df>0,2,all)]
   
@@ -240,26 +240,26 @@ citrus.calculateFileClusterParameterEMDist = function(emdColumn,referenceData,ta
   return(dist)
 }
 
-citrus.calculateFeature.densities = function(foldsFileIds,clusterIds,clusterAssignments,data,citrus.dataArray,...){
+citrus.calculateFeature.abundances = function(foldsFileIds,clusterIds,clusterAssignments,data,citrus.dataArray,...){
   addtlArgs = list(...)
   if ("mc.cores" %in% names(addtlArgs)){
-    features = do.call("rbind",mclapply(foldsFileIds,citrus.calculateFileClustersDensities,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))
+    features = do.call("rbind",mclapply(foldsFileIds,citrus.calculateFileClustersAbundances,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))
   } else {
-    features = t(sapply(foldsFileIds,citrus.calculateFileClustersDensities,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))
+    features = t(sapply(foldsFileIds,citrus.calculateFileClustersAbundances,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))
   }
-  #features = t(sapply(foldsFileIds,citrus.calculateFileClustersDensities,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))
+  #features = t(sapply(foldsFileIds,citrus.calculateFileClustersAbundances,clusterIds=clusterIds,clusterAssignments=clusterAssignments,data=data,...))
   rownames(features) = citrus.dataArray$fileNames[foldsFileIds]
   return(features)
 }
 
-citrus.calculateFileClustersDensities = function(fileId,clusterIds,clusterAssignments,data,...){
+citrus.calculateFileClustersAbundances = function(fileId,clusterIds,clusterAssignments,data,...){
   fileIds=data[,"fileId"]
-  res = sapply(clusterIds,citrus.calculateFileClusterDensity,clusterAssignments=clusterAssignments,fileId=fileId,fileIds=fileIds)
-  names(res) = paste(paste("cluster",clusterIds),"density")
+  res = sapply(clusterIds,citrus.calculateFileClusterAbundance,clusterAssignments=clusterAssignments,fileId=fileId,fileIds=fileIds)
+  names(res) = paste(paste("cluster",clusterIds),"abundance")
   return(res)
 }
 
-citrus.calculateFileClusterDensity = function(clusterId,clusterAssignments,fileId,fileIds){
+citrus.calculateFileClusterAbundance = function(clusterId,clusterAssignments,fileId,fileIds){
   sum(which(fileIds==fileId) %in% clusterAssignments[[clusterId]])/sum((fileIds==fileId))
 }
 
