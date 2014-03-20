@@ -160,7 +160,7 @@ citrus.convertConditionMatrix = function(conditionMatrix){
 }
 
 citrus.version = function(){
-  return("0.05")
+  return("0.06")
 }
 
 citrus.fileEventCount = function(dataDir,...){
