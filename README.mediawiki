@@ -7,15 +7,18 @@ Citrus is a package for identifying clusters of cells in multidimensional flow c
 * Example analyses available on the [[https://github.com/nolanlab/citrus/wiki/Examples|Examples Page]].
 * See the [[https://github.com/nolanlab/citrus/wiki/Citrus-FAQ|Citrus FAQ]] for questions related to building and/or running Citrus.
 ===Version History===
+;Version 0.06
+: - Changed feature names
+: - Many new graphical outputs for result visualization
 ;Version 0.05
-: Adding support for SAM (two-class only)
+: - Adding support for SAM (two-class only)
 ;Version 0.04
-: Adding support for Survival analysis (glmnet model only)
+: - Adding support for Survival analysis (glmnet model only)
 ;Version 0.03
-: Switching to ggplot2 and adding feature heiarachy plots
+: - Switching to ggplot2 and adding feature heiarachy plots
 ;Version 0.02
-: Now includes shiny web GUI for running citrus
+: - Now includes shiny web GUI for running citrus
 ;Version 0.01
-: Initial Citrus Test Code
+: - Initial Citrus Test Code
 
 
