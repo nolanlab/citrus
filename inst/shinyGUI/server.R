@@ -234,7 +234,7 @@ shinyServer(function(input, output) {
       
     } else {
       if (length(errors)==0){
-        return(tagList(checkboxInput(inputId="runCitrus",label="<- Check to run Citrus"),tags$em("Checkbox to be replaced by button when input-specific reactivity becomes avaialble.")))  
+        return(actionButton(inputId="runCitrus",label="Run Citrus"))  
       } else {
         return(tagList(tags$em("The following problems must be corrected before running citrus:"),tags$ul(tagList(lapply(errors,tags$li)))))
       }  
