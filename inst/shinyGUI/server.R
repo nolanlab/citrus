@@ -51,7 +51,12 @@ shinyServer(function(input, output) {
     if (is.null(choices)){
       return(tagList(tags$b("Assign files to groups to enable selection of clustering parameters.")))
     } else {
-      return(checkboxGroupInput("clusterCols",label="Cluster",choices=choices))  
+      if ((!is.null(input$selectAllCluster))&&(input$selectAllCluster%%2 == 0)){
+        checked = checkboxGroupInput("clusterCols",label="Clustering Parameters",choices=choices,selected=choices)
+      } else {
+        checked = checkboxGroupInput("clusterCols",label="Clustering Parameters",choices=choices)
+      }
+      return(checked)
     }
   })
   
@@ -60,7 +65,13 @@ shinyServer(function(input, output) {
     if (is.null(choices)){
       return(tagList(tags$b("Assign samples to groups to enable selection of transform parameters.")))
     } else {
-      return(checkboxGroupInput("transformCols",label="Transform",choices=choices))  
+      if ((!is.null(input$selectAllTransform))&&(input$selectAllTransform%%2 == 0)){
+        checked = checkboxGroupInput("transformCols",label="Transform Parameters",choices=choices,selected=choices)
+      } else {
+        checked = checkboxGroupInput("transformCols",label="Transform Parameters",choices=choices)
+      }
+      return(checked)
+      
     }
   })
   
