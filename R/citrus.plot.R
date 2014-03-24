@@ -408,7 +408,7 @@ citrus.createPlotOutputDirectory = function(modelType,outputDir){
 
 
 # Plot
-citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus.featureObject,citrus.regressionResult,modelTypes,family,labels,plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph"),...){
+citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,conditionFeatureList,citrus.regressionResult,modelTypes,family,labels,plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph"),...){
   addtlArgs = list(...)
   
   theme="black"
@@ -417,7 +417,7 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus
   }
   
   for (conditionName in names(citrus.regressionResult)){
-    nAllFolds = length(citrus.featureObject[[conditionName]]$foldFeatures)
+    nAllFolds = length(conditionFeatureList[[conditionName]]$foldFeatures)
     # Make condition output directoy
     conditionOutputDir = file.path(outputDir,conditionName)
     sapply(modelTypes,citrus.createPlotOutputDirectory,outputDir=conditionOutputDir)
@@ -430,7 +430,7 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus
     
     if ("stratifyingFeatures" %in% plotTypes){
       cat("Plotting Stratifying Features\n")
-      lapply(modelTypes,citrus.plotDifferentialFeatures,differentialFeatures=citrus.regressionResult[[conditionName]]$differentialFeatures,features=citrus.featureObject[[conditionName]]$foldFeatures[[nAllFolds]],outputDir=conditionOutputDir,labels=labels,family=family,cvMinima=citrus.regressionResult[[conditionName]]$cvMinima,foldModels=citrus.regressionResult[[conditionName]]$foldModels,regularizationThresholds=citrus.regressionResult[[conditionName]]$regularizationThresholds)
+      lapply(modelTypes,citrus.plotDifferentialFeatures,differentialFeatures=citrus.regressionResult[[conditionName]]$differentialFeatures,features=conditionFeatureList[[conditionName]]$foldFeatures[[nAllFolds]],outputDir=conditionOutputDir,labels=labels,family=family,cvMinima=citrus.regressionResult[[conditionName]]$cvMinima,foldModels=citrus.regressionResult[[conditionName]]$foldModels,regularizationThresholds=citrus.regressionResult[[conditionName]]$regularizationThresholds)
     }
     
     if ("stratifyingClusters" %in% plotTypes){
@@ -460,9 +460,9 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus
       }
       
       cat("Plotting Clustering Graph\n")
-      g = citrus.createHierarchyGraph(largeEnoughClusters=citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],mergeOrder=citrus.preclusterResult[[conditionName]]$foldsCluster[[nAllFolds]]$merge,clusterAssignments=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments[[nAllFolds]],minVertexSize=minVertexSize)
+      g = citrus.createHierarchyGraph(largeEnoughClusters=conditionFeatureList[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],mergeOrder=citrus.preclusterResult[[conditionName]]$foldsCluster[[nAllFolds]]$merge,clusterAssignments=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments[[nAllFolds]],minVertexSize=minVertexSize)
       l = layout.reingold.tilford(g,root=length(V(g)),circular=T)
-      clusterMedians = t(sapply(citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],.getClusterMedians,clusterAssignments=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments[[nAllFolds]],data=citrus.preclusterResult[[conditionName]]$citrus.dataArray$data,clusterCols=citrus.preclusterResult[[conditionName]]$clusterColumns))
+      clusterMedians = t(sapply(conditionFeatureList[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],.getClusterMedians,clusterAssignments=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments[[nAllFolds]],data=citrus.preclusterResult[[conditionName]]$citrus.dataArray$data,clusterCols=citrus.preclusterResult[[conditionName]]$clusterColumns))
       
       ### CHECK TO SEE IF THIS MAKES MARKERPLOT NAMES CORRECTLY 
       colLabels = citrus.preclusterResult[[conditionName]]$citrus.dataArray$fileChannelNames[[conditionName]][[1]]
@@ -476,7 +476,7 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,citrus
       }
       ###
       
-      rownames(clusterMedians) = citrus.featureObject[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]]
+      rownames(clusterMedians) = conditionFeatureList[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]]
       for (modelType in names(citrus.regressionResult[[conditionName]]$differentialFeatures)){
         citrus.plotHierarchicalClusterMedians(outputFile=file.path(conditionOutputDir,"markerPlots.pdf"),clusterMedians,graph=g,layout=l,plotSize=plotSize,theme=theme)
         write.csv(clusterMedians,file=file.path(conditionOutputDir,"clusterMarkerMedianValues.csv"),quote=F)
