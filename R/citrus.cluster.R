@@ -164,13 +164,16 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
   folds[[nAllFolds]]="all"
   
   if (!is.null(conditionCluster)){
-    results = parLapply(conditionCluster,allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,clusterCols=clusterCols,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformFactor=transformFactor,scaleCols=scaleCols,outputDir=outputDir,...)  
+    clusterResult = parLapply(conditionCluster,allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,clusterCols=clusterCols,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformFactor=transformFactor,scaleCols=scaleCols,outputDir=outputDir,...)  
   } else {
-    results = lapply(allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,clusterCols=clusterCols,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformFactor=transformFactor,scaleCols=scaleCols,outputDir=outputDir,...)  
+    clusterResult = lapply(allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,clusterCols=clusterCols,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformFactor=transformFactor,scaleCols=scaleCols,outputDir=outputDir,...)  
   }
     
-  names(results) = lapply(allConditions,paste,collapse="_vs_")
-  return(results)
+  names(clusterResult) = lapply(allConditions,paste,collapse="_vs_")
+  
+  save(clusterResult,file=file.path(outputDir,"citrus.clusterResult.rDat"))
+  
+  return(clusterResult)
 }
 
 citrus.preClusterCondition = function(conditions,dataDir,fileList,clusterCols,folds,nFolds,fileSampleSize,transformCols,transformFactor,scaleCols,outputDir,...){

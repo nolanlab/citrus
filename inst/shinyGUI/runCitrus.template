@@ -92,6 +92,9 @@ results = citrus.full(
 # Cluster all the data
 # clusterResult = citrus.preCluster(dataDir=dataDirectory,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize, fileList=fileList,nFolds=nFolds,transformCols=transformCols<% if ("conditionComparaMatrix" %in% names(templateData)){cat(", conditionComparaMatrix=conditionComparaMatrix")}%>)
 
+# OR load a previous clustering result. All other variables must be set by previous lines in runCitrus.R
+# load(file.path(outputDir,"citrus.clusterResult.rDat"))
+
 # Build cluster features
 # conditionFeatureList = citrus.buildFeatures(preclusterResult=clusterResult,outputDir=outputDir,featureTypes=featureTypes,minimumClusterSizePercent=minimumClusterSizePercent<% if ("medianCols" %in% names(templateData)){cat(",medianColumns=medianColumns")} %><% if ("emdCols" %in% names(templateData)){cat(",emdColumns=emdColumns")} %>)
 
