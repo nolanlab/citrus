@@ -12,7 +12,7 @@ library("citrus",lib.loc=<% if (is.null(templateData[["library"]])){
 # Uncomment this next line if the clustering step crashes on Mac OS X (i.e. abort trap 6)
 # Rclusterpp.setThreads(1);
 
-
+family = "twoClass"
 dataDirectory = "../"
 # dataDirectory = <%cat(stringQuote(templateData[["dataDir"]]))%>
 
@@ -71,7 +71,7 @@ results = citrus.full(
             fileSampleSize=fileSampleSize,
             labels=labels,
             nFolds=nFolds,
-            family="twoClass",
+            family=family,
             fileList=fileList,
             modelTypes=modelTypes,
             featureTypes=featureTypes,
@@ -81,4 +81,22 @@ results = citrus.full(
             <% if ("medianCols" %in% names(templateData)){cat(",medianColumns=medianColumns")} %>
             <% if ("emdCols" %in% names(templateData)){cat(",emdColumns=emdColumns")} %>
 )
-            
+
+# ==================================================================================================
+# The following lines perform the same analysis as the citrus.full() function but broken down
+# into component steps. This is may be more useful to run if you plan on running the clustering
+# once but examining many endpoints, features, or minimum cluster sizes. You should uncomment 
+# the clustering, feature extraction, regression, and plotting functionlines. 
+# ==================================================================================================
+
+# Cluster all the data
+# clusterResult = citrus.preCluster(dataDir=dataDirectory,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize, fileList=fileList,nFolds=nFolds,transformCols=transformCols<% if ("conditionComparaMatrix" %in% names(templateData)){cat(", conditionComparaMatrix=conditionComparaMatrix")}%>)
+
+# Build cluster features
+# conditionFeatureList = citrus.buildFeatures(preclusterResult=clusterResult,outputDir=outputDir,featureTypes=featureTypes,minimumClusterSizePercent=minimumClusterSizePercent<% if ("medianCols" %in% names(templateData)){cat(",medianColumns=medianColumns")} %><% if ("emdCols" %in% names(templateData)){cat(",emdColumns=emdColumns")} %>)
+
+# Run the regression 
+# regressionResult = citrus.endpointRegress(conditionFeatureList,family=family,modelTypes=modelTypes,labels=labels)
+
+# Plot Results
+# citrus.plotRegressionResults(outputDir=outputDir,citrus.preclusterResult=clusterResult,conditionFeatureList=conditionFeatureList,citrus.regressionResult=regressionResult,modelTypes=modelTypes,family=family,labels=labels)

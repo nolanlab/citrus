@@ -74,3 +74,7 @@ disableInput <- function(x) {
   }
   x
 }
+
+#convertToFunctionArgsString = function(args){
+#  paste(lapply(names(args),function(name,args){paste0(name,"='",args[[name]],"\'")},args=args),collapse=", ")
+#}
