@@ -343,6 +343,11 @@ citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph
 
 
 citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureClusterMatrix,graph,layout,petalPlots=F,clusterMedians=NULL,featureClusterCols=NULL,theme="black",encircle=T,plotSize=15){
+  
+  if (!is.null(featureClusterCols)&&(is.null(names(featureClusterCols)))){
+    stop("featureClusterCols argument must be a named vector")
+  }
+  
   if (theme=="black"){
     bg="black"
     stroke="white"
