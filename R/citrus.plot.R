@@ -140,7 +140,7 @@ citrus.plotModelDifferentialFeatures.classification = function(modelType,differe
     # Write features to file for easy parsing
     write.table(features[,nonzeroFeatureNames],file=file.path(modelTypeDir,paste("features_",cvPoint,".csv",sep="")),quote=F,sep=",")
 
-    melted = melt(data.frame(features[,nonzeroFeatureNames],labels=labels,check.names=F),id.vars="labels")
+    melted = melt(data.frame(features[,nonzeroFeatureNames,drop=F],labels=labels,check.names=F),id.vars="labels")
     
     nrow=ceiling(length(nonzeroFeatureNames)/4)
     ncol=4
