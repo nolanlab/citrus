@@ -4,7 +4,7 @@ library("Rclusterpp")
 library("pamr")
 library("glmnet")
 library("ggplot2")
-library("spade",lib.loc="~/Desktop/work/R/spade_with_nn/lib")
+#library("spade",lib.loc="~/Desktop/work/R/spade_with_nn/lib")
 library("citrus")
 
 Rclusterpp.setThreads(1)

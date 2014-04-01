@@ -67,6 +67,9 @@ shinyUI(pageWithSidebar(
                         uiOutput("transformCols"),
                         actionButton("selectAllTransform",label="Select All/None")
                       )
+                    ),
+                    tags$td(
+                      uiOutput("transformCofactor")
                     )
                   )
                )

@@ -19,7 +19,7 @@
 #' @details Details about the cluster conditions matrix, fold features, etc.
 #' @author Robert Bruggner
 #' @references http://github.com/nolanlab/citrus/
-citrus.full = function(dataDir,outputDir,clusterCols,labels,nFolds,family,fileList=NULL,filePopulationList=NULL,modelTypes=c("glmnet"),featureTypes=c("abundances"),minimumClusterSizePercent=0.05,fileSampleSize=NULL,transformCols=NULL,conditionComparaMatrix=NULL,plot=T,transformFactor=5,...){
+citrus.full = function(dataDir,outputDir,clusterCols,labels,nFolds,family,fileList=NULL,filePopulationList=NULL,modelTypes=c("glmnet"),featureTypes=c("abundances"),minimumClusterSizePercent=0.05,fileSampleSize=NULL,transformCols=NULL,conditionComparaMatrix=NULL,plot=T,transformCofactor=NULL,...){
   
   balanceFactor=NULL
   if (family=="survival"){
@@ -48,7 +48,7 @@ citrus.full = function(dataDir,outputDir,clusterCols,labels,nFolds,family,fileLi
                                          transformCols=transformCols,
                                          conditionComparaMatrix=conditionComparaMatrix,
                                          balanceFactor=balanceFactor,
-                                         transformFactor=transformFactor,...)
+                                         transformCofactor=transformCofactor,...)
     plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph")
   } else if (!is.null(filePopulationList)){
     if (("abundances" %in% featureTypes) && (!is.null(fileSampleSize))){
@@ -145,8 +145,8 @@ citrus.endpointRegress = function(conditionFeatureList,family,modelTypes,labels,
   
 }
 
-citrus.mapAndPredict = function(citrusResult,dataDir,newFileList,fileSampleSize,mappingColumns=NULL,transformCols=NULL,transformFactor=5){
-  mappingResults = citrus.mapFileDataToClustering(dataDir=dataDir,newFileList=newFileList,fileSampleSize=fileSampleSize,preClusterResult=citrusResult$preClusterResult,mappingColumns=mappingColumns,transformCols=transformColumns,transformFactor=transformFactor)
+citrus.mapAndPredict = function(citrusResult,dataDir,newFileList,fileSampleSize,mappingColumns=NULL,transformCols=NULL,transformCofactor=5){
+  mappingResults = citrus.mapFileDataToClustering(dataDir=dataDir,newFileList=newFileList,fileSampleSize=fileSampleSize,preClusterResult=citrusResult$preClusterResult,mappingColumns=mappingColumns,transformCols=transformColumns,transformCofactor=transformCofactor)
   modelLargeEnoughClusters = lapply(names(citrusResult),.extractConditionLargeEnoughClusters,foldFeatures=trainFeatures)
   
   mappedFeatures = citrus.buildFeatures(preclusterResult=mappingResults,outputDir=outputDir,featureTypes=c("abundances","medians"),largeEnoughClusters=trainLargeEnoughClusters,medianColumns=medianCols)

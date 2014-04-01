@@ -1,5 +1,5 @@
 # FILE SAMPLE SIZE SHOULD BE A NAMED VECTOR OR LIST OR SOMETHING THAT'S EASY TO EXTRACT BY NAME
-citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,transformCols=NULL,transformFactor=5,scaleCols=NULL,...){
+citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,transformCols=NULL,transformCofactor=5,scaleCols=NULL,...){
   data = list();
   fileCounter = 1;
   fileNames = c();
@@ -27,7 +27,7 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
       fcsData = cbind(fcsData,fileEventNumber=1:nrow(fcsData),fileId=fileCounter);
       fileCounter=fileCounter+1;
       if (!is.null(transformCols)){
-        fcsData[,transformCols] = asinh(fcsData[,transformCols]/transformFactor);
+        fcsData[,transformCols] = asinh(fcsData[,transformCols]/transformCofactor);
       }
       if ((!is.null(fileSampleSize))&&(fileSampleSize<nrow(fcsData))){
         cat(paste("\tSampling",fileSampleSize,"events.\n"))
@@ -49,7 +49,7 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
   return(results);
 }
 
-citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaMatrix=NULL,fileSampleSize=NULL,transformColumns=NULL,transformFactor=5){
+citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaMatrix=NULL,fileSampleSize=NULL,transformColumns=NULL,transformCofactor=5){
   
   if (!is.null(conditionComparaMatrix)){
     allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 
@@ -114,7 +114,7 @@ citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaM
     }
     
     if (!is.null(transformColumns)){
-      cda[,transformColumns] = cda[,transformColumns]/transformFactor
+      cda[,transformColumns] = cda[,transformColumns]/transformCofactor
     }
     
     results[[paste(conditions,collapse="_vs_")]] = list(folds="all",

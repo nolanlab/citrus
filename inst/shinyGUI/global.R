@@ -36,12 +36,6 @@ if (basename(dataDirFile)=="citruskey.csv"){
     
 cat(paste("Launching citrus interface with target directory:",dataDir,"\n"));
 
-# Lousy Fix to keep open mp processes from dying in mac os x
-#if (Sys.info()[["sysname"]]=="Darwin"){
-#  cat("Mac OS X Detected. Setting number of OpenMP threads to 1.\n")
-#  Rclusterpp.setThreads(threads=1)
-#  Sys.setenv("OMP_NUM_THREADS"=1)
-#}
 
 # Comment to True to debug
 options(shiny.trace=F)
@@ -85,7 +79,3 @@ disableInput <- function(x) {
   }
   x
 }
-
-#convertToFunctionArgsString = function(args){
-#  paste(lapply(names(args),function(name,args){paste0(name,"='",args[[name]],"\'")},args=args),collapse=", ")
-#}

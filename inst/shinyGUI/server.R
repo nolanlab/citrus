@@ -23,6 +23,15 @@ shinyServer(function(input, output) {
     return(tags$div(paste0("Estimated maximum number of events to be clustered: ",eventEstimate)))
   })
   
+  # Transform cofactor 
+  output$transformCofactor = renderUI({
+    if (is.null(input$transformCols)||(length(input$transformCols)==0)){
+      tags$input(type="text",id="transformCofactor",value="NULL",style="display:none")
+    } else {
+      numericInput(inputId="transformCofactor",label="Transform Cofactor",value=5,min=1)  
+    }
+  })
+  
   output$conditionComparaMatrixInput = renderUI({
     if (preload){
       conditions = c("index",colnames(keyFile[,-labelCol]))
@@ -343,11 +352,14 @@ writeRunCitrusFile = function(input,templateFile=NULL){
   if (!file.exists(outputDir)){
     dir.create(file.path(dataDir,"citrusOutput"),showWarnings=F)
   }
-  brew(
-    #file = "/Users/rbruggner/Desktop/work/citrus/inst/shinyGUI/runCitrus.template",
-    file=file.path(system.file(package="citrus"),"shinyGUI","runCitrus.template"),
-    output=file.path(outputDir,"runCitrus.R")
-  )
+  
+  runCitrusTemplateFilePath = file.path(system.file(package="citrus"),"shinyGUI","runCitrus.template")
+  if (exists("debugTemplate")&&(debugTemplate)){
+    runCitrusTemplateFilePath = "/Users/rbruggner/Desktop/work/citrus/inst/shinyGUI/runCitrus.template" 
+  }
+  
+  brew(file=runCitrusTemplateFilePath,output=file.path(outputDir,"runCitrus.R"))
+  
 }
 
 convertToLabeledFileList = function(x){

@@ -25,6 +25,8 @@ cat(paste("medianColumns=c(",paste(sapply(templateData[["medianCols"]],stringQuo
 cat(paste("emdColumns=c(",paste(sapply(templateData[["emdCols"]],stringQuote),collapse=","),")\n",sep=""))
 }%>
 transformCols = c(<%cat(paste(sapply(templateData[["transformCols"]],stringQuote),collapse=","))%>)
+transformCofactor = <%cat(ifelse(length(templateData[["transformCols"]])>0,templateData[["transformCofactor"]],"NULL"))%>
+
 minimumClusterSizePercent = <%cat(templateData[["minimumClusterSizePercent"]])%>
 modelTypes = c(<% cat(paste(sapply(templateData[["classificationModels"]],stringQuote),collapse=",")) %>)
 fileSampleSize = <% cat(templateData[["fileSampleSize"]]) %>
@@ -76,7 +78,8 @@ results = citrus.full(
             modelTypes=modelTypes,
             featureTypes=featureTypes,
             minimumClusterSizePercent=minimumClusterSizePercent,
-            transformCols=transformCols
+            transformCols=transformCols,
+            transformCofactor=transformCofactor
             <% if ("conditionComparaMatrix" %in% names(templateData)){cat(",conditionComparaMatrix=conditionComparaMatrix")} %>
             <% if ("medianCols" %in% names(templateData)){cat(",medianColumns=medianColumns")} %>
             <% if ("emdCols" %in% names(templateData)){cat(",emdColumns=emdColumns")} %>
@@ -90,7 +93,7 @@ results = citrus.full(
 # ==================================================================================================
 
 # Cluster all the data
-# clusterResult = citrus.preCluster(dataDir=dataDirectory,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize, fileList=fileList,nFolds=nFolds,transformCols=transformCols<% if ("conditionComparaMatrix" %in% names(templateData)){cat(", conditionComparaMatrix=conditionComparaMatrix")}%>)
+# clusterResult = citrus.preCluster(dataDir=dataDirectory,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize, fileList=fileList,nFolds=nFolds,transformCols=transformCols,transformCofactor=transformCofactor<% if ("conditionComparaMatrix" %in% names(templateData)){cat(", conditionComparaMatrix=conditionComparaMatrix")}%>)
 
 # OR load a previous clustering result. All other variables must be set by previous lines in runCitrus.R
 # load(file.path(outputDir,"citrus.clusterResult.rDat"))
