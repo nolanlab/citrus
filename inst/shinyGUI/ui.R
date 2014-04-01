@@ -94,7 +94,6 @@ shinyUI(pageWithSidebar(
                tags$hr(),
                tags$em("TBD Runtime Options:",class="control-label"),
                tags$br(),
-               disableInput(checkboxInput(inputId="multithread",label="Run Multithreaded")),
                disableInput(checkboxInput(inputId="exportClusters",label="Export Identified Clusters"))
                )
       )
