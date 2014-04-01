@@ -345,7 +345,7 @@ citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph
 citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureClusterMatrix,graph,layout,petalPlots=F,clusterMedians=NULL,featureClusterCols=NULL,theme="black",encircle=T,plotSize=15){
   
   if (!is.null(featureClusterCols)&&(is.null(names(featureClusterCols)))){
-    stop("featureClusterCols argument must be a named vector")
+    stop("featureClusterCols argument must be vector with elements having names of vertices to be colored.")
   }
   
   if (theme=="black"){
@@ -384,7 +384,7 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
         vertexColor=rep(rgb(0,0,.5,.5),length(V(graph)))
         vertexColor[get.vertex.attribute(graph,"label")%in%featureClusters]=rgb(0.5,0,0,.7)
       } else {
-        vertexColor=rep(rgb(0,0,0),length(V(graph)))
+        vertexColor=rep(rgb(0,0,.5,.5),length(V(graph)))
         cp = rgb(1,0,0,seq(0,1,by=.05))
         ct = seq(from=(min(featureClusterCols)-0.01),to=(max(featureClusterCols)+0.01),length.out=20)
         vertexColor[ match(names(featureClusterCols),get.vertex.attribute(graph,"label")) ] = cp[sapply(featureClusterCols,findInterval,vec=ct)]
