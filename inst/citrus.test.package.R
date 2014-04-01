@@ -14,7 +14,7 @@ nFolds=5
 nFolds="all"
 fileList = data.frame(unstim=list.files(dataDir,pattern=".fcs",ignore.case=T))
 featureTypes=c("abundances")
-modelTypes=c("pamr","glmnet")
+modelTypes=c("pamr","glmnet","sam")
 #modelTypes=("sam")
 minimumClusterSizePercent=0.05
 plot=T
@@ -30,11 +30,10 @@ transformFactor=NULL
 #outfile="~/Desktop/notime/glmnetprofile.out"
 #Rprof(outfile)
 res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,labels=labels,nFolds="all",family="twoClass",fileList=fileList,modelTypes=modelTypes,featureTypes=featureTypes,minimumClusterSizePercent=minimumClusterSizePercent,fileSampleSize=fileSampleSize,plot=T,mc.cores=4)
+res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,labels=labels,nFolds=4,family="twoClass",fileList=fileList,modelTypes=modelTypes,featureTypes=featureTypes,minimumClusterSizePercent=minimumClusterSizePercent,fileSampleSize=fileSampleSize,plot=T,mc.cores=4)
 #Rprof(NULL)
-summaryRprof(outfile)
-res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels=labels,nFolds="all",family="twoClass",featureTypes=c("abundances"),minimumClusterSizePercent=minimumClusterSizePercent,plot=T,mc.cores=4)
-
-
+#summaryRprof(outfile)
+citrus.endpointRegress(conditionFeatureList=res$featureObject,family="twoClass",modelTypes="pamr",labels=labels)
 filePopulationList = list(unstim=matrix(list.files("~/Desktop/work/citrus/inst/extdata/example4.1",pattern=".fcs"),ncol=3,byrow=T,dimnames=list(NULL,paste("Pop",1:3))))
 res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,filePopulationList=filePopulationList,labels=labels,family="classification",featureTypes=c("abundances"),modelTypes=c("glmnet","pamr"),plot=T)
 
@@ -104,6 +103,34 @@ conditionComparaMatrix[3]=T
 res=citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels,nFolds=5,family,modelTypes="glmnet",featureTypes="emDists",minimumClusterSizePercent=minimumClusterSizePercent,conditionComparaMatrix=conditionComparaMatrix,plot=T,returnResults=T,emdColumns=medianCols)
 res=citrus.quick(dataDir,outputDir,clusterCols,fileSampleSize,fileList,labels,family,modelTypes="glmnet",featureTypes="emDists",minimumClusterSizePercent=minimumClusterSizePercent,conditionComparaMatrix=conditionComparaMatrix,plot=T,returnResults=T,emdColumns=medianCols)
 
+# Example 4: multiclass
+# Class 1 has small amounts of population 3 (1%), class 2 has small more of population 2 (%), and class 3 has lots of population 2 and 3 (8%)
+rm(list = ls())
+library("citrus")
+dataDir = file.path("~/Desktop/work/citrus/inst/extdata/example4/")
+outputDir = "~/Desktop/notime/citrusOutput/"
+clusterCols = c(1:2)
+fileSampleSize=500
+
+labels = c(rep("Class1",10),rep("Class2",10),rep("Class3",10))
+labels = as.factor(labels)
+nFolds=5
+nFolds="all"
+fileList = data.frame(unstim=list.files(dataDir,pattern=".fcs",ignore.case=T))
+featureTypes=c("abundances")
+#modelTypes=c("pamr","glmnet","sam")
+modelTypes=("sam")
+minimumClusterSizePercent=0.05
+plot=T
+returnResults=T
+family="twoClass"
+transformCols=NULL
+conditionComparaMatrix=NULL
+transformFactor=NULL
+
+res = citrus.full(dataDir=dataDir,outputDir=outputDir,clusterCols=clusterCols,labels=labels,nFolds="all",family=family,fileList=fileList,modelTypes=modelTypes,featureTypes=featureTypes,minimumClusterSizePercent=minimumClusterSizePercent,fileSampleSize=fileSampleSize,plot=T,mc.cores=4)
+
+
 
 
 # Testing the new file mapping example
@@ -146,10 +173,5 @@ cvm = cv.glmnet(x=fastICA(f,n.comp=3)$S,y=as.factor(rep(c("H","D"),each=5)),fami
 plot(cvm)
 
 
-library("fastICA")
-
-# FIX THIS
-mappedFeatures = citrus.buildFeatures(preclusterResult=mappingResults,outputDir=outputDir,featureTypes=c("abundances","medians"),largeEnoughClusters=trainLargeEnoughClusters,medianColumns=medianCols)
-predict(cvm,newx=mappedFeatures$unstim_vs_stim1$foldFeatures[[1]],type="class")
 
 

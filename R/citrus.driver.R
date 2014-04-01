@@ -7,7 +7,7 @@
 #' @param fileSampleSize Number of events to be sampled from each analyzed file. Files with fewer events contribute all of their events. 
 #' @param labels Outcome variable to regress against. Should be groups for classification or survival time. 
 #' @param nFolds Number of cross validation folds used to assess model accuracy. Set this value to "all" for quick analysis.
-#' @param family Type of regression to perform. Valid options are \code{twoClass}, \code{survival}, or \code{quantitative}.
+#' @param family Type of regression to perform. Valid options are \code{twoClass} and \code{survival}
 #' @param fileList A matrix containing file names. 1 condition per column. See details.
 #' @param filePopulationList A list with each named entry consisting of a matrix of file names. Samples in rows and 1 population per column.
 #' @param modelTypes A vector of models to construct. Valid options are \code{pamr}, \code{glmnet},\code{sam}.

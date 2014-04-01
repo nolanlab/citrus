@@ -81,7 +81,12 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
 }
 
 citrus.plotDifferentialFeatures = function(modelType,differentialFeatures,features,outputDir,labels,family,foldModels,cvMinima,regularizationThresholds){
-  do.call(paste("citrus.plotModelDifferentialFeatures",family,sep="."),args=list(modelType=modelType,differentialFeatures=differentialFeatures,features=features,outputDir=outputDir,labels=labels,foldModels=foldModels,cvMinima=cvMinima,regularizationThresholds=regularizationThresholds))
+  # Passing sam models makes things go crazy so this is a hack to avoid problems debugging. 
+  if (family=="survival"){
+    do.call(paste("citrus.plotModelDifferentialFeatures",family,sep="."),args=list(modelType=modelType,differentialFeatures=differentialFeatures,features=features,outputDir=outputDir,labels=labels,foldModels=foldModels,cvMinima=cvMinima,regularizationThresholds=regularizationThresholds))    
+  } else {
+    do.call(paste("citrus.plotModelDifferentialFeatures",family,sep="."),args=list(modelType=modelType,differentialFeatures=differentialFeatures,features=features,outputDir=outputDir,labels=labels,cvMinima=cvMinima,regularizationThresholds=regularizationThresholds))
+  }
 }
 
 citrus.plotModelDifferentialFeatures.survival = function(modelType,differentialFeatures,features,outputDir,labels,foldModels,cvMinima,regularizationThresholds,...){
@@ -135,14 +140,8 @@ citrus.plotModelDifferentialFeatures.twoClass = function(modelType,differentialF
     # Write features to file for easy parsing
     write.table(features[,nonzeroFeatureNames],file=file.path(modelTypeDir,paste("features_",cvPoint,".csv",sep="")),quote=F,sep=",")
 
-    for (nonzeroFeatureName in nonzeroFeatureNames){
-      df = data.frame(value=features[,nonzeroFeatureName],labels=as.factor(labels),featureName=nonzeroFeatureName)
-      if (which(nonzeroFeatureNames==nonzeroFeatureName)==1){
-        combinedDf = df;
-      } else {
-        combinedDf = rbind(combinedDf,df)
-      }  
-    }
+    melted = melt(data.frame(features[,nonzeroFeatureNames],labels=labels,check.names=F),id.vars="labels")
+    
     nrow=ceiling(length(nonzeroFeatureNames)/4)
     ncol=4
     if (length(nonzeroFeatureNames)<4){
@@ -150,8 +149,8 @@ citrus.plotModelDifferentialFeatures.twoClass = function(modelType,differentialF
     }
     
     pdf(file.path(modelTypeDir,paste("features-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=(ncol*4),height=(nrow*1.5))
-    p <- ggplot(combinedDf[,], aes(labels, value)) 
-    p = p + facet_wrap(~featureName,ncol=4) + geom_boxplot(outlier.colour=rgb(0,0,0,0),colour=rgb(0,0,0,.3)) + geom_point(aes(color=labels),alpha=I(0.25),shape=19,size=I(2)) + scale_colour_manual(values = c("red","blue")) + coord_flip() +  theme_bw() + ylab("") + xlab("") + theme(legend.position = "none") 
+    p <- ggplot(melted, aes(x=factor(labels), y=value)) 
+    p = p + facet_wrap(~variable,ncol=4) + geom_boxplot(outlier.colour=rgb(0,0,0,0),colour=rgb(0,0,0,.3)) + geom_point(aes(color=factor(labels)),alpha=I(0.25),shape=19,size=I(2)) + coord_flip() +  theme_bw() + ylab("") + xlab("") + theme(legend.position = "none") 
     print(p)
     dev.off()
   }
