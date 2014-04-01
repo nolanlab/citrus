@@ -119,7 +119,7 @@ nFolds="all"
 fileList = data.frame(unstim=list.files(dataDir,pattern=".fcs",ignore.case=T))
 featureTypes=c("abundances")
 #modelTypes=c("pamr","glmnet","sam")
-modelTypes=("sam")
+modelTypes=("glmnet")
 minimumClusterSizePercent=0.05
 plot=T
 returnResults=T

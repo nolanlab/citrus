@@ -410,6 +410,7 @@ citrus.extractModelFeatures = function(modelType,cvMinima,foldModels,foldFeature
       }
       
     } else if (modelType=="glmnet"){
+      # THIS NEEDS TO BE FIXED IN ORDER TO SUPPORT MULTINOMIAL REGRESSION WITH GLMNET
       f = as.matrix(predict(finalModel,newx=foldFeatures[[nAllFolds]],type="coefficient",s=threshold))
       f = rownames(f)[f!=0]
       if ("(Intercept)" %in% f){
