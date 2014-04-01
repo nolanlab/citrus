@@ -14,7 +14,7 @@ citrus.launchUI = function(dataDirectory=NULL,host="localhost",...){
   }, warning = function(w){
     cat(paste(w,"\n"));
   },error = function(e){
-    stop(print(paste("Unexpected Error:",e)))
+    stop(paste("Unexpected Error:",e))
   }, finally = {
     
   })
@@ -36,7 +36,7 @@ citrus.launchUI = function(dataDirectory=NULL,host="localhost",...){
 }
 
 citrus.getFileCols = function(fileName,dataDir,...){
-  
+  cat(paste0("Reading parameters in ",fileName,"\n"));
   fcsFile = citrus.readFCS(file.path(dataDir,fileName),which.lines=1)
   parameterNames = flowCore::colnames(fcsFile)
   pnames = as.vector(pData(flowCore::parameters(fcsFile))$desc)

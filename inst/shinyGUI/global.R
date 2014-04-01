@@ -51,6 +51,11 @@ options(shiny.trace=F)
 if (!preload){
   # Get list of sample files
   fileList = list.files(file.path(dataDir),pattern=".fcs",ignore.case=T)
+  
+  if (length(fileList)==0){
+    stop(paste0("\nNo FCS files found in  ",dataDir,". Please ensure files have a '.fcs' or '.FCS' extension."))
+  }
+  
   # This should get fixed...
   fileGroupAssignments = rep("",length(fileList))
   # Pre-read list of columns measured in each file
@@ -59,9 +64,15 @@ if (!preload){
   fileGroupAssignments = as.vector(rep(keyFile[,labelCol],ncol(keyFile[,-labelCol])))
 } 
 
+cat("\nScanning parameters in FCS files\n")
 fileCols = lapply(fileList,citrus.getFileCols,dataDir=dataDir)
-
-
+fileColLength = sapply(fileCols,length)
+cat("\nNumber of parameters per file:\n")
+cat(paste0(fileList,": ",fileColLength,"\n"))
+if (length(unique(fileColLength))>1){
+  stop("\nAll FCS files must have the same number of channels.\n")
+}
+  
 disableInput <- function(x) {
   if (inherits(x, 'shiny.tag')) {
     if (x$name %in% c('input', 'select'))
