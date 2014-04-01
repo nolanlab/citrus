@@ -83,7 +83,7 @@ shinyUI(pageWithSidebar(
                 uiOutput("emdCols")
                ),
       
-      tabPanel("Two-Class Setup",
+      tabPanel("Regression Model Configuration",
                uiOutput("crossValidationRange"),
                tags$hr(),
                uiOutput("classificationModels")
