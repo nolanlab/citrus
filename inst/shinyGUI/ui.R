@@ -49,7 +49,9 @@ shinyUI(pageWithSidebar(
         ),
                
       tabPanel("Clustering Setup",
-               numericInput(inputId="fileSampleSize","Events Sampled Per File",min=1,value=1000),
+               numericInput(inputId="fileSampleSize","Events Sampled Per File:",min=1,value=1000),
+               uiOutput("estimatedClusteredEvents"),
+               tags$hr(),
                # Scale cols not attached to package yet. Uncomment when fixed.
                #tags$table(tags$tr(tags$td(uiOutput("clusterCols")),tags$td(uiOutput("transformCols")),tags$td(uiOutput("scaleCols"))))
                tags$table(

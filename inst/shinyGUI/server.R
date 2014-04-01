@@ -16,6 +16,13 @@ shinyServer(function(input, output) {
     }
   })
   
+  # Estimates the number of events to be clustered. May be
+  # less if files have fewer events than specified sample size
+  output$estimatedClusteredEvents = renderUI({
+    eventEstimate = format(input$fileSampleSize*length(unlist(getSelectedFiles(input))),big.mark=",",scientific=F)
+    return(tags$div(paste0("Estimated maximum number of events to be clustered: ",eventEstimate)))
+  })
+  
   output$conditionComparaMatrixInput = renderUI({
     if (preload){
       conditions = c("index",colnames(keyFile[,-labelCol]))
