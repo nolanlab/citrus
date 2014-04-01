@@ -19,7 +19,7 @@ shinyUI(pageWithSidebar(
     tags$em("Cluster Characterization Summary:"),
     uiOutput("featureSummary"),
     tags$em("Class Summary:"),
-    uiOutput("twoClassSummary"),
+    uiOutput("classificationSummary"),
     tags$hr(),
     tags$em("Sample Summary:"),
     tableOutput("sampleGroupsTable")
@@ -81,7 +81,7 @@ shinyUI(pageWithSidebar(
       tabPanel("Two-Class Setup",
                uiOutput("crossValidationRange"),
                tags$hr(),
-               uiOutput("twoClassModels")
+               uiOutput("classificationModels")
                ),
       
       tabPanel("Run!",

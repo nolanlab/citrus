@@ -12,7 +12,7 @@ library("citrus",lib.loc=<% if (is.null(templateData[["library"]])){
 # Uncomment this next line if the clustering step crashes on Mac OS X (i.e. abort trap 6)
 # Rclusterpp.setThreads(1);
 
-family = "twoClass"
+family = "classification"
 dataDirectory = "../"
 # dataDirectory = <%cat(stringQuote(templateData[["dataDir"]]))%>
 
@@ -26,7 +26,7 @@ cat(paste("emdColumns=c(",paste(sapply(templateData[["emdCols"]],stringQuote),co
 }%>
 transformCols = c(<%cat(paste(sapply(templateData[["transformCols"]],stringQuote),collapse=","))%>)
 minimumClusterSizePercent = <%cat(templateData[["minimumClusterSizePercent"]])%>
-modelTypes = c(<% cat(paste(sapply(templateData[["twoClassModels"]],stringQuote),collapse=",")) %>)
+modelTypes = c(<% cat(paste(sapply(templateData[["classificationModels"]],stringQuote),collapse=",")) %>)
 fileSampleSize = <% cat(templateData[["fileSampleSize"]]) %>
 <% if (templateData[["crossValidationFolds"]]==1){
   templateData[["crossValidationFolds"]]='"all"'

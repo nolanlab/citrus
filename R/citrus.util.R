@@ -179,7 +179,7 @@ citrus.featureTypes = function(){
 }
 
 citrus.familyList = function(){
-  return(c("twoClass","survival","quantiative"))
+  return(c("classification","survival","quantiative"))
 }
 
 citrus.modelTypes = function(){

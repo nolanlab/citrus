@@ -206,7 +206,7 @@ shinyServer(function(input, output) {
     )
   })
   
-  output$twoClassSummary = renderUI({
+  output$classificationSummary = renderUI({
     if (is.null(input$crossValidationFolds)){
       cvTag = tagList(tags$span("Cross Validation Folds:"),tags$span("None",class="red-error"))
     } else {
@@ -221,13 +221,13 @@ shinyServer(function(input, output) {
     
   })
   
-  output$twoClassModels = renderUI({
+  output$classificationModels = renderUI({
     # This is a hack to disable glmnet until lasso multinomial regression is supported. 
     modelTypes = citrus.modelTypes()
     if (input$numberOfGroups>2){
       modelTypes = modelTypes[modelTypes!="glmnet"]
     }
-    tagList(tags$span("Two-Class Models:"),lapply(modelTypes,serialTwoClassModel))  
+    tagList(tags$span("Two-Class Models:"),lapply(modelTypes,serialClassificationModel))  
   })
   
   output$run = renderUI({
@@ -263,7 +263,7 @@ shinyServer(function(input, output) {
 ##############################
 # UI OUTPUT CONTROLS 
 ##############################
-serialTwoClassModel = function(modelName){
+serialClassificationModel = function(modelName){
   checkboxInput(modelName,modelName,value=F)
 }
 
@@ -326,7 +326,7 @@ writeRunCitrusFile = function(input,templateFile=NULL){
   templateData[["preload"]]=preload
   templateData[["dataDir"]]=dataDir
   templateData[["computedFeatures"]] = names(getComputedFeatures(input))[unlist(getComputedFeatures(input))]
-  templateData[["twoClassModels"]] = citrus.modelTypes()[getSelectedModels(input)]
+  templateData[["classificationModels"]] = citrus.modelTypes()[getSelectedModels(input)]
   if (preload){
     templateData[["keyFile"]]=keyFile
     templateData[["conditionComparaMatrix"]]=getConditionComparaMatrix(input,conditions=colnames(keyFile[,-labelCol]))

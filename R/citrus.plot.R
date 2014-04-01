@@ -132,7 +132,7 @@ citrus.plotModelDifferentialFeatures.survival = function(modelType,differentialF
   }
 }
 
-citrus.plotModelDifferentialFeatures.twoClass = function(modelType,differentialFeatures,features,outputDir,labels,...){
+citrus.plotModelDifferentialFeatures.classification = function(modelType,differentialFeatures,features,outputDir,labels,...){
   for (cvPoint in names(differentialFeatures[[modelType]])){
     modelTypeDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
     nonzeroFeatureNames = differentialFeatures[[modelType]][[cvPoint]][["features"]]

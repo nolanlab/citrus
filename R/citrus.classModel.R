@@ -1,4 +1,4 @@
-citrus.buildModel.twoClass = function(features,labels,type,regularizationThresholds,...){
+citrus.buildModel.classification = function(features,labels,type,regularizationThresholds,...){
   
   addtlArgs = list(...)
   alpha=1
@@ -51,7 +51,7 @@ citrus.buildFoldModels = function(index,folds,foldFeatures,labels,type,regulariz
   do.call(paste("citrus.buildModel",family,sep="."),args=list(features=foldFeatures[[index]],labels=labels,type=type,regularizationThresholds=regularizationThresholds,finalModelIndex=length(folds),thisFoldIndex=index,...=...))
 }
 
-#citrus.cvIteration.twoClass = function(i,modelType,features,labels,regularizationThresholds,nFolds,pamrModel=NULL,alpha=NULL,standardize=NULL){
+#citrus.cvIteration.classification = function(i,modelType,features,labels,regularizationThresholds,nFolds,pamrModel=NULL,alpha=NULL,standardize=NULL){
 #  if (modelType == "pamr"){
 #    return(pamr.cv(fit=pamrModel,data=features,nfold=nFolds)$error)
 #  } else if (modelType=="glmnet"){
@@ -91,11 +91,11 @@ citrus.thresholdCVs.model.quick = function(modelType,features,regularizationThre
     errorRates$cvsd = cvmSD / sqrt(length(pamrCVModel$folds))
     errorRates$fdr =  citrus:::pamr.fdr.new(pamrModel,data=pamrData,nperms=1000)$results[,"Median FDR"]
   } else if (modelType=="glmnet"){
-    glmnetFamilyMap = list("twoClass"="binomial","survival"="multinomial")
+    glmnetFamilyMap = list("classification"="binomial","survival"="multinomial")
     
     # Ugly hack. Fix to properly set multinomial
     if (length(unique(labels))>2){
-      glmnetFamilyMap[["twoClass"]]="multinomial"
+      glmnetFamilyMap[["classification"]]="multinomial"
     }
     
     addtlArgs = list(...)
@@ -156,7 +156,7 @@ citrus.thresholdCVs.model.quick = function(modelType,features,regularizationThre
 #  return(results)
 #}
 
-citrus.thresholdCVs.twoClass = function(foldModels,leftoutFeatures,foldFeatures,modelTypes,regularizationThresholds,labels,folds,...){
+citrus.thresholdCVs.classification = function(foldModels,leftoutFeatures,foldFeatures,modelTypes,regularizationThresholds,labels,folds,...){
   # The following operations are not applicable to SAM models
   if ("sam" %in% modelTypes){
     modelTypes = modelTypes[modelTypes!="sam"]
@@ -191,14 +191,14 @@ citrus.thresholdCVs.twoClass = function(foldModels,leftoutFeatures,foldFeatures,
 
 
 citrus.foldPredict = function(index,models,features){
-  citrus.predict.twoClass(models[[index]],features[[index]])
+  citrus.predict.classification(models[[index]],features[[index]])
 }
 
 citrus.foldScore = function(index,folds,predictions,labels){
   return(predictions[[index]]==labels[folds[[index]]])
 }
 
-citrus.predict.twoClass = function(model,features){
+citrus.predict.classification = function(model,features){
   if ("glmnet" %in% class(model)){
     predictions = predict(model,newx=features,type="class")
   } else if (class(model)=="pamrtrained"){
@@ -211,7 +211,7 @@ citrus.predict.twoClass = function(model,features){
 }
 
 
-citrus.generateRegularizationThresholds.twoClass = function(features,labels,modelTypes,n,...){
+citrus.generateRegularizationThresholds.classification = function(features,labels,modelTypes,n,...){
   if (length(modelTypes)<1){
     stop("no regularzation threshold types specified.")
   }
