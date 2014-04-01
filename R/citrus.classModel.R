@@ -46,19 +46,19 @@ citrus.buildFoldModels = function(index,folds,foldFeatures,labels,type,regulariz
   do.call(paste("citrus.buildModel",family,sep="."),args=list(features=foldFeatures[[index]],labels=labels,type=type,regularizationThresholds=regularizationThresholds,finalModelIndex=length(folds),thisFoldIndex=index,...=...))
 }
 
-citrus.cvIteration.twoClass = function(i,modelType,features,labels,regularizationThresholds,nFolds,pamrModel=NULL,alpha=NULL,standardize=NULL){
-  if (modelType == "pamr"){
-    return(pamr.cv(fit=pamrModel,data=features,nfold=nFolds)$error)
-  } else if (modelType=="glmnet"){
-    family="binomial"
-    if (length(unique(labels))>2){
-      family="multinomial"
-    }
-    return(cv.glmnet(x=features,y=labels,family=family,lambda=regularizationThresholds,type.measure="class",nfolds=nFolds,alpha=alpha,standardize=standardize)$cvm)
-  } else {
-    stop(paste("Model Type",modelType,"unknown."));
-  }
-}
+#citrus.cvIteration.twoClass = function(i,modelType,features,labels,regularizationThresholds,nFolds,pamrModel=NULL,alpha=NULL,standardize=NULL){
+#  if (modelType == "pamr"){
+#    return(pamr.cv(fit=pamrModel,data=features,nfold=nFolds)$error)
+#  } else if (modelType=="glmnet"){
+#    family="binomial"
+#    if (length(unique(labels))>2){
+#      family="multinomial"
+#    }
+#    return(cv.glmnet(x=features,y=labels,family=family,lambda=regularizationThresholds,type.measure="class",nfolds=nFolds,alpha=alpha,standardize=standardize)$cvm)
+#  } else {
+#    stop(paste("Model Type",modelType,"unknown."));
+#  }
+#}
 
 
 citrus.thresholdCVs.quick = function(foldModels,foldFeatures,modelTypes,regularizationThresholds,labels,family,...){
@@ -67,17 +67,26 @@ citrus.thresholdCVs.quick = function(foldModels,foldFeatures,modelTypes,regulari
   return(rates)
 }
 
-citrus.thresholdCVs.model.quick = function(modelType,features,regularizationThresholds,family,labels,nFolds=5,ncvIterations=10,...){
+citrus.thresholdCVs.model.quick = function(modelType,features,regularizationThresholds,family,labels,...){
   typeRegularizationThresholds=regularizationThresholds[[modelType]]
+  errorRates = list(threshold=typeRegularizationThresholds)
   if (modelType=="pamr"){
     if (family=="survival"){
       stop("PAM model not implemeted for survival.")
     }
     pamrData = list(x=t(features),y=labels)
     pamrModel = pamr.train(data=pamrData,threshold=typeRegularizationThresholds,remove.zeros=F)
-    errorRates = sapply(1:ncvIterations,paste("citrus.cvIteration",family,sep="."),modelType="pamr",features=pamrData,labels=labels,regularizationThresholds=typeRegularizationThresholds,nFolds=nFolds,pamrModel=pamrModel)
-    fdrRate = citrus:::pamr.fdr.new(pamrModel,data=pamrData,nperms=1000)$results[,"Median FDR"]
+    pamrCVModel = pamr.cv(fit=pamrModel,data=pamrData)
+    errorRates$cvm = pamrCVModel$error
+    
+    cvmSD = as.vector(apply(sapply(pamrCVModel$folds,function(foldIndices,y,yhat){
+      apply(apply(yhat[foldIndices,],2,"==",y[foldIndices]),2,sum)/length(foldIndices)
+    },y=labels,yhat=pamrCVModel$yhat),1,sd))
+    
+    errorRates$cvsd = cvmSD / sqrt(length(pamrCVModel$folds))
+    errorRates$fdr =  citrus:::pamr.fdr.new(pamrModel,data=pamrData,nperms=1000)$results[,"Median FDR"]
   } else if (modelType=="glmnet"){
+    glmnetFamilyMap = list("twoClass"="binomial")
     addtlArgs = list(...)
     alpha=1
     if ("alpha" %in% names(addtlArgs)){
@@ -87,21 +96,54 @@ citrus.thresholdCVs.model.quick = function(modelType,features,regularizationThre
     if ("standardize" %in% names(addtlArgs)){
       standardize=addtlArgs[["standardize"]]
     }
-    errorRates = sapply(1:ncvIterations,paste("citrus.cvIteration",family,sep="."),modelType="glmnet",features=features,labels=labels,regularizationThresholds=typeRegularizationThresholds,nFolds=nFolds,alpha=alpha,standardize=standardize)
+    glmnetModel = cv.glmnet(x=features,y=labels,family=glmnetFamilyMap[[family]],lambda=typeRegularizationThresholds,type.measure="class",alpha=alpha,standardize=standardize)
+    errorRates$cvm = glmnetModel$cvm
+    errorRates$cvsd = glmnetModel$cvsd
   } else if (modelType=="sam"){
     warning("No thresholds for SAM. This is Normal.")
     return(NA)
   } else {
     stop(paste("CV for Model type",modelType,"not implemented"))
   }
-  cvm=apply(errorRates,1,mean)
-  cvsd=apply(errorRates,1,sd)/sqrt(ncvIterations)
-  results = data.frame(threshold=typeRegularizationThresholds,cvm=cvm,cvsd=cvsd)
-  if (exists("fdrRate")){
-    results$fdr=fdrRate
-  }
-  return(results)
+  
+  return(data.frame(errorRates))
 }
+
+#citrus.thresholdCVs.model.quick.old = function(modelType,features,regularizationThresholds,family,labels,nFolds=5,ncvIterations=10,...){
+#  typeRegularizationThresholds=regularizationThresholds[[modelType]]
+#  if (modelType=="pamr"){
+#    if (family=="survival"){
+#      stop("PAM model not implemeted for survival.")
+#    }
+#    pamrData = list(x=t(features),y=labels)
+#    pamrModel = pamr.train(data=pamrData,threshold=typeRegularizationThresholds,remove.zeros=F)
+#    errorRates = sapply(1:ncvIterations,paste("citrus.cvIteration",family,sep="."),modelType="pamr",features=pamrData,labels=labels,regularizationThresholds=typeRegularizationThresholds,nFolds=nFolds,pamrModel=pamrModel)
+#    fdrRate = citrus:::pamr.fdr.new(pamrModel,data=pamrData,nperms=1000)$results[,"Median FDR"]
+#  } else if (modelType=="glmnet"){
+#    addtlArgs = list(...)
+#    alpha=1
+#    if ("alpha" %in% names(addtlArgs)){
+#      alpha=addtlArgs[["alpha"]]
+#    }
+#    standardize=T
+#    if ("standardize" %in% names(addtlArgs)){
+#      standardize=addtlArgs[["standardize"]]
+#    }
+#    errorRates = sapply(1:ncvIterations,paste("citrus.cvIteration",family,sep="."),modelType="glmnet",features=features,labels=labels,regularizationThresholds=typeRegularizationThresholds,nFolds=nFolds,alpha=alpha,standardize=standardize)
+#  } else if (modelType=="sam"){
+#    warning("No thresholds for SAM. This is Normal.")
+#    return(NA)
+#  } else {
+#    stop(paste("CV for Model type",modelType,"not implemented"))
+#  }
+#  cvm=apply(errorRates,1,mean)
+#  cvsd=apply(errorRates,1,sd)/sqrt(ncvIterations)
+#  results = data.frame(threshold=typeRegularizationThresholds,cvm=cvm,cvsd=cvsd)
+#  if (exists("fdrRate")){
+#    results$fdr=fdrRate
+#  }
+#  return(results)
+#}
 
 citrus.thresholdCVs.twoClass = function(foldModels,leftoutFeatures,foldFeatures,modelTypes,regularizationThresholds,labels,folds,...){
   # The following operations are not applicable to SAM models
