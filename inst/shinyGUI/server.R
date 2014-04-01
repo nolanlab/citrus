@@ -322,10 +322,10 @@ serialGroupNameInput = function(x){
 serialGroupSelectors = function(groupName,fileList){
   
   if (preload){
-    inputTag = selectInput(paste(groupName,"files",sep=""),label=paste(groupName,"samples"),selected=fileList[fileGroupAssignments==groupName],choices=fileList,multiple=T)
+    inputTag = selectInput(paste(groupName,"files",sep=""),label=paste(groupName,"samples"),selected=fileList[fileGroupAssignments==groupName],choices=fileList,multiple=T,selectize=F)
     inputTag = disableInput(inputTag)
   } else {
-    inputTag = selectInput(paste(groupName,"files",sep=""),label=paste(groupName,"samples"),selected=fileList[grep(groupName,fileList,ignore.case=T)],choices=fileList,multiple=T)
+    inputTag = selectInput(paste(groupName,"files",sep=""),label=paste(groupName,"samples"),selected=fileList[grep(groupName,fileList,ignore.case=T)],choices=fileList,multiple=T,selectize=F)
   }
   tags$td(inputTag)
 }
