@@ -1,4 +1,5 @@
 library("flowCore")
+library("cytofCore")
 events = 10000
 dims = 2
 p1c1 = .90
@@ -25,9 +26,8 @@ for (i in 1:10){
   p3data = cbind(rnorm(p3n,mean=3.2,sd=.5),rnorm(p3n,sd=.5))
   
   d = rbind(p1data,p2data,p3data)
-  colnames(d) = c("LineageMarker1","LineageMarker2")
-  f = flowFrame(exprs=d)  
-  write.FCS(f,filename=paste("~/Desktop/work/citrus/inst/extdata/example4/Patient",sprintf("%02.0f",i),"_Class1.fcs",sep=""))
+  colnames(d) = c("Marker1","Marker2")
+  cytofCore.write.FCS(d,filename=paste("~/Desktop/work/citrus/inst/extdata/example4/Patient",sprintf("%02.0f",i),"_Class1.fcs",sep=""),channelDescriptions=c("LineageMarker1","LineageMarker2"))
 }
 
 for (i in 11:20){
@@ -42,9 +42,8 @@ for (i in 11:20){
   p3data = cbind(rnorm(p3n,mean=3.2,sd=.5),rnorm(p3n,sd=.5))
   
   d = rbind(p1data,p2data,p3data)
-  colnames(d) = c("LineageMarker1","LineageMarker2")
-  f = flowFrame(exprs=d)  
-  write.FCS(f,filename=paste("~/Desktop/work/citrus/inst/extdata/example4/Patient",sprintf("%02.0f",i),"_Class2.fcs",sep=""))
+  colnames(d) = c("Marker1","Marker2")
+  cytofCore.write.FCS(d,filename=paste("~/Desktop/work/citrus/inst/extdata/example4/Patient",sprintf("%02.0f",i),"_Class2.fcs",sep=""),channelDescriptions=c("LineageMarker1","LineageMarker2"))
 }
 
 for (i in 21:30){
@@ -59,7 +58,6 @@ for (i in 21:30){
   p3data = cbind(rnorm(p3n,mean=3.2,sd=.5),rnorm(p3n,sd=.5))
   
   d = rbind(p1data,p2data,p3data)
-  colnames(d) = c("LineageMarker1","LineageMarker2")
-  f = flowFrame(exprs=d)  
-  write.FCS(f,filename=paste("~/Desktop/work/citrus/inst/extdata/example4/Patient",sprintf("%02.0f",i),"_Class3.fcs",sep=""))
+  colnames(d) = c("Marker1","Marker2")
+  cytofCore.write.FCS(d,filename=paste("~/Desktop/work/citrus/inst/extdata/example4/Patient",sprintf("%02.0f",i),"_Class3.fcs",sep=""),channelDescriptions=c("LineageMarker1","LineageMarker2"))
 }
