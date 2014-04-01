@@ -32,9 +32,8 @@ shinyUI(pageWithSidebar(
                  if (preload){
                     disableInput(numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=length(unique(keyFile[,labelCol]))))
                  } else {
-                   #Only allowing two groups until sam multiclass is implemented.
-                   #numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2,min=2)
-                   disableInput(numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2))
+                   numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2,min=2)
+                   #disableInput(numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2))
                  },
                  tags$table(class="sampleGroupTable",
                             tagList(

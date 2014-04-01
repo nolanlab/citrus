@@ -222,7 +222,12 @@ shinyServer(function(input, output) {
   })
   
   output$twoClassModels = renderUI({
-    tagList(tags$span("Two-Class Models:"),lapply(citrus.modelTypes(),serialTwoClassModel))  
+    # This is a hack to disable glmnet until lasso multinomial regression is supported. 
+    modelTypes = citrus.modelTypes()
+    if (input$numberOfGroups>2){
+      modelTypes = modelTypes[modelTypes!="glmnet"]
+    }
+    tagList(tags$span("Two-Class Models:"),lapply(modelTypes,serialTwoClassModel))  
   })
   
   output$run = renderUI({
@@ -259,7 +264,7 @@ shinyServer(function(input, output) {
 # UI OUTPUT CONTROLS 
 ##############################
 serialTwoClassModel = function(modelName){
-  checkboxInput(modelName,modelName,value=T)
+  checkboxInput(modelName,modelName,value=F)
 }
 
 serialGroupSummary = function(groupName,selectedFiles){

@@ -91,7 +91,13 @@ citrus.thresholdCVs.model.quick = function(modelType,features,regularizationThre
     errorRates$cvsd = cvmSD / sqrt(length(pamrCVModel$folds))
     errorRates$fdr =  citrus:::pamr.fdr.new(pamrModel,data=pamrData,nperms=1000)$results[,"Median FDR"]
   } else if (modelType=="glmnet"){
-    glmnetFamilyMap = list("twoClass"="binomial")
+    glmnetFamilyMap = list("twoClass"="binomial","survival"="multinomial")
+    
+    # Ugly hack. Fix to properly set multinomial
+    if (length(unique(labels))>2){
+      glmnetFamilyMap[["twoClass"]]="multinomial"
+    }
+    
     addtlArgs = list(...)
     alpha=1
     if ("alpha" %in% names(addtlArgs)){
