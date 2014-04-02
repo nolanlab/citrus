@@ -23,6 +23,13 @@ shinyServer(function(input, output) {
     return(tags$div(paste0("Estimated maximum number of events to be clustered: ",eventEstimate)))
   })
   
+  output$estimatedClusterSize = renderUI({
+    numFiles = length(unlist(getSelectedFiles(input)))
+    eventEstimate = input$fileSampleSize*numFiles
+    minClusterSize = format(floor(eventEstimate*(input$minimumClusterSizePercent/100)),big.mark=",",scientific=F)
+    return(tags$div(paste0("Estimated minimum cluster size: ",minClusterSize," cells")))
+  })
+  
   # Transform cofactor 
   output$transformCofactor = renderUI({
     if (is.null(input$transformCols)||(length(input$transformCols)==0)){
