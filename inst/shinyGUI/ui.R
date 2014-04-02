@@ -93,8 +93,8 @@ shinyUI(pageWithSidebar(
       tabPanel("Run!",
                
                radioButtons("citrusRunAction", "Citrus Execution Options:",
-                            list("Write runCitrus.R file to data directory only" = "wrc",
-                                 "Quit GUI and run Citrus in R" = "qar")),
+                            list("Quit GUI and run Citrus in R" = "qar","Write runCitrus.R file to data directory only" = "wrc")
+                            ),
                tags$hr(),
                uiOutput("run"),
                tags$hr(),
