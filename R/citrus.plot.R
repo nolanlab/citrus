@@ -313,7 +313,7 @@ citrus.createHierarchyGraph = function(largeEnoughClusters,mergeOrder,clusterAss
   return(g)
 }
 
-citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph,layout,theme="black",plotSize=15){
+citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph,layout,theme="black",plotSize=15,singlePDF=F,ncol=3,scale=1){
   if (theme=="black"){
     bg="black"
     stroke="white"
@@ -325,13 +325,23 @@ citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph
   } else {
     stop("Unrecognized theme option. Choices are 'white' or 'black'")
   }
-  pdf(file=outputFile,width=plotSize,height=plotSize,bg=bg)
+  if (singlePDF){
+    expand=3*scale
+    nrow = ceiling(ncol(clusterMedians)/ncol)
+    pdf(file=outputFile,width=ncol*expand,height=nrow*expand,bg=bg)
+    par(mfrow=c(nrow,ncol),oma=rep(0.8,4),mar=c(.1,0,.8,2.8))
+    vc=rgb(0,0,0,0)
+  } else {
+    pdf(file=outputFile,width=plotSize,height=plotSize,bg=bg)  
+    vc="white"
+  }
+  
   for (target in 1:ncol(clusterMedians)){
     ct = seq(from=(min(clusterMedians[,target])-0.01),to=(max(clusterMedians[,target])+0.01),length.out=20)
     cols = .graphColorPalette(20)[sapply(clusterMedians[,target],findInterval,vec=ct)]
     par(col.main=stroke)  
-    plot.igraph(graph,layout=layout,vertex.color=cols,main=colnames(clusterMedians)[target],edge.color=stroke,vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica")
-    
+    plot.igraph(graph,layout=layout,vertex.color=cols,main=colnames(clusterMedians)[target],edge.color=stroke,vertex.label.color=vc,edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica")
+        
     # Legend
     legend_image <- as.raster(matrix(rev(.graphColorPalette(20)), ncol=1))
     rasterImage(legend_image, 1.1, -.5, 1.15,.5)
@@ -483,6 +493,7 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,condit
       rownames(clusterMedians) = conditionFeatureList[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]]
       for (modelType in names(citrus.regressionResult[[conditionName]]$differentialFeatures)){
         citrus.plotHierarchicalClusterMedians(outputFile=file.path(conditionOutputDir,"markerPlots.pdf"),clusterMedians,graph=g,layout=l,plotSize=plotSize,theme=theme)
+        citrus.plotHierarchicalClusterMedians(outputFile=file.path(conditionOutputDir,"markerPlotsAll.pdf"),clusterMedians,graph=g,layout=l,plotSize=plotSize,theme=theme,singlePDF=T)
         write.csv(clusterMedians,file=file.path(conditionOutputDir,"clusterMarkerMedianValues.csv"),quote=F)
         for (cvPoint in names(citrus.regressionResult[[conditionName]]$differentialFeatures[[modelType]])){
           featureClusterMatrix = .getClusterFeatureMatrix(citrus.regressionResult[[conditionName]]$differentialFeatures[[modelType]][[cvPoint]][["features"]])
