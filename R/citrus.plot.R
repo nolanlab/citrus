@@ -325,7 +325,7 @@ citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph
   } else {
     stop("Unrecognized theme option. Choices are 'white' or 'black'")
   }
-  if (plotClusterIds){
+  if (plotClusterIDs){
     vc="white"
   } else {
     vc=rgb(0,0,0,0)
