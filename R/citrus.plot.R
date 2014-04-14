@@ -313,7 +313,7 @@ citrus.createHierarchyGraph = function(largeEnoughClusters,mergeOrder,clusterAss
   return(g)
 }
 
-citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph,layout,theme="black",plotSize=15,singlePDF=F,ncol=3,scale=1){
+citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph,layout,theme="black",plotSize=15,singlePDF=F,ncol=3,scale=1,plotClusterIDs=T){
   if (theme=="black"){
     bg="black"
     stroke="white"
@@ -325,15 +325,19 @@ citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph
   } else {
     stop("Unrecognized theme option. Choices are 'white' or 'black'")
   }
+  if (plotClusterIds){
+    vc="white"
+  } else {
+    vc=rgb(0,0,0,0)
+  }
   if (singlePDF){
     expand=3*scale
     nrow = ceiling(ncol(clusterMedians)/ncol)
     pdf(file=outputFile,width=ncol*expand,height=nrow*expand,bg=bg)
     par(mfrow=c(nrow,ncol),oma=rep(0.8,4),mar=c(.1,0,.8,2.8))
-    vc=rgb(0,0,0,0)
   } else {
     pdf(file=outputFile,width=plotSize,height=plotSize,bg=bg)  
-    vc="white"
+    
   }
   
   for (target in 1:ncol(clusterMedians)){
