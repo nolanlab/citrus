@@ -147,10 +147,6 @@ citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaM
   return(results)
 }
 
-citrus.indexof = function(x,y){
-  which(y==x)
-}
-
 citrus.leavoutFold = function(x,y,leaveoutSize){
   groupCounts = table(y)/length(y)*leaveoutSize
   leaveout = list()
@@ -182,7 +178,6 @@ citrus.version = function(){
 
 citrus.fileEventCount = function(dataDir,...){
   lengths = list();
-  
   
   for (fcsFile in list.files(dataDir,pattern=".fcs",ignore.case=T)){
     print(paste("Reading",fcsFile))
@@ -248,6 +243,5 @@ citrus.exportCluster = function(clusterId,data,clusterAssignments,outputFile,sam
     warning(paste("No data for cluster ",clusterId,"in selected files. Not writing to disk."))
   } else {
     write.FCS(x=flowFrame(exprs=clusterData),filename=outputFile)  
-  }
-  
+  } 
 }
