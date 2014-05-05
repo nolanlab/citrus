@@ -1,5 +1,5 @@
 # FILE SAMPLE SIZE SHOULD BE A NAMED VECTOR OR LIST OR SOMETHING THAT'S EASY TO EXTRACT BY NAME
-citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,transformCols=NULL,transformCofactor=5,scaleCols=NULL,...){
+citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,transformCols=NULL,transformCofactor=5,useChannelDescriptions=T,...){
   data = list();
   fileCounter = 1;
   fileNames = c();
@@ -22,6 +22,12 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
       fcsFile = citrus.readFCS(filePath)
       
       fcsData=exprs(fcsFile)
+      
+      if (useChannelDescriptions){
+        channelDescriptions = as.vector(pData(parameters(fcsFile))$desc)
+        colnames(fcsData)[nchar(channelDescriptions)>2] = channelDescriptions[nchar(channelDescriptions)>2]
+      }
+      
       fileChannelNames[[conditions[i]]][[fileName]]=as.vector(pData(parameters(fcsFile))$name)
       fileReagentNames[[conditions[i]]][[fileName]]=as.vector(pData(parameters(fcsFile))$desc)
       fcsData = cbind(fcsData,fileEventNumber=1:nrow(fcsData),fileId=fileCounter);
@@ -33,16 +39,27 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
         cat(paste("\tSampling",fileSampleSize,"events.\n"))
         fcsData = fcsData[sort(sample(1:nrow(fcsData),fileSampleSize)),] 
       }
+      
+      if ("scaleSampleCols" in names(addtlArgs)){
+        fcsData = apply(fcsData[,addtlArgs[["scaleSampleCols"]]],2,scale)  
+      }
       conditionData[[fileName]] = fcsData
+      
+      if (useChannelDescriptions){
+        channelDescriptions = as.vector(pData(parameters(fcsFile))$desc)
+        nchar(channelDescriptions)>2
+      }
     }
     data[[conditions[i]]] = do.call("rbind",conditionData)
     rm(conditionData)
     gc();
   }
   data = do.call("rbind",data)
-  if (!is.null(scaleCols)){
-    data[,scaleCols] = apply(data[,scaleCols],2,scale)
+  
+  if ("scaleAllCols" in names(addtlArgs)){
+    fcsData = apply(fcsData[,addtlArgs[["scaleSamples"]]],2,scale)  
   }
+  
   results = list(data=data,fileIds=matrix(1:(fileCounter-1),ncol=length(conditions),dimnames=list(c(),conditions)),fileNames=fileNames,fileChannelNames=fileChannelNames,fileReagentNames=fileReagentNames)
   class(results) = "citrusDataObject"
   # HOW DO I MAKE IT PRINT OUT SUMMARIES? 
