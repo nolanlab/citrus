@@ -239,55 +239,7 @@ citrus.plotClusters = function(clusterIds,clusterAssignments,citrus.dataArray,co
   return(x)
 }
 
-.petalVertex <- function(coords, params){
-  scale = params("vertex", "scale")
-  weights = params("vertex", "weights")
-  sapply(1:nrow(coords),.petalVertexWrapper,coordinates=coords,scale=scale,weights=weights)
-}
 
-.petalVertexWrapper = function(x,coordinates,scale,weights){
-  .petalPlot(xpos=coordinates[x,1],coordinates[x,2],d=weights[x,],scale=scale)
-}
-
-.petalPlot = function(xpos,ypos,d,scale=1,segCol=NULL,labels=NULL,theme="black"){
-  if (theme=="black"){
-    bg="black"
-    stroke="white"
-    strokea=rgb(1,1,1,.4)
-  } else if (theme=="white"){
-    bg="white"
-    stroke="black"
-    strokea=rgb(0,0,0,.4)
-  } else {
-    stop("Unrecognized theme option. Choices are 'white' or 'black'")
-  }
-  res=360
-  nSegments = length(d)
-  if (is.null(segCol)){
-    segCol=rainbow(nSegments,alpha=.7)
-    borCol=rainbow(nSegments)
-  }
-  angles = (360/nSegments)*c(0:nSegments)*(pi/180)
-  series = seq(from=1,to=360,length.out=(res))
-  points = series*(pi/180)
-  x = cos(points)
-  y = sin(points)
-  segPoints = floor(seq(from=1,to=360,length.out=(nSegments+1)))
-  for (i in 1:nSegments){
-    seg.x = c(xpos,xpos+x[segPoints[i]:segPoints[i+1]]*d[i]*scale)
-    seg.y = c(ypos,ypos+y[segPoints[i]:segPoints[i+1]]*d[i]*scale)
-    polygon(seg.x,seg.y,col=segCol[i],border=borCol[i])
-    lines(c(xpos,xpos+x[segPoints[i]]*scale),c(ypos,ypos+y[segPoints[i]]*scale),col=strokea)
-  }
-  lines((x*scale)+xpos,(y*scale)+ypos,col=strokea)
-  lines((x*.5*scale)+xpos,(y*.5*scale)+ypos,col=strokea)
-  
-  if (!is.null(labels)){
-    labelPoints = segPoints[-length(segPoints)]+segPoints[2]/2
-    text(x=c(x[labelPoints]*scale+xpos),y=c(y[labelPoints]*scale+ypos),labels,col=stroke)
-  }
-  
-}
 
 .getClusterFeatureMatrix = function(featureVector){
   df = do.call("rbind",strsplit(gsub(pattern="(cluster [0-9]+) ",replacement="\\1~",featureVector),"~"))
@@ -355,7 +307,7 @@ citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph
 }
 
 
-citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureClusterMatrix,graph,layout,petalPlots=F,clusterMedians=NULL,featureClusterCols=NULL,theme="black",encircle=T,plotSize=15,plotClusterIDs=T){
+citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureClusterMatrix,graph,layout,clusterMedians=NULL,featureClusterCols=NULL,theme="black",encircle=T,plotSize=15,plotClusterIDs=T){
   
   if (!is.null(featureClusterCols)&&(is.null(names(featureClusterCols)))){
     stop("featureClusterCols argument must be vector with elements having names of vertices to be colored.")
@@ -383,42 +335,34 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
       fGroup[[groupId]]=match(get.vertex.attribute(subgraph,"label")[groupAssignments==groupId],get.vertex.attribute(graph,"label"))
     }
     par(col.main=stroke)
-    #if (petalPlots){
-    #  if (is.null(clusterMedians)){
-    #    stop("clusterMedians argument must be supplied to plot petals")
-    #  }
-    #  add.vertex.shape("petal", clip=vertex.shapes("circle")$clip,plot=.petalVertex, parameters=list(vertex.scale=.04,vertex.weights=apply(clusterMedians,2,.scaleToOne)))
-    #  plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color=stroke,vertex.label.color="white",edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=rgb(0,0,.5,.3),mark.col=.graphColorPalette(length(fGroup),alpha=.3),vertex.shape="petal")
-    #  .petalPlot(xpos=1,ypos=-1,d=rep(1,ncol(clusterMedians)),scale=.2,labels=colnames(clusterMedians))
-    #} else {
-      vertexFont=rep(1,length(V(graph)))
-      vertexFont[get.vertex.attribute(graph,"label")%in%featureClusters]=2
-      if (is.null(featureClusterCols)){
-        vertexColor=rep(rgb(0,0,.5,.5),length(V(graph)))
-        vertexColor[get.vertex.attribute(graph,"label")%in%featureClusters]=rgb(0.5,0,0,.7)
-      } else {
-        vertexColor=rep(rgb(0,0,.5,.5),length(V(graph)))
-        cp = rgb(1,0,0,seq(0,1,by=.05))
-        ct = seq(from=(min(featureClusterCols)-0.01),to=(max(featureClusterCols)+0.01),length.out=20)
-        vertexColor[ match(names(featureClusterCols),get.vertex.attribute(graph,"label")) ] = cp[sapply(featureClusterCols,findInterval,vec=ct)]
-      }
-      
-      vertexLabelColor="white"
-      if (!plotClusterIDs){
-        vertexLabelColor = rgb(0,0,0,0)
-      }
-      if (encircle){
-        plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color=stroke,vertex.label.color=vertexLabelColor,edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=vertexColor,mark.border=strokea,mark.col=.graphColorPalette(length(fGroup),alpha=.2),vertex.label.font=vertexFont)      
-      } else {
-        plot.igraph(graph,layout=layout,main=feature,edge.color=stroke,vertex.label.color=vertexLabelColor,edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=vertexColor,vertex.label.font=vertexFont)     
-      }
-      if (!is.null(featureClusterCols)){
-        legend_image <- as.raster(matrix(rev(cp), ncol=1))
-        rasterImage(legend_image, 1.1, -.5, 1.15,.5)
-        text(x=1.15, y = seq(-.5,.5,l=5), labels = .decimalFormat(ct[c(1,floor((length(ct)/4)*1:4))]) ,pos=4,col=stroke)  
-      }
+
+    vertexFont=rep(1,length(V(graph)))
+    vertexFont[get.vertex.attribute(graph,"label")%in%featureClusters]=2
+    if (is.null(featureClusterCols)){
+      vertexColor=rep(rgb(0,0,.5,.5),length(V(graph)))
+      vertexColor[get.vertex.attribute(graph,"label")%in%featureClusters]=rgb(0.5,0,0,.7)
+    } else {
+      vertexColor=rep(rgb(0,0,.5,.5),length(V(graph)))
+      cp = rgb(1,0,0,seq(0,1,by=.05))
+      ct = seq(from=(min(featureClusterCols)-0.01),to=(max(featureClusterCols)+0.01),length.out=20)
+      vertexColor[ match(names(featureClusterCols),get.vertex.attribute(graph,"label")) ] = cp[sapply(featureClusterCols,findInterval,vec=ct)]
+    }
+    
+    vertexLabelColor="white"
+    if (!plotClusterIDs){
+      vertexLabelColor = rgb(0,0,0,0)
+    }
+    if (encircle){
+      plot.igraph(graph,layout=layout,mark.groups=fGroup,mark.expand=5,main=feature,edge.color=stroke,vertex.label.color=vertexLabelColor,edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=vertexColor,mark.border=strokea,mark.col=.graphColorPalette(length(fGroup),alpha=.2),vertex.label.font=vertexFont)      
+    } else {
+      plot.igraph(graph,layout=layout,main=feature,edge.color=stroke,vertex.label.color=vertexLabelColor,edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=vertexColor,vertex.label.font=vertexFont)     
+    }
+    if (!is.null(featureClusterCols)){
+      legend_image <- as.raster(matrix(rev(cp), ncol=1))
+      rasterImage(legend_image, 1.1, -.5, 1.15,.5)
+      text(x=1.15, y = seq(-.5,.5,l=5), labels = .decimalFormat(ct[c(1,floor((length(ct)/4)*1:4))]) ,pos=4,col=stroke)  
+    }
           
-    #}
   }
   dev.off()
 }
