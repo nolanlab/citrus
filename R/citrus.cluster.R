@@ -1,9 +1,9 @@
-citrus.mapFileDataToClustering = function(dataDir,newFileList,preClusterResult,fileSampleSize,mappingColumns=NULL,transformCols=NULL,transformCofactor=5,scaleCols=NULL,...){
+citrus.mapFileDataToClustering = function(dataDir,newFileList,preClusterResult,fileSampleSize,mappingColumns=NULL,transformCols=NULL,transformCofactor=5,...){
   conditions = strsplit(names(preClusterResult),"_vs_")
   mappingResult = list()
   for (conditionName in names(preClusterResult)){
     conditions = strsplit(conditionName,"_vs_")[[1]]
-    mappingResult[[conditionName]]$citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=newFileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize,transformCofactor=transformCofactor,scaleCols=scaleCols,...)
+    mappingResult[[conditionName]]$citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=newFileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize,transformCofactor=transformCofactor,...)
     
     if (is.null(mappingColumns)){
       mappingColumns = preClusterResult[[conditionName]]$clusterColumns
@@ -130,7 +130,7 @@ citrus.getClusterAncestors = function(node,mergeOrder){
   }
 }
 
-citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds=5,folds=NULL,transformCols=NULL,clusterConditions=NULL,conditionComparaMatrix=NULL,balanceFactor=NULL,transformCofactor=5,scaleCols=NULL,conditionCluster=NULL,...){
+citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds=5,folds=NULL,transformCols=NULL,clusterConditionList=NULL,conditionComparaMatrix=NULL,balanceFactor=NULL,transformCofactor=5,...){
   
   addtlArgs = list(...)
   
@@ -139,8 +139,8 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
     stop(paste("Output directory",outputDir,"not found."))
   }
   
-  if (!is.null(clusterConditions)){
-    allConditions = list(clusterConditions)
+  if (!is.null(clusterConditionList)){
+    allConditions = clusterConditionList
   } else if (!is.null(conditionComparaMatrix)){
     allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 
   } else {
@@ -163,10 +163,10 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
   }
   folds[[nAllFolds]]="all"
   
-  if (!is.null(conditionCluster)){
-    clusterResult = parLapply(conditionCluster,allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,clusterCols=clusterCols,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,scaleCols=scaleCols,outputDir=outputDir,...)  
+  if (conditionCluster %in% names(addtlArgs)){
+    clusterResult = parLapply(addtlArgs[["conditionCluster"]],allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,clusterCols=clusterCols,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,outputDir=outputDir,...)  
   } else {
-    clusterResult = lapply(allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,clusterCols=clusterCols,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,scaleCols=scaleCols,outputDir=outputDir,...)  
+    clusterResult = lapply(allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,clusterCols=clusterCols,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,outputDir=outputDir,...)  
   }
     
   names(clusterResult) = lapply(allConditions,paste,collapse="_vs_")
@@ -176,11 +176,11 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
   return(clusterResult)
 }
 
-citrus.preClusterCondition = function(conditions,dataDir,fileList,clusterCols,folds,nFolds,fileSampleSize,transformCols,transformCofactor,scaleCols,outputDir,...){
+citrus.preClusterCondition = function(conditions,dataDir,fileList,clusterCols,folds,nFolds,fileSampleSize,transformCols,transformCofactor,outputDir,...){
   
   cat(paste("Clustering Condition",paste(conditions,collapse=" vs "),"\n"))
   
-  citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,scaleCols=scaleCols,...)
+  citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,...)
   
   foldsCluster = lapply(folds,citrus.foldCluster,citrus.dataArray=citrus.dataArray,clusterCols=clusterCols,conditions=conditions,...)
   cat("Assigning Events to Clusters\n")

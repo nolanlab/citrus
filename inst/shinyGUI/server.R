@@ -98,14 +98,14 @@ shinyServer(function(input, output) {
     }
   })
   
-  output$scaleCols = renderUI({
-    choices = getParameterIntersections(input,fileList,fileCols);
-    if (is.null(choices)){
-      return(tagList(tags$b("Assign samples to groups to enable selection of transform parameters.")))
-    } else {
-      return(checkboxGroupInput("scaleCols",label="Scale",choices=choices))  
-    }
-  })
+  #output$scaleCols = renderUI({
+  #  choices = getParameterIntersections(input,fileList,fileCols);
+  #  if (is.null(choices)){
+  #    return(tagList(tags$b("Assign samples to groups to enable selection of transform parameters.")))
+  #  } else {
+  #    return(checkboxGroupInput("scaleCols",label="Scale",choices=choices))  
+  #  }
+  #})
   
   
   output$calculatedFeatures = renderUI({
