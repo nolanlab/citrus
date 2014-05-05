@@ -41,7 +41,7 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
       }
       
       if ("scaleSampleCols" %in% names(addtlArgs)){
-        fcsData[,addtlArgs[["scaleSampleCols"]]] = apply(fcsData[,addtlArgs[["scaleSampleCols"]]],2,scale)  
+        fcsData[,addtlArgs[["scaleSampleCols"]]] = apply(fcsData[,addtlArgs[["scaleSampleCols"]]],2,scale,center=F)  
       }
       conditionData[[fileName]] = fcsData
       
@@ -57,7 +57,7 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
   data = do.call("rbind",data)
   
   if ("scaleAllCols" %in% names(addtlArgs)){
-    fcsData = apply(fcsData[,addtlArgs[["scaleSamples"]]],2,scale)  
+    fcsData = apply(fcsData[,addtlArgs[["scaleSamples"]]],2,scale,center=F)  
   }
   
   results = list(data=data,fileIds=matrix(1:(fileCounter-1),ncol=length(conditions),dimnames=list(c(),conditions)),fileNames=fileNames,fileChannelNames=fileChannelNames,fileReagentNames=fileReagentNames)
