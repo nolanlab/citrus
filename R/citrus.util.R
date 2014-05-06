@@ -32,9 +32,15 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
       fileReagentNames[[conditions[i]]][[fileName]]=as.vector(pData(parameters(fcsFile))$desc)
       fcsData = cbind(fcsData,fileEventNumber=1:nrow(fcsData),fileId=fileCounter);
       fileCounter=fileCounter+1;
+      
       if (!is.null(transformCols)){
+        containedCols = setdiff(transformCols,colnames(fcsData))
+        if (length(containedCols)>0){
+          stop(paste("Transform cols",paste(containedCols,collapse=", "),"not found. Valid channel names:",paste(colnames(fcsData),collapse=", ")))
+        }
         fcsData[,transformCols] = asinh(fcsData[,transformCols]/transformCofactor);
       }
+      
       if ((!is.null(fileSampleSize))&&(fileSampleSize<nrow(fcsData))){
         cat(paste("\tSampling",fileSampleSize,"events.\n"))
         fcsData = fcsData[sort(sample(1:nrow(fcsData),fileSampleSize)),] 
