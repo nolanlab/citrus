@@ -34,9 +34,11 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
       fileCounter=fileCounter+1;
       
       if (!is.null(transformCols)){
-        containedCols = setdiff(transformCols,colnames(fcsData))
-        if (length(containedCols)>0){
-          stop(paste("Transform cols",paste(containedCols,collapse=", "),"not found. Valid channel names:",paste(colnames(fcsData),collapse=", ")))
+        if (any(!is.numeric(transformCols))){
+          containedCols = setdiff(transformCols,colnames(fcsData))
+          if (length(containedCols)>0){
+            stop(paste("Transform cols",paste(containedCols,collapse=", "),"not found. Valid channel names:",paste(colnames(fcsData),collapse=", ")))
+          }  
         }
         fcsData[,transformCols] = asinh(fcsData[,transformCols]/transformCofactor);
       }

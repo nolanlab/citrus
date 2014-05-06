@@ -281,11 +281,12 @@ citrus.calculateFileClustersMedians = function(fileId,clusterIds,clusterAssignme
     stop("medianColumns argument must be specified to compute cluster medians.")
   }
   
-  containedCols = setdiff(addtlArgs[["medianColumns"]],colnames(data))
-  if (length(containedCols)>0){
-    stop(paste("Cluster cols",paste(containedCols,collapse=", "),"not found. Valid channel names:",paste(colnames(data),collapse=", ")))
+  if (any(!is.numeric(addtlArgs[["medianColumns"]]))){
+    containedCols = setdiff(addtlArgs[["medianColumns"]],colnames(data))
+    if (length(containedCols)>0){
+      stop(paste("Cluster cols",paste(containedCols,collapse=", "),"not found. Valid channel names:",paste(colnames(data),collapse=", ")))
+    }  
   }
-  
   unlist(lapply(clusterIds,citrus.calculateFileClusterMedian,clusterAssignments=clusterAssignments,fileId=fileId,data=data,medianColumns=addtlArgs[["medianColumns"]]))
 }
 
