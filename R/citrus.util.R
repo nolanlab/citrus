@@ -1,5 +1,5 @@
 # FILE SAMPLE SIZE SHOULD BE A NAMED VECTOR OR LIST OR SOMETHING THAT'S EASY TO EXTRACT BY NAME
-citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,transformCols=NULL,transformCofactor=5,useChannelDescriptions=T,...){
+citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,transformCols=NULL,transformCofactor=5,useChannelDescriptions=F,...){
   data = list();
   fileCounter = 1;
   fileNames = c();
@@ -24,8 +24,8 @@ citrus.readFCSSet = function(dataDir,fileList,conditions,fileSampleSize=NULL,tra
       fcsData=exprs(fcsFile)
       
       if (useChannelDescriptions){
-        channelDescriptions = as.vector(pData(parameters(fcsFile))$desc)
-        colnames(fcsData)[nchar(channelDescriptions)>2] = channelDescriptions[nchar(channelDescriptions)>2]
+       channelDescriptions = as.vector(pData(parameters(fcsFile))$desc)
+       colnames(fcsData)[nchar(channelDescriptions)>1] = channelDescriptions[nchar(channelDescriptions)>1]
       }
       
       fileChannelNames[[conditions[i]]][[fileName]]=as.vector(pData(parameters(fcsFile))$name)
