@@ -186,12 +186,8 @@ citrus.preClusterCondition = function(conditions,dataDir,fileList,clusterCols,fo
   cat(paste("Clustering Condition",paste(conditions,collapse=" vs "),"\n"))
   
   addtlArgs = list(...)
-  useChannelDescriptions = F
-  if ("useChannelDescriptions" %in% names(addtlArgs)){
-    useChannelDescriptions = addtlArgs[["useChannelDescriptions"]]
-  }
   
-  citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,useChannelDescriptions=useChannelDescriptions,...)
+  citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,...)
   
   foldsCluster = lapply(folds,citrus.foldCluster,citrus.dataArray=citrus.dataArray,clusterCols=clusterCols,conditions=conditions,...)
   cat("Assigning Events to Clusters\n")
