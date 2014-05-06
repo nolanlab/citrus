@@ -167,6 +167,7 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
   }
   folds[[nAllFolds]]="all"
   
+  
   if ("conditionParallelClusters" %in% names(addtlArgs)){
     clusterResult = parLapply(addtlArgs[["conditionParallelClusters"]],allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,clusterCols=clusterCols,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,outputDir=outputDir,...)  
   } else {
@@ -184,7 +185,13 @@ citrus.preClusterCondition = function(conditions,dataDir,fileList,clusterCols,fo
   
   cat(paste("Clustering Condition",paste(conditions,collapse=" vs "),"\n"))
   
-  citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,...)
+  addtlArgs = list(...)
+  useChannelDescriptions = F
+  if ("useChannelDescriptions" %in% names(addtlArgs)){
+    useChannelDescriptions = addtlArgs[["useChannelDescriptions"]]
+  }
+  
+  citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,useChannelDescriptions=useChannelDescriptions,...)
   
   foldsCluster = lapply(folds,citrus.foldCluster,citrus.dataArray=citrus.dataArray,clusterCols=clusterCols,conditions=conditions,...)
   cat("Assigning Events to Clusters\n")
