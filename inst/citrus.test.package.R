@@ -41,7 +41,7 @@ res = citrus.full(dataDir,outputDir,clusterCols,fileSampleSize,filePopulationLis
 rm(list=ls(all=T))
 dataDir = file.path(system.file(package="citrus"),"extdata","example3")
 #dataDir = file.path("~/Desktop/work/citrus/inst/extdata/example3/")
-outputDir = "~/Desktop/notime/tmp/citrusOutput/"
+outputDir = "~/Desktop/notime/tmp/"
 clusterCols = c("LineageMarker1","LineageMarker2")
 medianCols = c("FunctionalMarker1","FunctionalMarker2")
 labels = c(rep("healthy",10),rep("diseased",10))
