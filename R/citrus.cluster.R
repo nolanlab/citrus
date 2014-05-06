@@ -163,8 +163,8 @@ citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileLi
   }
   folds[[nAllFolds]]="all"
   
-  if (conditionCluster %in% names(addtlArgs)){
-    clusterResult = parLapply(addtlArgs[["conditionCluster"]],allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,clusterCols=clusterCols,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,outputDir=outputDir,...)  
+  if ("conditionParallelClusters" %in% names(addtlArgs)){
+    clusterResult = parLapply(addtlArgs[["conditionParallelClusters"]],allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,clusterCols=clusterCols,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,outputDir=outputDir,...)  
   } else {
     clusterResult = lapply(allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,clusterCols=clusterCols,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,outputDir=outputDir,...)  
   }
