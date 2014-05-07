@@ -30,9 +30,11 @@ citrus.foldCluster = function(foldMembership,citrus.dataArray,clusterCols,condit
     includeFileIds = as.vector(citrus.dataArray$fileIds[-foldMembership,conditions])
     cat(paste("Clustering fileIds",paste(includeFileIds,collapse=", "),"\n"))
   }
-  containedCols = setdiff(clusterCols,colnames(citrus.dataArray$data))
-  if (length(containedCols)>0){
-    stop(paste("Cluster cols",paste(containedCols,collapse=", "),"not found. Valid channel names:",paste(colnames(citrus.dataArray$data),collapse=", ")))
+  if (any(!is.numeric(clusterCols))){
+    containedCols = setdiff(clusterCols,colnames(citrus.dataArray$data))
+    if (length(containedCols)>0){
+      stop(paste("Cluster cols",paste(containedCols,collapse=", "),"not found. Valid channel names:",paste(colnames(citrus.dataArray$data),collapse=", ")))
+    }  
   }
   return(citrus.cluster(citrus.dataArray$data[citrus.dataArray$data[,"fileId"] %in% includeFileIds,clusterCols],...))
 }
