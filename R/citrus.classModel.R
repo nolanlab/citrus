@@ -120,41 +120,6 @@ citrus.thresholdCVs.model.quick = function(modelType,features,regularizationThre
   return(data.frame(errorRates))
 }
 
-#citrus.thresholdCVs.model.quick.old = function(modelType,features,regularizationThresholds,family,labels,nFolds=5,ncvIterations=10,...){
-#  typeRegularizationThresholds=regularizationThresholds[[modelType]]
-#  if (modelType=="pamr"){
-#    if (family=="survival"){
-#      stop("PAM model not implemeted for survival.")
-#    }
-#    pamrData = list(x=t(features),y=labels)
-#    pamrModel = pamr.train(data=pamrData,threshold=typeRegularizationThresholds,remove.zeros=F)
-#    errorRates = sapply(1:ncvIterations,paste("citrus.cvIteration",family,sep="."),modelType="pamr",features=pamrData,labels=labels,regularizationThresholds=typeRegularizationThresholds,nFolds=nFolds,pamrModel=pamrModel)
-#    fdrRate = citrus:::pamr.fdr.new(pamrModel,data=pamrData,nperms=1000)$results[,"Median FDR"]
-#  } else if (modelType=="glmnet"){
-#    addtlArgs = list(...)
-#    alpha=1
-#    if ("alpha" %in% names(addtlArgs)){
-#      alpha=addtlArgs[["alpha"]]
-#    }
-#    standardize=T
-#    if ("standardize" %in% names(addtlArgs)){
-#      standardize=addtlArgs[["standardize"]]
-#    }
-#    errorRates = sapply(1:ncvIterations,paste("citrus.cvIteration",family,sep="."),modelType="glmnet",features=features,labels=labels,regularizationThresholds=typeRegularizationThresholds,nFolds=nFolds,alpha=alpha,standardize=standardize)
-#  } else if (modelType=="sam"){
-#    warning("No thresholds for SAM. This is Normal.")
-#    return(NA)
-#  } else {
-#    stop(paste("CV for Model type",modelType,"not implemented"))
-#  }
-#  cvm=apply(errorRates,1,mean)
-#  cvsd=apply(errorRates,1,sd)/sqrt(ncvIterations)
-#  results = data.frame(threshold=typeRegularizationThresholds,cvm=cvm,cvsd=cvsd)
-#  if (exists("fdrRate")){
-#    results$fdr=fdrRate
-#  }
-#  return(results)
-#}
 
 citrus.thresholdCVs.classification = function(foldModels,leftoutFeatures,foldFeatures,modelTypes,regularizationThresholds,labels,folds,...){
   # The following operations are not applicable to SAM models
