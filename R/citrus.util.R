@@ -82,95 +82,123 @@ print.citrus.combinedFCSSet = function(x,...){
   cat(paste0("Parameter Names:\n",paste0("\t",colnames(x$data),collapse="\n")))
 }
 
-citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaMatrix=NULL,fileSampleSize=NULL,transformColumns=NULL,transformCofactor=5){
-  
-  if (!is.null(conditionComparaMatrix)){
-    allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 
-    # Perform Internal Consistency Checks!
-  } else {
-    allConditions = names(filePopulationList)
-  }
-  
-  results = list();
-
-  for (conditions in allConditions){
-    
-    cda = data.frame();
-    eventCounter=0;
-    populationCounter=1;  
-    fileNames=list()  
-    clusterAssignments = list();
-    fileId=1;  
-    fileChannelNames = list()
-    fileReagentNames = list()
-    fileIds = list();
-    populationClusterMap = list();
-    for (condition in conditions){
-      
-      nPatients = nrow(filePopulationList[[condition]])
-      baseFileId = (match(condition,conditions)-1)*nPatients
-      fileIds[[condition]] = (baseFileId+1):(baseFileId+nPatients)
-      for (populationName in colnames(filePopulationList[[condition]])){
-        populationEvents = c();
-        for (patientId in 1:nPatients){
-          fcsFileName = filePopulationList[[condition]][patientId,populationName]
-          fileId = baseFileId+patientId
-          print(paste("Reading",fcsFileName))
-          fcsFile = citrus.readFCS(file.path(dataDir,fcsFileName),...)
-          fileChannelNames[[fcsFileName]] = colnames(fcsFile)
-          fileReagentNames[[fcsFileName]] = pData(parameters(fcsFile))$desc
-          fcsFileData = exprs(fcsFile)
-          if (!is.null(fileSampleSize)){
-            if (fileSampleSize < nrow(fcsFileData)){
-              fcsFileData = fcsFileData[sample(1:nrow(fcsFileData),fileSampleSize),]
-            }
-          }
-          lastEvent = nrow(cda)
-          absoluteEventIds = (lastEvent+1):(eventCounter+nrow(fcsFileData))
-          cda = rbind(cda,data.frame(fcsFileData,fileId=fileId))
-          populationEvents = c(populationEvents,absoluteEventIds)
-          eventCounter = eventCounter+nrow(fcsFileData)
-          fileNames[[fileId]]=fcsFileName
-          fileId=fileId+1;
-        }
-        
-        
-        if (populationName %in% names(populationClusterMap)){
-          clusterAssignments[[populationClusterMap[[populationName]]]] = c(clusterAssignments[[populationClusterMap[[populationName]]]],populationEvents)
-        } else {
-          clusterAssignments[[populationCounter]]=populationEvents;
-          populationClusterMap[[populationName]]=populationCounter
-          populationCounter = populationCounter+1;
-        }
-        
-      }
-    }
-    
-    if (!is.null(transformColumns)){
-      cda[,transformColumns] = cda[,transformColumns]/transformCofactor
-    }
-    
-    results[[paste(conditions,collapse="_vs_")]] = list(folds="all",
-                                                        foldsClusterAssignments=list(all=clusterAssignments),
-                                                        conditions=conditions,
-                                                        citrus.dataArray=list(data=as.matrix(cda),
-                                                                              fileNames=unlist(fileNames,use.names=F),
-                                                                              fileIds=do.call("cbind",fileIds),
-                                                                              fileChannelNames=fileChannelNames,
-                                                                              fileReagentNames=fileReagentNames),
-                                                        clusterPopulationNames=names(populationClusterMap));
-  }
+citrus.maskCombinedFCSSet = function(citrus.combinedFCSSet,fileIds){
+  apply(citrus.combinedFCSSet$fileIds,2,"%in%",fileIds)
+  results = list(data=citrus.combinedFCSSet$data[citrus.combinedFCSSet$data[,"fileId"] %in% fileIds,],
+             fileIds=apply(citrus.combinedFCSSet$fileIds,2,"%in%",fileIds),
+             fileNames=citrus.combinedFCSSet$fileNames[fileIds],
+             fileChannelNames=citrus.combinedFCSSet$fileChannelNames,
+             fileReagentNames=citrus.combinedFCSSet$fileReagentNames,
+             call = match.call() 
+        )
+  class(results) = "citrus.combinedFCSSet"
   return(results)
 }
 
-citrus.leavoutFold = function(x,y,leaveoutSize){
-  groupCounts = table(y)/length(y)*leaveoutSize
-  leaveout = list()
-  for (group in unique(y)){
-    leaveout[[group]] = sample(which(y==group),groupCounts[which(names(groupCounts)==group)])
-  }
-  return(as.vector(unlist(leaveout)))
+citrus.selectClusters = function(citrus.clustering,method="minimumClusterSize",...){
+  do.call(paste0("citrus.selectClusters.",method),args=list(citrus.clustering=citrus.clustering,...))
 }
+
+citrus.selectClusters.minimumClusterSize =function(citrus.clustering,...){
+  addtlArgs = list(...)
+  if (!("minimumClusterSizePercent" %in% names(addtlArgs))){
+    stop("Missing 'minimumClusterSizePercent' argument.");
+  }
+  clusterSizes = sapply(citrus.clustering$clusterMembership,length)
+  minimumClusterSize = (length(citrus.clustering$clusterMembership)+1)*minimumClusterSizePercent
+  return(which(clusterSizes>=minimumClusterSize))
+}
+
+
+#citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaMatrix=NULL,fileSampleSize=NULL,transformColumns=NULL,transformCofactor=5){
+  
+#  if (!is.null(conditionComparaMatrix)){
+#    allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 
+#    # Perform Internal Consistency Checks!
+#  } else {
+#    allConditions = names(filePopulationList)
+#  }
+  
+#  results = list();
+
+#  for (conditions in allConditions){
+    
+#    cda = data.frame();
+#    eventCounter=0;
+#    populationCounter=1;  
+#    fileNames=list()  
+#    clusterAssignments = list();
+#   fileId=1;  
+#    fileChannelNames = list()
+#    fileReagentNames = list()
+#    fileIds = list();
+#    populationClusterMap = list();
+#    for (condition in conditions){
+#      
+#      nPatients = nrow(filePopulationList[[condition]])
+#      baseFileId = (match(condition,conditions)-1)*nPatients
+#      fileIds[[condition]] = (baseFileId+1):(baseFileId+nPatients)
+#      for (populationName in colnames(filePopulationList[[condition]])){
+#        populationEvents = c();
+#        for (patientId in 1:nPatients){
+#          fcsFileName = filePopulationList[[condition]][patientId,populationName]
+#          fileId = baseFileId+patientId
+#          print(paste("Reading",fcsFileName))
+#          fcsFile = citrus.readFCS(file.path(dataDir,fcsFileName),...)
+#          fileChannelNames[[fcsFileName]] = colnames(fcsFile)
+#          fileReagentNames[[fcsFileName]] = pData(parameters(fcsFile))$desc
+#          fcsFileData = exprs(fcsFile)
+#          if (!is.null(fileSampleSize)){
+#            if (fileSampleSize < nrow(fcsFileData)){
+#              fcsFileData = fcsFileData[sample(1:nrow(fcsFileData),fileSampleSize),]
+#            }
+#          }
+#          lastEvent = nrow(cda)
+#          absoluteEventIds = (lastEvent+1):(eventCounter+nrow(fcsFileData))
+#          cda = rbind(cda,data.frame(fcsFileData,fileId=fileId))
+#          populationEvents = c(populationEvents,absoluteEventIds)
+#          eventCounter = eventCounter+nrow(fcsFileData)
+#          fileNames[[fileId]]=fcsFileName
+#          fileId=fileId+1;
+#        }
+#        
+#        
+#        if (populationName %in% names(populationClusterMap)){
+#          clusterAssignments[[populationClusterMap[[populationName]]]] = c(clusterAssignments[[populationClusterMap[[populationName]]]],populationEvents)
+#        } else {
+#          clusterAssignments[[populationCounter]]=populationEvents;
+#          populationClusterMap[[populationName]]=populationCounter
+#          populationCounter = populationCounter+1;
+#        }
+#        
+#      }
+#    }
+#    
+#    if (!is.null(transformColumns)){
+#      cda[,transformColumns] = cda[,transformColumns]/transformCofactor
+#    }
+#    
+#    results[[paste(conditions,collapse="_vs_")]] = list(folds="all",
+#                                                        foldsClusterAssignments=list(all=clusterAssignments),
+#                                                        conditions=conditions,
+#                                                        citrus.dataArray=list(data=as.matrix(cda),
+#                                                                              fileNames=unlist(fileNames,use.names=F),
+#                                                                              fileIds=do.call("cbind",fileIds),
+#                                                                              fileChannelNames=fileChannelNames,
+#                                                                              fileReagentNames=fileReagentNames),
+#                                                        clusterPopulationNames=names(populationClusterMap));
+#  }
+#  return(results)
+#}
+
+#citrus.leavoutFold = function(x,y,leaveoutSize){
+#  groupCounts = table(y)/length(y)*leaveoutSize
+#  leaveout = list()
+#  for (group in unique(y)){
+#    leaveout[[group]] = sample(which(y==group),groupCounts[which(names(groupCounts)==group)])
+#  }
+#  return(as.vector(unlist(leaveout)))
+#}
 
 citrus.formatDecimal = function(x){
   sprintf("%1.2f", x)
@@ -203,7 +231,7 @@ citrus.fileEventCount = function(dataDir,...){
 }
 
 citrus.featureTypes = function(){
-  return(c("abundances","medians","emDists","CVs"))
+  return(c("abundances","medians"))
 }
 
 citrus.familyList = function(){

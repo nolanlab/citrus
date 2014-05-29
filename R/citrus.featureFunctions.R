@@ -34,7 +34,32 @@
 #  return(featureRes)
 #}
 
-citrus.buildFeatures = function(citrus.combinedFCSSet,citrus.clustering,featureType="abundances",minimumClusterSizePercent=0.05,...){  
+citrus.buildFoldFeatures = function(foldIndex,folds,foldClusterIds,citrus.combinedFCSSet,foldClustering=NULL,foldMappingAssignments=NULL,featureType="abundances",calculateLeftoutFeatureValues=F,...){
+  leavoutFileIds = folds[[foldIndex]]
+  
+  if (calculateLeftoutFeatureValues){
+    featureFileIds = citrus.combinedFCSSet$fileIds[leavoutFileIds,]
+    if (is.null(foldMappingAssignments)){
+      stop("foldMappingAssignments argument missing")
+    }
+    cellAssignments = foldMappingAssignments[[foldIndex]]$clusterMembership
+  } else {
+    featureFileIds = setdiff(as.vector(citrus.combinedFCSSet$fileIds),leavoutFileIds)
+    if (is.null(foldClustering)){
+      stop("foldClustering argument missing")
+    }
+    cellAssignments = foldClustering[[foldIndex]]$clusterMembership
+  }
+  
+  citrus.buildFeatures(citrus.combinedFCSSet=citrus.maskCombinedFCSSet(citrus.combinedFCSSet,featureFileIds),
+                       clusterAssignments=cellAssignments,
+                       clusterIds=foldClusterIds[[foldIndex]],
+                       featureType=featureType,
+                       ...)
+  
+}
+
+citrus.buildFeatures = function(citrus.combinedFCSSet,clusterAssignments,clusterIds,featureType="abundances",...){  
 
   addtlArgs = list(...)
 
@@ -47,23 +72,20 @@ citrus.buildFeatures = function(citrus.combinedFCSSet,citrus.clustering,featureT
     stop("medianColumns argument must be specified to calculate cluster medians.")
   }
   
-  clusterSizes = sapply(citrus.clustering$clusterMembership,length)
-  largeEnoughClusters = which(clusterSizes>=nrow(citrus.combinedFCSSet$data)*minimumClusterSizePercent)
-  do.call(paste0("citrus.calculateFeature.",featureType),args=list(clusterIds=largeEnoughClusters,citrus.clustering=citrus.clustering,citrus.combinedFCSSet=citrus.combinedFCSSet,...))
+  do.call(paste0("citrus.calculateFeature.",featureType),args=list(clusterIds=clusterIds,clusterAssignments=clusterAssignments,citrus.combinedFCSSet=citrus.combinedFCSSet,...))
 }
 
 ################################
 # Abundance Features
 ################################
-citrus.calculateFeature.abundances = function(clusterIds,citrus.clustering,citrus.combinedFCSSet,...){
+citrus.calculateFeature.abundances = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,...){
   eventFileIds = citrus.combinedFCSSet$data[,"fileId"]
   fileIds = unique(eventFileIds)
-  citrus.calculateFileClusterAbundance(clusterId=clusterIds[1],fileId=fileIds[1],clusterAssignments=citrus.clustering$clusterMembership,eventFileIds=eventFileIds)
   res = mcmapply(citrus.calculateFileClusterAbundance,
           clusterId=rep(clusterIds,length(fileIds)),
           fileId=rep(fileIds,each=length(clusterIds)),
           MoreArgs=list(
-                        clusterAssignments=citrus.clustering$clusterMembership,
+                        clusterAssignments=clusterAssignments,
                         eventFileIds=eventFileIds)
           ,...)
   return(
@@ -78,9 +100,10 @@ citrus.calculateFileClusterAbundance = function(clusterId,fileId,clusterAssignme
 ################################
 # Median Features
 ################################
-citrus.calculate.calculateFeature.medians = function(clusterIds,citrus.clustering,citrus.combinedFCSSet,...){
-  if !("medianColumns" %in% names(list(...)))
+citrus.calculate.calculateFeature.medians = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,...){
+  if (!("medianColumns" %in% names(list(...)))){
     stop("medianColumns argument missing")
+  }
   
   medianColumns = list(...)[["medianColumns"]]
   fileIds = unique(citrus.combinedFCSSet$data[,"fileId"])
@@ -90,7 +113,7 @@ citrus.calculate.calculateFeature.medians = function(clusterIds,citrus.clusterin
                  medianColumn=rep(rep(medianColumns,each=length(clusterIds)),length(fileIds)),
                  MoreArgs=list(
                    data=citrus.combinedFCSSet$data,
-                   clusterAssignments=citrus.clustering$clusterMembership)
+                   clusterAssignments=clusterAssignments)
         ,...)
   
   return(
@@ -187,33 +210,33 @@ citrus.calculateConditionFeatureDifferences = function(data,condition1,condition
   return(x)
 }
 
-citrus.calculateFoldLargeEnoughClusters = function(index,foldsClusterAssignments,folds,citrus.dataArray,conditions,minimumClusterSizePercent=0.05){
-  if ((length(folds[[index]])==1) && (folds[[index]]=="all")){
-    foldsDataLength = sum(citrus.dataArray$data[,"fileId"] %in% citrus.dataArray$fileIds[,conditions])
-  } else {
-    foldsDataLength = sum(citrus.dataArray$data[,"fileId"] %in% citrus.dataArray$fileIds[-folds[[index]],conditions])
-  }
-  minimumClusterSize = floor(minimumClusterSizePercent*foldsDataLength)
-  return(citrus.calculateLargeEnoughClusters(foldsClusterAssignments[[index]],minimumClusterSize))
-}
+#citrus.calculateFoldLargeEnoughClusters = function(index,foldsClusterAssignments,folds,citrus.dataArray,conditions,minimumClusterSizePercent=0.05){
+#  if ((length(folds[[index]])==1) && (folds[[index]]=="all")){
+#    foldsDataLength = sum(citrus.dataArray$data[,"fileId"] %in% citrus.dataArray$fileIds[,conditions])
+#  } else {
+#    foldsDataLength = sum(citrus.dataArray$data[,"fileId"] %in% citrus.dataArray$fileIds[-folds[[index]],conditions])
+#  }
+#  minimumClusterSize = floor(minimumClusterSizePercent*foldsDataLength)
+#  return(citrus.calculateLargeEnoughClusters(foldsClusterAssignments[[index]],minimumClusterSize))
+#}
   
-citrus.calculateLargeEnoughClusters = function(clusters,minimumClusterSize){
-  clusterLengths = lapply(clusters,length)
-  return(which(clusterLengths >= minimumClusterSize))
-}
+#citrus.calculateLargeEnoughClusters = function(clusters,minimumClusterSize){
+#  clusterLengths = lapply(clusters,length)
+#  return(which(clusterLengths >= minimumClusterSize))
+#}
 
-citrus.getNonOverlappingFeatures = function(index,foldFeatures,leftoutFeatures){
-  c(setdiff(colnames(foldFeatures[[index]]),colnames(leftoutFeatures[[index]])),setdiff(colnames(leftoutFeatures[[index]]),colnames(foldFeatures[[index]])))
-}
+#citrus.getNonOverlappingFeatures = function(index,foldFeatures,leftoutFeatures){
+#  c(setdiff(colnames(foldFeatures[[index]]),colnames(leftoutFeatures[[index]])),setdiff(colnames(leftoutFeatures[[index]]),colnames(foldFeatures[[index]])))
+#}
 
-citrus.removeFeatures = function(index,foldFeatures,nonOverlappingFeatures){
-  ff = foldFeatures[[index]]
-  remove = which(colnames(ff)%in%nonOverlappingFeatures[[index]])
-  if (length(remove)>0){
-    ff = ff[,-remove]
-  }
-  return(ff)
-}
+#citrus.removeFeatures = function(index,foldFeatures,nonOverlappingFeatures){
+#  ff = foldFeatures[[index]]
+#  remove = which(colnames(ff)%in%nonOverlappingFeatures[[index]])
+#  if (length(remove)>0){
+#    ff = ff[,-remove]
+#  }
+#  return(ff)
+#}
 
 
 citrus.getCVMinima = function(modelType,thresholdCVRates,fdrRate=0.01){
