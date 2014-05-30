@@ -14,37 +14,25 @@ print.citrus.endpointModel = function(x,...){
   cat(paste("\tType:",x$type,"\n"))
 }
 
-citrus.buildCrossValidatedEnpointModel(citrus.combinedFCSSet,clusteringColumns,labels,family,modelTypes,clusteringType="hierarchical",nFolds=10,...){
+citrus.buildFoldEndpointModel = function(foldIndex,folds,foldFeatures,labels,family,type,regularizationThreshold,...){
+  foldLabels = labels[-folds[[foldIndex]]]
+  citrus.buildEndpointModel(foldFeatures[[foldIndex]],labels=foldLabels,family=family,type=type,regularizationThreshold=regularizationThreshold,...)
+}
+
+citrus.buildCrossValidatedEndpointModel = function(type,citrus.foldFeatureSet,labels,regularizationThresholds,family="classification",...){
   addtlArgs = list(...)
-  
-  # Define Folds
-  if ("nFolds" %in% names(addtlArgs)){
-    nFolds = addtlArgs[["nFolds"]]
-  }
-  folds = pamr:::balanced.folds(y=labels,nfolds=nFolds)
-  
-  # Cluster fold events
-  foldClustering = lapply(folds,citrus.clusterFold,citrus.combinedFCSSet=citrus.combinedFCSSet,clusteringColumns=clusteringColumns,clusteringType=clusteringType)
-  allClustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns,clusteringType)
-  
-  # Map leftout data 
-  foldMapping = lapply(1:nFolds,citrus.mapFoldDataToClusterSpace,folds=folds,foldClustering=foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,mc.cores=8)
-  
-  # Select clusters in each folds
-  # Default is minimum cluster size
-  foldLargeEnoughClusters = lapply(foldClustering,citrus.selectClusters,minimumClusterSizePercent=0.1)
-  
-  # Build Training Features
-  foldFeatures = lapply(1:nFolds,citrus.buildFoldFeatures,folds=folds,foldClusterIds=foldLargeEnoughClusters,citrus.combinedFCSSet=citrus.combinedFCSSet,foldClustering=foldClustering)
-  
-  # Build Testing Features
-  
+    
   # Build models
-  
-  # Predict testing data
-  
-  # Calculate error rates
-  
-  # Identify Critical CV Points
+  foldModels = lapply(1:citrus.foldFeatureSet$nFolds,
+         citrus.buildFoldEndpointModel,
+         folds=citrus.foldFeatureSet$folds,
+         foldFeatures=citrus.foldFeatureSet$foldFeatures,
+         labels=labels,
+         family=family,
+         type=type,
+         regularizationThreshold=regularizationThresholds[[type]])
+         
+  class(foldModels) = "citrus.foldModels"
+  return(foldModels)
 }
 

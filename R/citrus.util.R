@@ -83,8 +83,8 @@ print.citrus.combinedFCSSet = function(x,...){
 }
 
 citrus.maskCombinedFCSSet = function(citrus.combinedFCSSet,fileIds){
-  apply(citrus.combinedFCSSet$fileIds,2,"%in%",fileIds)
-  results = list(data=citrus.combinedFCSSet$data[citrus.combinedFCSSet$data[,"fileId"] %in% fileIds,],
+
+  results = list(data=do.call("rbind",lapply(fileIds,.subsetByFile,data=citrus.combinedFCSSet$data)),
              fileIds=apply(citrus.combinedFCSSet$fileIds,2,"%in%",fileIds),
              fileNames=citrus.combinedFCSSet$fileNames[fileIds],
              fileChannelNames=citrus.combinedFCSSet$fileChannelNames,
@@ -93,6 +93,10 @@ citrus.maskCombinedFCSSet = function(citrus.combinedFCSSet,fileIds){
         )
   class(results) = "citrus.combinedFCSSet"
   return(results)
+}
+
+.subsetByFile = function(data,fileId){
+  subset(data,data[,"fileId"]==fileId)
 }
 
 citrus.selectClusters = function(citrus.clustering,method="minimumClusterSize",...){
@@ -105,7 +109,7 @@ citrus.selectClusters.minimumClusterSize =function(citrus.clustering,...){
     stop("Missing 'minimumClusterSizePercent' argument.");
   }
   clusterSizes = sapply(citrus.clustering$clusterMembership,length)
-  minimumClusterSize = (length(citrus.clustering$clusterMembership)+1)*minimumClusterSizePercent
+  minimumClusterSize = (length(citrus.clustering$clusterMembership)+1)*addtlArgs[["minimumClusterSizePercent"]]
   return(which(clusterSizes>=minimumClusterSize))
 }
 

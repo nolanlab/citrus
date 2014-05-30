@@ -34,17 +34,38 @@
 #  return(featureRes)
 #}
 
+citrus.buildFoldFeatureSet = function(citrus.foldClustering,citrus.combinedFCSSet,featureType="abundances",minimumClusterSizePercent=0.05){
+  # Select clusters in each folds
+  # Default is minimum cluster size
+  foldLargeEnoughClusters = lapply(citrus.foldClustering$foldClustering,citrus.selectClusters,minimumClusterSizePercent=minimumClusterSizePercent)
+  allLargeEnoughClusters = citrus.selectClusters(citrus.clustering=citrus.foldClustering$allClustering,minimumClusterSizePercent=minimumClusterSizePercent)
+  
+  # Build Training Features
+  foldFeatures = lapply(1:citrus.foldClustering$nFolds,citrus.buildFoldFeatures,folds=citrus.foldClustering$folds,foldClusterIds=foldLargeEnoughClusters,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,foldClustering=citrus.foldClustering$foldClustering)
+  
+  # Build Testing Features
+  leftoutFeatures = lapply(1:citrus.foldClustering$nFolds,citrus.buildFoldFeatures,folds=citrus.foldClustering$folds,foldClusterIds=foldLargeEnoughClusters,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,foldMappingAssignments=citrus.foldClustering$foldMappingAssignments,calculateLeftoutFeatureValues=T)
+  
+  # Build features for clustering of all samples
+  allFeatures = citrus.buildFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,clusterIds=allLargeEnoughClusters,featureType=featureType)
+    
+  result = list(foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,leftoutFeatures=leftoutFeatures,allFeatures=allFeatures,allLargeEnoughClusters=allLargeEnoughClusters,folds=citrus.foldClustering$folds,nFolds=citrus.foldClustering$nFolds)
+  class(result) = "citrus.foldFeatureSet"
+  return(result)
+  
+}
+
 citrus.buildFoldFeatures = function(foldIndex,folds,foldClusterIds,citrus.combinedFCSSet,foldClustering=NULL,foldMappingAssignments=NULL,featureType="abundances",calculateLeftoutFeatureValues=F,...){
-  leavoutFileIds = folds[[foldIndex]]
+  leavoutFileIndices = folds[[foldIndex]]
   
   if (calculateLeftoutFeatureValues){
-    featureFileIds = citrus.combinedFCSSet$fileIds[leavoutFileIds,]
+    featureFileIds = as.vector(citrus.combinedFCSSet$fileIds[leavoutFileIndices,])
     if (is.null(foldMappingAssignments)){
       stop("foldMappingAssignments argument missing")
     }
     cellAssignments = foldMappingAssignments[[foldIndex]]$clusterMembership
   } else {
-    featureFileIds = setdiff(as.vector(citrus.combinedFCSSet$fileIds),leavoutFileIds)
+    featureFileIds = setdiff(as.vector(citrus.combinedFCSSet$fileIds),as.vector(citrus.combinedFCSSet$fileIds[leavoutFileIndices,]))
     if (is.null(foldClustering)){
       stop("foldClustering argument missing")
     }

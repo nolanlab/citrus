@@ -40,16 +40,16 @@ citrus.buildModel.classification = function(features,labels,type,regularizationT
 }
 
 
-citrus.buildFoldModels = function(index,folds,foldFeatures,labels,type,regularizationThresholds,family,...){
-  if (!((length(folds[[index]])==1) && (folds[[index]]=="all"))){
-    if (!is.null(dim(labels))){
-      labels = labels[-folds[[index]],]
-    } else {
-      labels = labels[-folds[[index]]]
-    }
-  }
-  do.call(paste("citrus.buildModel",family,sep="."),args=list(features=foldFeatures[[index]],labels=labels,type=type,regularizationThresholds=regularizationThresholds,finalModelIndex=length(folds),thisFoldIndex=index,...=...))
-}
+#citrus.buildFoldModels = function(index,folds,foldFeatures,labels,type,regularizationThresholds,family,...){
+#  if (!((length(folds[[index]])==1) && (folds[[index]]=="all"))){
+#    if (!is.null(dim(labels))){
+#      labels = labels[-folds[[index]],]
+#    } else {
+#      labels = labels[-folds[[index]]]
+#    }
+#  }
+#  do.call(paste("citrus.buildModel",family,sep="."),args=list(features=foldFeatures[[index]],labels=labels,type=type,regularizationThresholds=regularizationThresholds,finalModelIndex=length(folds),thisFoldIndex=index,...=...))
+#}
 
 #citrus.cvIteration.classification = function(i,modelType,features,labels,regularizationThresholds,nFolds,pamrModel=NULL,alpha=NULL,standardize=NULL){
 #  if (modelType == "pamr"){
@@ -164,22 +164,19 @@ citrus.foldScore = function(index,folds,predictions,labels){
 }
 
 citrus.predict.classification = function(model,features){
-  if ("glmnet" %in% class(model)){
-    predictions = predict(model,newx=features,type="class")
-  } else if (class(model)=="pamrtrained"){
-    predictions = pamr.predictmany(fit=model,newx=t(features))$predclass
+  if (model$type=="glmnet"){
+    predictions = predict(model$model,newx=features,type="class")
+  } else if (model$type=="pamr"){
+    predictions = pamr.predictmany(fit=model$model,newx=t(features))$predclass
   } else {
-    stop(paste("don't know how to predict for class",class(model)));
+    stop(paste("don't know how to predict for class",model$type));
   }
   rownames(predictions) = rownames(features)
   return(predictions)
 }
 
 
-citrus.generateRegularizationThresholds.classification = function(features,labels,modelTypes,n,...){
-  if (length(modelTypes)<1){
-    stop("no regularzation threshold types specified.")
-  }
+citrus.generateRegularizationThresholds.classification = function(features,labels,modelType,n,...){
   addtlArgs = list(...)
   alpha=1
   if ("alpha" %in% names(addtlArgs)){
@@ -191,10 +188,11 @@ citrus.generateRegularizationThresholds.classification = function(features,label
   }
   regs = list()
   
-  if ("pamr" %in% modelTypes){
+  if ("pamr" %in% modelType){
     regs$pamr = rev(pamr.train(data=list(x=t(features),y=labels),n.threshold=n)$threshold)
   }
-  if ("glmnet" %in% modelTypes){
+  
+  if ("glmnet" %in% modelType){
     if (length(unique(labels))==2){
       glmfamily="binomial"
     } else {
@@ -252,7 +250,10 @@ citrus.calculateTypeErroRate = function(modelType,predictionSuccess,regularizati
 
 citrus.calculateTypeFDRRate = function(modelType,foldModels,foldFeatures,labels){
   if (modelType=="pamr"){
-    return(pamr.fdr.new(foldModels[[modelType]][[length(foldModels[[modelType]])]],data=list(x=t(foldFeatures[[length(foldModels)]]),y=labels),nperms=1000)$results[,"Median FDR"])
+    # FIX THIS
+    # Should be average FDR across all models, not just all model 
+    # return(pamr.fdr.new(foldModels[[modelType]][[length(foldModels[[modelType]])]],data=list(x=t(foldFeatures[[length(foldModels)]]),y=labels),nperms=1000)$results[,"Median FDR"])
+    return(NULL)
   } else {
     return(NULL)
   }  

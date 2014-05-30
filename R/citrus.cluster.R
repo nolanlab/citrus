@@ -8,7 +8,8 @@ citrus.mapToClusterSpace = function(citrus.combinedFCSSet.new,citrus.combinedFCS
   }
   
   # Map new data to nearest neighbor in existing clustered dataset
-  nearestNeighborMap = citrus.assignToCluster(tbl=citrus.combinedFCSSet.new$data[citrus.combinedFCSSet.new$data[,"fileId"]%in%fileIds,mappingColumns],cluster_data=citrus.combinedFCSSet.old$data[,mappingColumns],cluster_assign=rep(1,nrow(citrus.combinedFCSSet.old$data)))
+  cat(paste("Mapping",nrow(citrus.combinedFCSSet.new$data),"events\n"))
+  nearestNeighborMap = citrus.assignToCluster(tbl=citrus.combinedFCSSet.new$data[,mappingColumns],cluster_data=citrus.combinedFCSSet.old$data[,mappingColumns],cluster_assign=rep(1,nrow(citrus.combinedFCSSet.old$data)))
   
   # Assign new data to the same clusters as its nearest neighbor in the existing clustered dataset
   newDataClusterAssignments = mclapply(citrus.clustering$clusterMembership,citrus.mapNeighborsToCluster,nearestNeighborMap=nearestNeighborMap,...)
@@ -23,12 +24,12 @@ citrus.mapNeighborsToCluster = function(clusterMembers,nearestNeighborMap){
 }
 
 citrus.mapFoldDataToClusterSpace = function(foldIndex,folds,foldClustering,citrus.combinedFCSSet,...){
-  leavoutFileIds = folds[[foldIndex]]
-  leavoutFileIds = citrus.combinedFCSSet$fileIds[leavoutFileIds,]
-  clusteredFileIds = setdiff(as.vector(citrus.combinedFCSSet$fileIds),leavoutFileIds)
+  leavoutFileIds = as.vector(citrus.combinedFCSSet$fileIds[folds[[foldIndex]],])
+  includeFileIds = setdiff(as.vector(citrus.combinedFCSSet$fileIds),leavoutFileIds)
+  
   
   citrus.mapToClusterSpace(citrus.combinedFCSSet.new=citrus.maskCombinedFCSSet(citrus.combinedFCSSet,leavoutFileIds),
-                           citrus.combinedFCSSet.old=citrus.maskCombinedFCSSet(citrus.combinedFCSSet,clusteredFileIds),
+                           citrus.combinedFCSSet.old=citrus.maskCombinedFCSSet(citrus.combinedFCSSet,includeFileIds),
                            citrus.clustering=foldClustering[[foldIndex]],
                            mappingColumns=foldClustering[[foldIndex]]$clusteringColumns,...)
 }
@@ -90,11 +91,39 @@ print.citrus.clustering = function(x,...){
   cat(paste0("\tClusters:\t",length(x$clusterMembership),"\n"))
 }
 
-citrus.clusterFold = function(leavoutFileIds,citrus.combinedFCSSet,clusteringColumns,clusteringType="hierarchical"){
-  leavoutFileIds = citrus.combinedFCSSet$fileIds[leavoutFileIds,]
+citrus.clusterFold = function(foldIndex,folds,citrus.combinedFCSSet,clusteringColumns,clusteringType="hierarchical"){
+  leavoutFileIds = as.vector(citrus.combinedFCSSet$fileIds[folds[[foldIndex]],])
   includeFileIds = setdiff(as.vector(citrus.combinedFCSSet$fileIds),leavoutFileIds)
   citrus.cluster(citrus.maskCombinedFCSSet(citrus.combinedFCSSet,fileIds=includeFileIds),clusteringColumns,clusteringType)
 }
+
+citrus.clusterAndMapFolds = function(citrus.combinedFCSSet,clusteringColumns,labels,clusteringType="hierarchical",nFolds=10,...){
+  addtlArgs = list(...)
+  
+  # Define Folds
+  if ("nFolds" %in% names(addtlArgs)){
+    nFolds = addtlArgs[["nFolds"]]
+  }
+  folds = pamr:::balanced.folds(y=labels,nfolds=nFolds)
+  
+  # Cluster fold events
+  cat("\n")
+  foldClustering = lapply(1:nFolds,citrus.clusterFold,folds=folds,citrus.combinedFCSSet=citrus.combinedFCSSet,clusteringColumns=clusteringColumns,clusteringType=clusteringType)
+  allClustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns,clusteringType)
+  
+  # Map leftout data 
+  foldMappingAssignments = lapply(1:nFolds,citrus.mapFoldDataToClusterSpace,folds=folds,foldClustering=foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet)
+
+  result = list(foldClustering=foldClustering,foldMappingAssignments=foldMappingAssignments,allClustering=allClustering,folds=folds,nFolds=nFolds)
+  class(result) = "citrus.foldClustering"
+  return(result)
+}
+
+print.citrus.foldClustering = function(x,...){
+  cat("citrus.foldClustering\n")
+  cat(paste("\tNumber of Folds: ",length(x$folds),"\n"))
+}
+
 
 
 citrus.cluster.hierarchical = function(data){
