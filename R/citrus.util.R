@@ -1,4 +1,4 @@
-citrus.readFCSSet = function(dataDir,fileList,conditions=NULL,fileSampleSize=NULL,transformCols=NULL,transformCofactor=5,useChannelDescriptions=F,...){
+citrus.readFCSSet = function(dataDirectory,fileList,conditions=NULL,fileSampleSize=NULL,transformColumns=NULL,transformCofactor=5,useChannelDescriptions=F,...){
   data = list();
   fileCounter = 1;
   fileNames = c();
@@ -16,7 +16,7 @@ citrus.readFCSSet = function(dataDir,fileList,conditions=NULL,fileSampleSize=NUL
     fileReagentNames[[conditions[i]]] = list();
     for (fileName in fileList[,conditions[i]]){
       fileNames[fileCounter]=fileName
-      filePath = file.path(dataDir,fileName);
+      filePath = file.path(dataDirectory,fileName);
       if (!file.exists(filePath)){
         stop(paste("File",filePath,"not found."));
       }
@@ -35,14 +35,14 @@ citrus.readFCSSet = function(dataDir,fileList,conditions=NULL,fileSampleSize=NUL
       fcsData = cbind(fcsData,fileEventNumber=1:nrow(fcsData),fileId=fileCounter);
       fileCounter=fileCounter+1;
       
-      if (!is.null(transformCols)){
-        if (any(!is.numeric(transformCols))){
-          containedCols = setdiff(transformCols,colnames(fcsData))
+      if (!is.null(transformColumns)){
+        if (any(!is.numeric(transformColumns))){
+          containedCols = setdiff(transformColumns,colnames(fcsData))
           if (length(containedCols)>0){
             stop(paste("Transform cols",paste(containedCols,collapse=", "),"not found. Valid channel names:",paste(colnames(fcsData),collapse=", ")))
           }  
         }
-        fcsData[,transformCols] = asinh(fcsData[,transformCols]/transformCofactor);
+        fcsData[,transformColumns] = asinh(fcsData[,transformColumns]/transformCofactor);
       }
       
       if ((!is.null(fileSampleSize))&&(fileSampleSize<nrow(fcsData))){

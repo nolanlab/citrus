@@ -19,57 +19,59 @@
 #' @details Details about the cluster conditions matrix, fold features, etc.
 #' @author Robert Bruggner
 #' @references http://github.com/nolanlab/citrus/
-citrus.full = function(dataDir,outputDir,clusterCols,labels,nFolds,family,fileList=NULL,filePopulationList=NULL,modelTypes=c("glmnet"),featureTypes=c("abundances"),minimumClusterSizePercent=0.05,fileSampleSize=NULL,transformCols=NULL,conditionComparaMatrix=NULL,plot=T,transformCofactor=NULL,...){
+citrus.full = function(dataDirectory,
+                       clusterCols,
+                       labels,
+                       family,
+                       fileList,
+                       outputDirectory,
+                       modelTypes=c("glmnet"),
+                       nFolds=1,
+                       featureTypes=c("abundances"),
+                       minimumClusterSizePercent=0.05,
+                       fileSampleSize=NULL,
+                       transformColumns=NULL,
+                       conditionComparaMatrix=NULL,
+                       plot=T,
+                       transformCofactor=NULL,
+                       ...){
   
-  balanceFactor=NULL
-  if (family=="survival"){
-    balanceFactor=as.factor(labels[,"event"])
-    if ((ncol(labels)!=2)||(!all(colnames(labels) %in% c("time","event")))){
-      stop("Incorrect labeling for files. Expecting 'time' and 'event' label columns.")
-    }
-  }
+  #balanceFactor=NULL
+  #if (family=="survival"){
+  #  balanceFactor=as.factor(labels[,"event"])
+  #  if ((ncol(labels)!=2)||(!all(colnames(labels) %in% c("time","event")))){
+  #    stop("Incorrect labeling for files. Expecting 'time' and 'event' label columns.")
+  #  }
+  #}
   
   if (is.null(fileSampleSize)){
-    fileSampleSize = 50/minimumClusterSizePercent
+    fileSampleSize = 100/minimumClusterSizePercent
   }
   
   # No point in running cv if SAM only model
   if (all(modelTypes=="sam")){
-    nFolds="all"
+    nFolds=1
   }
   
-  if (!is.null(fileList)){
-    preclusterResult = citrus.preCluster(dataDir=dataDir,
-                                         outputDir=outputDir,
-                                         clusterCols=clusterCols,
-                                         fileSampleSize=fileSampleSize,
-                                         fileList=fileList,
-                                         nFolds=nFolds,
-                                         transformCols=transformCols,
-                                         conditionComparaMatrix=conditionComparaMatrix,
-                                         balanceFactor=balanceFactor,
-                                         transformCofactor=transformCofactor,...)
-    plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph")
-  } else if (!is.null(filePopulationList)){
-    if (("abundances" %in% featureTypes) && (!is.null(fileSampleSize))){
-      stop("File subsampling may not be used with manually gated populations.")
-    }
-    preclusterResult = citrus.assembleHandGates(dataDir,filePopulationList,conditionComparaMatrix,fileSampleSize,...)
+  # Read in data
+  citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory=dataDirectory,fileList=fileList,fileSampleSize=fileSampleSize,transformColumns=transformColumns,useChannelDescriptions=T)
     
-    plotTypes=c("errorRate","stratifyingFeatures")
-  } else {
-    stop("Either fileList or filePopulationList arguments must be provided")
-  }
-      
-  #featureObject = citrus.buildFeatures(preclusterResult,outputDir,featureTypes,minimumClusterSizePercent)
-  featureObject = citrus.buildFeatures(preclusterResult,outputDir,featureTypes,minimumClusterSizePercent,...)
+  # Cluster each fold
+  citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,labels=labels,nFolds=nFolds)
+  save(list=c("citrus.combinedFCSSet","citrus.foldClustering"),file=file.path(outputDirectory,"citrusClustering.rData"),compress=F)
+    
+  # Calculate fold features
+  citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,minimumClusterSizePercent=minimumClusterSizePercent)
   
-  #regressionResults = citrus.endpointRegress(conditionFeatureList=featureObject,family=family,modelTypes=modelTypes,labels=labels) 
-  regressionResults = citrus.endpointRegress(conditionFeatureList=featureObject,family=family,modelTypes=modelTypes,labels=labels,...) 
+  citrus.regressionResults = lapply(modelTypes,citrus.endpointRegress,citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,family=family)
+  names(citrus.regressionResults) = modelTypes
+    
+      
   if (plot){
-    citrus.plotRegressionResults(outputDir,citrus.preclusterResult=preclusterResult,conditionFeatureList=featureObject,citrus.regressionResult=regressionResults,modelTypes,family,labels,plotTypes,mcsp=minimumClusterSizePercent)
+    citrus.plotRegressionResults(outputDirectory,citrus.foldClustering,citrus.foldFeatureSet,citrus.regressionResults,citrus.combinedFCSSet,family,labels)  
   }
-  return(list(preclusterResult=preclusterResult,featureObject=featureObject,regressionResults=regressionResults))
+  results = list(citrus.foldClustering=citrus.foldClustering,citrus.foldFeatureSet=citrus.foldFeatureSet,citrus.regressionResults=citrus.regressionResults)
+  class(results) = "citrus.full.result"
 }
 
 #citrus.endpointRegress = function(conditionFeatureList,family,modelTypes,labels,...){

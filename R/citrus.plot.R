@@ -1,30 +1,29 @@
-citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds,thresholdCVRates,foldModels,cvMinima,family){  
+citrus.plotTypeErrorRate = function(modelType,modelOutputDirectory,regularizationThresholds,thresholdCVRates,finalModel,cvMinima,family){  
     if (modelType=="sam"){
       return()
     }
-    nAllFolds = length(foldModels[[modelType]])
-    modelOutputDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
-    pdf(file.path(modelOutputDir,"ModelErrorRate.pdf"),width=6,height=6)
-    thresholds=regularizationThresholds[[modelType]]
-    errorRates=thresholdCVRates[[modelType]][,"cvm"]
+    
+    pdf(file.path(modelOutputDirectory,"ModelErrorRate.pdf"),width=6,height=6)
+    thresholds=regularizationThresholds
+    errorRates=thresholdCVRates[,"cvm"]
     ylim=c(0,1)
     ylab="Model Cross Validation Error Rate"
     if (modelType=="glmnet"){
       thresholds = log(thresholds)
       xlab="log(Regularization Threshold)"
-      nonzeroCounts = foldModels[[modelType]][[nAllFolds]]$df
+      nonzeroCounts = finalModel$df
       if (family=="survival"){
         ylim=range(errorRates,na.rm=T)
         ylab="Model Cross Validation Partial Likelihood"
       }
     } else if (modelType=="pamr"){
       xlab="Regularization Threshold"
-      nonzeroCounts = foldModels[[modelType]][[nAllFolds]]$nonzero
+      nonzeroCounts = finalModel$nonzero
     }
     plot(errorRates,type='o',pch=20,col="red",main="Number of model features\n",axes=F,xlab=xlab,ylim=ylim,ylab=ylab)
     #Plot SEM
     for (i in 1:length(thresholds)){
-      lines(c(i,i),c(errorRates[i]+thresholdCVRates[[modelType]][,"cvsd"][i],errorRates[i]-thresholdCVRates[[modelType]][,"cvsd"][i]),col="red",lty=3)
+      lines(c(i,i),c(errorRates[i]+thresholdCVRates[,"cvsd"][i],errorRates[i]-thresholdCVRates[,"cvsd"][i]),col="red",lty=3)
     }
     grid()
     axis(1,at=1:length(errorRates),labels=sapply(thresholds,citrus.formatDecimal))
@@ -40,7 +39,7 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
     legendPchs = c(20)
     legendLty = c(1)
     legendPtCex=c(1)
-    if (!is.null(thresholdCVRates[[modelType]]$fdr)){
+    if (!is.null(thresholdCVRates$fdr)){
       lines(thresholdCVRates[[modelType]]$fdr,type='o',pch=1,cex=1.5,col="blue")
       legendLabels = c(legendLabels,"Feature False Discovery Rate")
       legendColors = c(legendColors,"blue")
@@ -49,8 +48,8 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
       legendPtCex=c(legendPtCex,1)
     }
     
-    cv.min = cvMinima[[modelType]]$cv.min.index
-    cv.1se = cvMinima[[modelType]]$cv.1se.index
+    cv.min = cvMinima$cv.min.index
+    cv.1se = cvMinima$cv.1se.index
     if (!is.null(cv.min)){
       points(c(cv.min,cv.min),y=c(errorRates[cv.min],errorRates[cv.min]),col="green",pch=20,cex=2)  
     }
@@ -64,9 +63,9 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
     legendLty = c(legendLty,0,0)
     legendPtCex=c(legendPtCex,2,1.5)  
        
-    if ( "cv.fdr.constrained" %in% names(cvMinima[[modelType]])) {
+    if ( "cv.fdr.constrained" %in% names(cvMinima)) {
       
-      cv.fdr.constrained = cvMinima[[modelType]]$cv.fdr.constrained.index
+      cv.fdr.constrained = cvMinima$cv.fdr.constrained.index
       points(c(cv.fdr.constrained,cv.fdr.constrained),y=c(errorRates[cv.fdr.constrained],errorRates[cv.fdr.constrained]),col="yellow",pch=17,cex=1.5)
       points(c(cv.fdr.constrained,cv.fdr.constrained),y=c(errorRates[cv.fdr.constrained],errorRates[cv.fdr.constrained]),col="black",pch=2,cex=1.5)
       legendLabels = c(legendLabels,"cv.fdr.constrained")
@@ -80,13 +79,13 @@ citrus.plotTypeErrorRate = function(modelType,outputDir,regularizationThresholds
     dev.off()   
 }
 
-citrus.plotDifferentialFeatures = function(modelType,differentialFeatures,features,outputDir,labels,family,foldModels,cvMinima,regularizationThresholds){
+citrus.plotDifferentialFeatures = function(differentialFeatures,features,modelOutputDirectory,labels,family,...){
   # Passing sam models makes things go crazy so this is a hack to avoid problems debugging. 
-  if (family=="survival"){
-    do.call(paste("citrus.plotModelDifferentialFeatures",family,sep="."),args=list(modelType=modelType,differentialFeatures=differentialFeatures,features=features,outputDir=outputDir,labels=labels,foldModels=foldModels,cvMinima=cvMinima,regularizationThresholds=regularizationThresholds))    
-  } else {
-    do.call(paste("citrus.plotModelDifferentialFeatures",family,sep="."),args=list(modelType=modelType,differentialFeatures=differentialFeatures,features=features,outputDir=outputDir,labels=labels,cvMinima=cvMinima,regularizationThresholds=regularizationThresholds))
-  }
+#  if (family=="survival"){
+#    do.call(paste("citrus.plotModelDifferentialFeatures",family,sep="."),args=list(modelType=modelType,differentialFeatures=differentialFeatures,features=features,outputDir=outputDir,labels=labels,foldModels=foldModels,cvMinima=cvMinima,regularizationThresholds=regularizationThresholds))    
+#  } else {
+    do.call(paste("citrus.plotModelDifferentialFeatures",family,sep="."),args=list(differentialFeatures=differentialFeatures,features=features,modelOutputDirectory=modelOutputDirectory,labels=labels))
+ # }
 }
 
 citrus.plotModelDifferentialFeatures.survival = function(modelType,differentialFeatures,features,outputDir,labels,foldModels,cvMinima,regularizationThresholds,...){
@@ -132,23 +131,17 @@ citrus.plotModelDifferentialFeatures.survival = function(modelType,differentialF
   }
 }
 
-citrus.plotModelDifferentialFeatures.classification = function(modelType,differentialFeatures,features,outputDir,labels,...){
-  for (cvPoint in names(differentialFeatures[[modelType]])){
-    modelTypeDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
-    nonzeroFeatureNames = differentialFeatures[[modelType]][[cvPoint]][["features"]]
+citrus.plotModelDifferentialFeatures.classification = function(differentialFeatures,features,modelOutputDirectory,labels,...){
+  for (cvPoint in names(differentialFeatures)){
+    nonzeroFeatureNames = differentialFeatures[[cvPoint]][["features"]]
 
     # Write features to file for easy parsing
-    write.table(features[,nonzeroFeatureNames],file=file.path(modelTypeDir,paste("features_",cvPoint,".csv",sep="")),quote=F,sep=",")
+    write.table(features[,nonzeroFeatureNames],file=file.path(modelOutputDirectory,paste("features_",cvPoint,".csv",sep="")),quote=F,sep=",")
 
     melted = melt(data.frame(features[,nonzeroFeatureNames,drop=F],labels=labels,check.names=F),id.vars="labels")
     
-    #nrow=ceiling(length(nonzeroFeatureNames)/4)
-    #ncol=1
-    #if (length(nonzeroFeatureNames)<4){
-    #  ncol=length(nonzeroFeatureNames)
-    #}
     
-    pdf(file.path(modelTypeDir,paste("features-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=4,height=length(nonzeroFeatureNames)*1.5)
+    pdf(file.path(modelOutputDirectory,paste("features-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=4,height=length(nonzeroFeatureNames)*1.5)
     p <- ggplot(melted, aes(x=factor(labels), y=value)) 
     p = p + facet_wrap(~variable,ncol=1) + geom_boxplot(outlier.colour=rgb(0,0,0,0),colour=rgb(0,0,0,.3)) + geom_point(aes(color=factor(labels)),alpha=I(0.25),shape=19,size=I(2)) + coord_flip() +  theme_bw() + ylab("") + xlab("") + theme(legend.position = "none")
     if (any(grepl(pattern="abundance",nonzeroFeatureNames))){
@@ -181,41 +174,42 @@ citrus.overlapDensityPlot = function(clusterDataList,backgroundData){
   print(p)
 }
 
-citrus.plotModelClusters = function(modelType,differentialFeatures,outputDir,clusterAssignments,citrus.dataArray,conditions,clusterCols){
-  for (cvPoint in names(differentialFeatures[[modelType]])){
-    clusterIds = as.numeric(differentialFeatures[[modelType]][[cvPoint]][["clusters"]])
-    outputFile = file.path(outputDir,paste(modelType,"_results/clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep=""))
-    citrus.plotClusters(clusterIds,clusterAssignments=clusterAssignments[[length(clusterAssignments)]],citrus.dataArray,conditions,clusterCols,outputFile=outputFile)
+citrus.plotModelClusters = function(differentialFeatures,modelOutputDirectory,clusterAssignments,citrus.combinedFCSSet,clusteringColumns){
+  for (cvPoint in names(differentialFeatures)){
+    clusterIds = as.numeric(differentialFeatures[[cvPoint]][["clusters"]])
+    outputFile = file.path(modelOutputDirectory,paste("clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep=""))
+    citrus.plotClusters(clusterIds,clusterAssignments=clusterAssignments,citrus.combinedFCSSet,clusteringColumns,outputFile=outputFile)
   }
 }
 
-citrus.plotClusters = function(clusterIds,clusterAssignments,citrus.dataArray,conditions,clusterCols,outputFile=NULL){
-  data = citrus.dataArray$data[citrus.dataArray$data[,"fileId"] %in% citrus.dataArray$fileIds[,conditions],]
+citrus.plotClusters = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,clusteringColumns,outputFile=NULL){
+  #data = citrus.dataArray$data[citrus.dataArray$data[,"fileId"] %in% citrus.dataArray$fileIds[,conditions],]
+  data = citrus.combinedFCSSet$data
   if (!is.null(outputFile)){
-    pdf(file=outputFile,width=(2.2*length(clusterCols)+2),height=(2*length(clusterIds)))  
+    pdf(file=outputFile,width=(2.2*length(clusteringColumns)+2),height=(2*length(clusterIds)))  
   }
   clusterDataList = list();
   for (clusterId in sort(clusterIds)){
     if (length(clusterAssignments[[clusterId]])>2500){
-      clusterDataList[[as.character(clusterId)]]=data[clusterAssignments[[clusterId]],clusterCols][sample(1:length(clusterAssignments[[clusterId]]),2500),]
+      clusterDataList[[as.character(clusterId)]]=data[clusterAssignments[[clusterId]],clusteringColumns][sample(1:length(clusterAssignments[[clusterId]]),2500),]
     } else {
-      clusterDataList[[as.character(clusterId)]]=data[clusterAssignments[[clusterId]],clusterCols]
+      clusterDataList[[as.character(clusterId)]]=data[clusterAssignments[[clusterId]],clusteringColumns]
     }
     
-    colLabels = citrus.dataArray$fileChannelNames[[conditions[1]]][[1]]
-    reagentNames = citrus.dataArray$fileReagentNames[[conditions[1]]][[1]]
+    colLabels = citrus.combinedFCSSet$fileChannelNames[[1]][[1]]
+    reagentNames = citrus.combinedFCSSet$fileReagentNames[[1]][[1]]
     displayNames = colLabels
     displayNames[nchar(reagentNames)>1] = reagentNames[nchar(reagentNames)>1]
-    if (is.numeric(clusterCols)){
-      colnames(clusterDataList[[as.character(clusterId)]])=displayNames[clusterCols]  
+    if (is.numeric(clusteringColumns)){
+      colnames(clusterDataList[[as.character(clusterId)]])=displayNames[clusteringColumns]  
     } else {
-      colnames(clusterDataList[[as.character(clusterId)]])=displayNames[colLabels%in%clusterCols]
+      colnames(clusterDataList[[as.character(clusterId)]])=displayNames[colLabels%in%clusteringColumns]
     }
   }
   if (nrow(data)>2500){
-    bgData = data[sample(1:nrow(data),2500),clusterCols]
+    bgData = data[sample(1:nrow(data),2500),clusteringColumns]
   } else {
-    bgData = data[,clusterCols]
+    bgData = data[,clusteringColumns]
   }
   colnames(bgData) = colnames(clusterDataList[[1]])
   citrus.overlapDensityPlot(clusterDataList=clusterDataList,backgroundData=bgData)
@@ -370,14 +364,10 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
   dev.off()
 }
 
-citrus.createPlotOutputDirectory = function(modelType,outputDir){
-  modelOutputDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
-  dir.create(modelOutputDir,showWarnings=F,recursive=T)
-}
 
 
 # Plot
-citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,conditionFeatureList,citrus.regressionResult,modelTypes,family,labels,plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph"),...){
+citrus.plotRegressionResults = function(outputDirectory,citrus.foldClustering,citrus.foldFeatureSet,citrus.regressionResults,citrus.combinedFCSSet,family,labels,plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph"),...){
   addtlArgs = list(...)
   
   theme="black"
@@ -385,81 +375,85 @@ citrus.plotRegressionResults = function(outputDir,citrus.preclusterResult,condit
     theme = addtlArgs[["theme"]]
   }
   
-  for (conditionName in names(citrus.regressionResult)){
-    nAllFolds = length(conditionFeatureList[[conditionName]]$foldFeatures)
-    # Make condition output directoy
-    conditionOutputDir = file.path(outputDir,conditionName)
-    sapply(modelTypes,citrus.createPlotOutputDirectory,outputDir=conditionOutputDir)
+  if ("clusterGraph" %in% plotTypes){
+    mcsp=0.05
+    if ("mcsp" %in% names(addtlArgs)){
+      mcsp=addtlArgs[["mcsp"]]
+    }
+    if (mcsp<0.005){
+      minVertexSize=0
+      plotSize=35
+    } else if (mcsp<0.01){
+      minVertexSize=4
+      plotSize=20
+    } else if (mcsp<0.05){
+      minVertexSize=6
+      plotSize=15
+    } else {
+      minVertexSize=8
+      plotSize=10
+    }
+    # Graph setup
+    g = citrus.createHierarchyGraph(largeEnoughClusters=citrus.foldFeatureSet$allLargeEnoughClusters,mergeOrder=citrus.foldClustering$allClustering$clustering$merge,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,minVertexSize=minVertexSize)
+    l = layout.reingold.tilford(g,root=length(V(g)),circular=T)
     
+    # Median Plots
+    clusterMedians = t(sapply(citrus.foldFeatureSet$allLargeEnoughClusters,.getClusterMedians,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,data=citrus.combinedFCSSet$data,clusterCols=citrus.foldClustering$allClustering$clusteringColumns))
+    rownames(clusterMedians) = citrus.foldFeatureSet$allLargeEnoughClusters
+    colnames(clusterMedians) = .getDisplayNames(citrus.combinedFCSSet,clusteringColumns)
+    
+    citrus.plotHierarchicalClusterMedians(outputFile=file.path(outputDirectory,"markerPlots.pdf"),clusterMedians,graph=g,layout=l,plotSize=plotSize,theme=theme)
+    citrus.plotHierarchicalClusterMedians(outputFile=file.path(outputDirectory,"markerPlotsAll.pdf"),clusterMedians,graph=g,layout=l,plotSize=plotSize,theme=theme,singlePDF=T,plotClusterIDs=F)
+  }
+  
+  for (modelType in names(citrus.regressionResults)){
+    cat(paste("Plotting results for",modelType,"\n"))
+    
+    # Make model output directoy
+    modelOutputDirectory = file.path(outputDirectory,paste0(modelType,"_results"))
+    dir.create(modelOutputDirectory,showWarnings=F,recursive=T)
     
     if ("errorRate" %in% plotTypes){
       cat("Plotting Error Rate\n")
-      sapply(modelTypes,citrus.plotTypeErrorRate,outputDir=conditionOutputDir,regularizationThresholds=citrus.regressionResult[[conditionName]]$regularizationThresholds,thresholdCVRates=citrus.regressionResult[[conditionName]]$thresholdCVRates,cvMinima=citrus.regressionResult[[conditionName]]$cvMinima,foldModels=citrus.regressionResult[[conditionName]]$foldModels,family=family)
+      citrus.plotTypeErrorRate(modelType=modelType,modelOutputDirectory=modelOutputDirectory,regularizationThresholds=citrus.regressionResults[[modelType]]$regularizationThresholds,thresholdCVRates=citrus.regressionResults[[modelType]]$thresholdCVRates,finalModel=citrus.regressionResults[[modelType]]$finalModel$model,cvMinima=citrus.regressionResults[[modelType]]$cvMinima,family=family)
     }
-    
+      
     if ("stratifyingFeatures" %in% plotTypes){
       cat("Plotting Stratifying Features\n")
-      lapply(modelTypes,citrus.plotDifferentialFeatures,differentialFeatures=citrus.regressionResult[[conditionName]]$differentialFeatures,features=conditionFeatureList[[conditionName]]$foldFeatures[[nAllFolds]],outputDir=conditionOutputDir,labels=labels,family=family,cvMinima=citrus.regressionResult[[conditionName]]$cvMinima,foldModels=citrus.regressionResult[[conditionName]]$foldModels,regularizationThresholds=citrus.regressionResult[[conditionName]]$regularizationThresholds)
+      citrus.plotDifferentialFeatures(differentialFeatures=citrus.regressionResults[[modelType]]$differentialFeatures,features=citrus.foldFeatureSet$allFeatures,modelOutputDirectory=modelOutputDirectory,labels=labels,family=family)
     }
     
     if ("stratifyingClusters" %in% plotTypes){
       cat("Plotting Stratifying Clusters\n")
-      lapply(modelTypes,citrus.plotModelClusters,differentialFeatures=citrus.regressionResult[[conditionName]]$differentialFeatures,outputDir=conditionOutputDir,clusterAssignments=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments,citrus.dataArray=citrus.preclusterResult[[conditionName]]$citrus.dataArray,conditions=citrus.preclusterResult[[conditionName]]$conditions,clusterCols=citrus.preclusterResult[[conditionName]]$clusterColumns)
+      citrus.plotModelClusters(differentialFeatures=citrus.regressionResults[[modelType]]$differentialFeatures,modelOutputDirectory=modelOutputDirectory,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,citrus.combinedFCSSet=citrus.combinedFCSSet,clusteringColumns=citrus.foldClustering$allClustering$clusteringColumns)
     }
     
-    
-    # GO BACK AND MAKE THIS PARALLEL CALLS....
+      
     if ("clusterGraph" %in% plotTypes){
-      mcsp=0.05
-      if ("mcsp" %in% names(addtlArgs)){
-        mcsp=addtlArgs[["mcsp"]]
-      }
-      if (mcsp<0.005){
-        minVertexSize=0
-        plotSize=35
-      } else if (mcsp<0.01){
-        minVertexSize=4
-        plotSize=20
-      } else if (mcsp<0.05){
-        minVertexSize=6
-        plotSize=15
-      } else {
-        minVertexSize=8
-        plotSize=10
-      }
-      
-      cat("Plotting Clustering Graph\n")
-      g = citrus.createHierarchyGraph(largeEnoughClusters=conditionFeatureList[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],mergeOrder=citrus.preclusterResult[[conditionName]]$foldsCluster[[nAllFolds]]$merge,clusterAssignments=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments[[nAllFolds]],minVertexSize=minVertexSize)
-      l = layout.reingold.tilford(g,root=length(V(g)),circular=T)
-      clusterMedians = t(sapply(conditionFeatureList[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]],.getClusterMedians,clusterAssignments=citrus.preclusterResult[[conditionName]]$foldsClusterAssignments[[nAllFolds]],data=citrus.preclusterResult[[conditionName]]$citrus.dataArray$data,clusterCols=citrus.preclusterResult[[conditionName]]$clusterColumns))
-      
-      ### CHECK TO SEE IF THIS MAKES MARKERPLOT NAMES CORRECTLY 
-      colLabels = citrus.preclusterResult[[conditionName]]$citrus.dataArray$fileChannelNames[[conditionName]][[1]]
-      reagentNames = citrus.preclusterResult[[conditionName]]$citrus.dataArray$fileReagentNames[[conditionName]][[1]]
-      displayNames = colLabels
-      displayNames[nchar(reagentNames)>1] = reagentNames[nchar(reagentNames)>1]
-      if (is.numeric(citrus.preclusterResult[[conditionName]]$clusterColumns)){
-        colnames(clusterMedians)=displayNames[citrus.preclusterResult[[conditionName]]$clusterColumns]  
-      } else {
-        colnames(clusterMedians)=displayNames[colLabels%in%citrus.preclusterResult[[conditionName]]$clusterColumns]
-      }
-      ###
-      
-      rownames(clusterMedians) = conditionFeatureList[[conditionName]]$foldLargeEnoughClusters[[nAllFolds]]
-      for (modelType in names(citrus.regressionResult[[conditionName]]$differentialFeatures)){
-        citrus.plotHierarchicalClusterMedians(outputFile=file.path(conditionOutputDir,"markerPlots.pdf"),clusterMedians,graph=g,layout=l,plotSize=plotSize,theme=theme)
-        citrus.plotHierarchicalClusterMedians(outputFile=file.path(conditionOutputDir,"markerPlotsAll.pdf"),clusterMedians,graph=g,layout=l,plotSize=plotSize,theme=theme,singlePDF=T,plotClusterIDs=F)
-        write.csv(clusterMedians,file=file.path(conditionOutputDir,"clusterMarkerMedianValues.csv"),quote=F)
-        for (cvPoint in names(citrus.regressionResult[[conditionName]]$differentialFeatures[[modelType]])){
-          featureClusterMatrix = .getClusterFeatureMatrix(citrus.regressionResult[[conditionName]]$differentialFeatures[[modelType]][[cvPoint]][["features"]])
-          citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(conditionOutputDir,paste(modelType,"results",sep="_"),paste("featurePlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,graph=g,layout=l,plotSize=plotSize,theme=theme)
-        }
+      for (cvPoint in names(citrus.regressionResults[[modelType]]$differentialFeatures)){
+        featureClusterMatrix = .getClusterFeatureMatrix(citrus.regressionResults[[modelType]]$differentialFeatures[[cvPoint]][["features"]])
+        citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(modelOutputDirectory,paste("featurePlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,graph=g,layout=l,plotSize=plotSize,theme=theme)
       }
     }
-  }
+  }  
+  
 }
 
 .graphColorPalette=function(x,alpha=1){
   #rainbow(x,alpha=.8,start=.65,end=.15)
   topo.colors(x,alpha=alpha)
+}
+
+.getDisplayNames=function(citrus.combinedFCSSet,clusteringColumns){
+  colLabels = citrus.combinedFCSSet$fileChannelNames[[1]][[1]]
+  reagentNames = citrus.combinedFCSSet$fileReagentNames[[1]][[1]]
+  displayNames = colLabels
+  displayNames[nchar(reagentNames)>1] = reagentNames[nchar(reagentNames)>1]
+  if (all(is.numeric(clusteringColumns))){
+    return(displayNames[clusteringColumns])
+  } else {
+    names(displayNames) = colLabels
+    return(as.vector(displayNames[clusteringColumns]))
+  }
+  
 }
