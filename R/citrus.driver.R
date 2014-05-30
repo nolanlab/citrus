@@ -72,82 +72,79 @@ citrus.full = function(dataDir,outputDir,clusterCols,labels,nFolds,family,fileLi
   return(list(preclusterResult=preclusterResult,featureObject=featureObject,regressionResults=regressionResults))
 }
 
-citrus.endpointRegress = function(conditionFeatureList,family,modelTypes,labels,...){
-  
-  if (!(family %in% citrus.familyList())){
-    stop("'family' argument must specified and one of the following: ",paste(citrus.familyList(),collapse=", "))
-  }
-  
-  if (family=="survival" && ("pamr" %in% modelTypes)){
-    warning("'pamr' model not implemented for 'survival' analysis. Removing.");
-    modelTypes=modelTypes[-which(modelTypes=="pamr")]
-  }
-  
-  if (length(modelTypes)==0){
-    stop("No model types specified.")
-  }
-  
-  
-  if (family=="survival"){
-    if ((ncol(labels)!=2)||(!all(colnames(labels) %in% c("time","event")))){
-      stop("Incorrect labeling for files. Expecting 'time' and 'event' label columns.")
-    }
-    lengthLabels = nrow(labels)
-  } else {
-    lengthLabels = length(labels)
-  }
-  
-  regressionRes=list()
-  for (conditionName in names(conditionFeatureList)){
+#citrus.endpointRegress = function(conditionFeatureList,family,modelTypes,labels,...){
+#  
+#  if (!(family %in% citrus.familyList())){
+#    stop("'family' argument must specified and one of the following: ",paste(citrus.familyList(),collapse=", "))
+#  }
+#  
+#  if (family=="survival" && ("pamr" %in% modelTypes)){
+#    warning("'pamr' model not implemented for 'survival' analysis. Removing.");
+#    modelTypes=modelTypes[-which(modelTypes=="pamr")]
+#  }
+#  
+#  if (length(modelTypes)==0){
+#    stop("No model types specified.")
+#  }
+#  
+#  
+#  if (family=="survival"){
+#    if ((ncol(labels)!=2)||(!all(colnames(labels) %in% c("time","event")))){
+#      stop("Incorrect labeling for files. Expecting 'time' and 'event' label columns.")
+#    }
+#    lengthLabels = nrow(labels)
+#  } else {
+#    lengthLabels = length(labels)
+#  }
+#  
+#  regressionRes=list()
+#  for (conditionName in names(conditionFeatureList)){
     # Calculate Regularization Thresholds
-    nAllFolds = length(conditionFeatureList[[conditionName]]$folds)
-    if (lengthLabels!=nrow(conditionFeatureList[[conditionName]]$foldFeatures[[nAllFolds]])){
-      stop(paste("Number of Lables not equal to number of samples."))
-    }    
+#    nAllFolds = length(conditionFeatureList[[conditionName]]$folds)
+#    if (lengthLabels!=nrow(conditionFeatureList[[conditionName]]$foldFeatures[[nAllFolds]])){
+#      stop(paste("Number of Lables not equal to number of samples."))
+#    }    
     
-    quick=F
-    if (length(nAllFolds==1)&&conditionFeatureList[[conditionName]]$folds[[1]]=="all"){
-      quick=T
-    }
-    
-    cat("Calculating Regularization Thresholds\n")
-    #regularizationThresholds = do.call(paste("citrus.generateRegularizationThresholds",family,sep="."),args=list(features=conditionFeatureList[[conditionName]]$foldFeatures[[nAllFolds]],labels=labels,modelTypes=modelTypes,n=100))
-    regularizationThresholds = do.call(paste("citrus.generateRegularizationThresholds",family,sep="."),args=list(features=conditionFeatureList[[conditionName]]$foldFeatures[[nAllFolds]],labels=labels,modelTypes=modelTypes,n=100,...))
-    
-    # Build Fold Models
-    cat("\nBuilding folds models\n")
-    #foldModels = citrus.buildModels(folds=conditionFeatureList[[conditionName]]$folds,foldFeatures=conditionFeatureList[[conditionName]]$foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,modelTypes=modelTypes,family=family)
-    foldModels = citrus.buildModels(folds=conditionFeatureList[[conditionName]]$folds,foldFeatures=conditionFeatureList[[conditionName]]$foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,modelTypes=modelTypes,family=family,...)
-    names(foldModels)=modelTypes
-    
-    # Calculate fold deviances
-    cat("\nCalculating threshold deviance rates\n")
-    if (quick){
-      thresholdCVRates = citrus.thresholdCVs.quick(foldModels=foldModels,foldFeatures=conditionFeatureList[[conditionName]]$foldFeatures,modelTypes=modelTypes,regularizationThresholds=regularizationThresholds,labels=labels,family=family)
-    } else {
-      thresholdCVRates = do.call(paste("citrus.thresholdCVs",family,sep="."),args=list(foldModels=foldModels,leftoutFeatures=conditionFeatureList[[conditionName]]$leftoutFeatures,foldFeatures=conditionFeatureList[[conditionName]]$foldFeatures,modelTypes=modelTypes,regularizationThresholds=regularizationThresholds,labels=labels,folds=conditionFeatureList[[conditionName]]$folds))  
-    }
+#    quick=F
+#    if (length(nAllFolds==1)&&conditionFeatureList[[conditionName]]$folds[[1]]=="all"){
+#      quick=T
+#    }
+#    cat("Calculating Regularization Thresholds\n")
+#    #regularizationThresholds = do.call(paste("citrus.generateRegularizationThresholds",family,sep="."),args=list(features=conditionFeatureList[[conditionName]]$foldFeatures[[nAllFolds]],labels=labels,modelTypes=modelTypes,n=100))
+#    regularizationThresholds = do.call(paste("citrus.generateRegularizationThresholds",family,sep="."),args=list(features=conditionFeatureList[[conditionName]]$foldFeatures[[nAllFolds]],labels=labels,modelTypes=modelTypes,n=100,...))
+#    
+#    # Build Fold Models
+#    cat("\nBuilding folds models\n")
+#    #foldModels = citrus.buildModels(folds=conditionFeatureList[[conditionName]]$folds,foldFeatures=conditionFeatureList[[conditionName]]$foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,modelTypes=modelTypes,family=family)
+#    foldModels = citrus.buildModels(folds=conditionFeatureList[[conditionName]]$folds,foldFeatures=conditionFeatureList[[conditionName]]$foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,modelTypes=modelTypes,family=family,...)
+#    names(foldModels)=modelTypes
+#    
+#    # Calculate fold deviances
+#    cat("\nCalculating threshold deviance rates\n")
+#    if (quick){
+#      thresholdCVRates = citrus.thresholdCVs.quick(foldModels=foldModels,foldFeatures=conditionFeatureList[[conditionName]]$foldFeatures,modelTypes=modelTypes,regularizationThresholds=regularizationThresholds,labels=labels,family=family)
+#    } else {
+#      thresholdCVRates = do.call(paste("citrus.thresholdCVs",family,sep="."),args=list(foldModels=foldModels,leftoutFeatures=conditionFeatureList[[conditionName]]$leftoutFeatures,foldFeatures=conditionFeatureList[[conditionName]]$foldFeatures,modelTypes=modelTypes,regularizationThresholds=regularizationThresholds,labels=labels,folds=conditionFeatureList[[conditionName]]$folds))  
+#    }
     
     # Find cv minima
-    cat("Calculating CV minima\n")
-    cvMinima = lapply(modelTypes,citrus.getCVMinima,thresholdCVRates=thresholdCVRates)
-    names(cvMinima) = modelTypes
-    
-    # Extract Features
-    cat("Extracting differential features\n")
-    differentialFeatures = lapply(modelTypes,citrus.extractModelFeatures,cvMinima=cvMinima,foldModels=foldModels,foldFeatures=conditionFeatureList[[conditionName]]$foldFeatures,regularizationThresholds=regularizationThresholds,family=family)
-    names(differentialFeatures) = modelTypes
-    
-    regressionRes[[conditionName]] = list(differentialFeatures=differentialFeatures,cvMinima=cvMinima,thresholdCVRates=thresholdCVRates,foldModels=foldModels,regularizationThresholds=regularizationThresholds)
-    
-  }
-  return(regressionRes)
-  
-}
+#    cat("Calculating CV minima\n")
+#    cvMinima = lapply(modelTypes,citrus.getCVMinima,thresholdCVRates=thresholdCVRates)
+#    names(cvMinima) = modelTypes
+#    
+#    # Extract Features
+#    cat("Extracting differential features\n")
+#    differentialFeatures = lapply(modelTypes,citrus.extractModelFeatures,cvMinima=cvMinima,foldModels=foldModels,foldFeatures=conditionFeatureList[[conditionName]]$foldFeatures,regularizationThresholds=regularizationThresholds,family=family)
+#    names(differentialFeatures) = modelTypes
+#    
+#    regressionRes[[conditionName]] = list(differentialFeatures=differentialFeatures,cvMinima=cvMinima,thresholdCVRates=thresholdCVRates,foldModels=foldModels,regularizationThresholds=regularizationThresholds)
+#    
+#  }
+#  return(regressionRes) 
+#}
 
-citrus.mapAndPredict = function(citrusResult,dataDir,newFileList,fileSampleSize,mappingColumns=NULL,transformCols=NULL,transformCofactor=5){
-  mappingResults = citrus.mapFileDataToClustering(dataDir=dataDir,newFileList=newFileList,fileSampleSize=fileSampleSize,preClusterResult=citrusResult$preClusterResult,mappingColumns=mappingColumns,transformCols=transformColumns,transformCofactor=transformCofactor)
-  modelLargeEnoughClusters = lapply(names(citrusResult),.extractConditionLargeEnoughClusters,foldFeatures=trainFeatures)
-  
-  mappedFeatures = citrus.buildFeatures(preclusterResult=mappingResults,outputDir=outputDir,featureTypes=c("abundances","medians"),largeEnoughClusters=trainLargeEnoughClusters,medianColumns=medianCols)
-}
+#citrus.mapAndPredict = function(citrusResult,dataDir,newFileList,fileSampleSize,mappingColumns=NULL,transformCols=NULL,transformCofactor=5){
+#  mappingResults = citrus.mapFileDataToClustering(dataDir=dataDir,newFileList=newFileList,fileSampleSize=fileSampleSize,preClusterResult=citrusResult$preClusterResult,mappingColumns=mappingColumns,transformCols=transformColumns,transformCofactor=transformCofactor)
+#  modelLargeEnoughClusters = lapply(names(citrusResult),.extractConditionLargeEnoughClusters,foldFeatures=trainFeatures)
+#  mappedFeatures = citrus.buildFeatures(preclusterResult=mappingResults,outputDir=outputDir,featureTypes=c("abundances","medians"),largeEnoughClusters=trainLargeEnoughClusters,medianColumns=medianCols)
+#}
