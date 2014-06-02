@@ -1,3 +1,48 @@
+########################
+# Helper Functions
+########################
+.graphColorPalette=function(x,alpha=1){
+  #rainbow(x,alpha=.8,start=.65,end=.15)
+  topo.colors(x,alpha=alpha)
+}
+
+.getDisplayNames=function(citrus.combinedFCSSet,clusteringColumns){
+  colLabels = citrus.combinedFCSSet$fileChannelNames[[1]][[1]]
+  reagentNames = citrus.combinedFCSSet$fileReagentNames[[1]][[1]]
+  displayNames = colLabels
+  displayNames[nchar(reagentNames)>1] = reagentNames[nchar(reagentNames)>1]
+  if (all(is.numeric(clusteringColumns))){
+    return(displayNames[clusteringColumns])
+  } else {
+    names(displayNames) = colLabels
+    return(as.vector(displayNames[clusteringColumns]))
+  }
+  
+}
+
+.getClusterMedians = function(clusterId,clusterAssignments,clusterCols,data){
+  apply(data[clusterAssignments[[clusterId]],clusterCols],2,median)
+}
+
+.decimalFormat = function(x){
+  sprintf("%.2f",x)
+}
+
+.scaleToOne = function(x){
+  x = x-min(x)
+  x = x/max(x)
+  return(x)
+}
+
+.getClusterFeatureMatrix = function(featureVector){
+  df = do.call("rbind",strsplit(gsub(pattern="(cluster [0-9]+) ",replacement="\\1~",featureVector),"~"))
+  return(cbind(cluster=do.call("rbind",strsplit(df[,1]," "))[,2],feature=df[,2]))
+}
+
+
+###
+
+
 citrus.plotTypeErrorRate = function(modelType,modelOutputDirectory,regularizationThresholds,thresholdCVRates,finalModel,cvMinima,family){  
     if (modelType=="sam"){
       return()
@@ -153,16 +198,6 @@ citrus.plotModelDifferentialFeatures.classification = function(differentialFeatu
   
 }
 
-scaleToRange =function(x,scale){
-  xrange = max(x)-min(x)
-  x = x/xrange
-  x = x-min(x)
-  scaleRange = max(scale)-min(scale)
-  x=x*scaleRange
-  x = x+min(scale)
-  return(x)
-}
-
 citrus.overlapDensityPlot = function(clusterDataList,backgroundData){
   combined = data.frame(check.names=F,check.rows=F)
   for (clusterName in names(clusterDataList)){
@@ -222,29 +257,11 @@ citrus.plotClusters = function(clusterIds,clusterAssignments,citrus.combinedFCSS
 # Hierarchical Clustering plots
 ########################################
 
-.getClusterMedians = function(clusterId,clusterAssignments,clusterCols,data){
-  apply(data[clusterAssignments[[clusterId]],clusterCols],2,median)
-}
-
-.decimalFormat = function(x){
-  sprintf("%.2f",x)
-}
-
-.scaleToOne = function(x){
-  x = x-min(x)
-  x = x/max(x)
-  return(x)
-}
-
-
-
-.getClusterFeatureMatrix = function(featureVector){
-  df = do.call("rbind",strsplit(gsub(pattern="(cluster [0-9]+) ",replacement="\\1~",featureVector),"~"))
-  return(cbind(cluster=do.call("rbind",strsplit(df[,1]," "))[,2],feature=df[,2]))
-}
+citrus.createHierarchyGraph = function(citrus.foldFeatureSet,citrus.foldClustering,minVertexSize=6){
+  largeEnoughClusters=citrus.foldFeatureSet$allLargeEnoughClusters
+  mergeOrder=citrus.foldClustering$allClustering$clustering$merge
+  clusterAssignments=citrus.foldClustering$allClustering$clusterMembership
   
-
-citrus.createHierarchyGraph = function(largeEnoughClusters,mergeOrder,clusterAssignments,minVertexSize=6){
   cmat = matrix(0,ncol=length(largeEnoughClusters),nrow=length(largeEnoughClusters),dimnames=list(largeEnoughClusters,largeEnoughClusters))
   for (cluster in largeEnoughClusters){
     children = mergeOrder[cluster,]  
@@ -259,10 +276,12 @@ citrus.createHierarchyGraph = function(largeEnoughClusters,mergeOrder,clusterAss
   sizes = sapply(log(clusterSizes[largeEnoughClusters]),findInterval,vec=hist(log(clusterSizes[largeEnoughClusters]),breaks=10,plot=F)$breaks)
   sizes = sizes+minVertexSize
   g = set.vertex.attribute(g,"size",value=sizes)
-  return(g)
+  l = layout.reingold.tilford(g,root=length(V(g)),circular=T)
+  result = list(graph=g,layout=l)  
+  return(result)
 }
 
-citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph,layout,theme="black",plotSize=15,singlePDF=F,ncol=3,scale=1,plotClusterIDs=T){
+citrus.plotClusteringHierarchy = function(outputFile,clusterColors,graph,layout,theme="black",plotSize=15,singlePDF=F,ncol=3,scale=1,plotClusterIDs=T){
   if (theme=="black"){
     bg="black"
     stroke="white"
@@ -281,7 +300,7 @@ citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph
   }
   if (singlePDF){
     expand=3*scale
-    nrow = ceiling(ncol(clusterMedians)/ncol)
+    nrow = ceiling(ncol(clusterColors)/ncol)
     pdf(file=outputFile,width=ncol*expand,height=nrow*expand,bg=bg)
     par(mfrow=c(nrow,ncol),oma=rep(0.8,4),mar=c(.1,0,.8,2.8))
   } else {
@@ -289,11 +308,11 @@ citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph
     
   }
   
-  for (target in 1:ncol(clusterMedians)){
-    ct = seq(from=(min(clusterMedians[,target])-0.01),to=(max(clusterMedians[,target])+0.01),length.out=20)
-    cols = .graphColorPalette(20)[sapply(clusterMedians[,target],findInterval,vec=ct)]
+  for (target in 1:ncol(clusterColors)){
+    ct = seq(from=(min(clusterColors[,target])-0.01),to=(max(clusterColors[,target])+0.01),length.out=20)
+    cols = .graphColorPalette(20)[sapply(clusterColors[,target],findInterval,vec=ct)]
     par(col.main=stroke)  
-    plot.igraph(graph,layout=layout,vertex.color=cols,main=colnames(clusterMedians)[target],edge.color=stroke,vertex.label.color=vc,edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica")
+    plot.igraph(graph,layout=layout,vertex.color=cols,main=colnames(clusterColors)[target],edge.color=stroke,vertex.label.color=vc,edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica")
         
     # Legend
     legend_image <- as.raster(matrix(rev(.graphColorPalette(20)), ncol=1))
@@ -302,7 +321,6 @@ citrus.plotHierarchicalClusterMedians = function(outputFile,clusterMedians,graph
   }
   dev.off()  
 }
-
 
 citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureClusterMatrix,graph,layout,clusterMedians=NULL,featureClusterCols=NULL,theme="black",encircle=T,plotSize=15,plotClusterIDs=T){
   
@@ -364,10 +382,8 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
   dev.off()
 }
 
-
-
 # Plot
-citrus.plotRegressionResults = function(outputDirectory,citrus.foldClustering,citrus.foldFeatureSet,citrus.regressionResults,citrus.combinedFCSSet,family,labels,plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph"),...){
+citrus.plotRegressionResults = function(citrus.regressionResult,outputDirectory,citrus.foldClustering,citrus.foldFeatureSet,citrus.combinedFCSSet,family,labels,plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph"),...){
   addtlArgs = list(...)
   
   theme="black"
@@ -394,16 +410,15 @@ citrus.plotRegressionResults = function(outputDirectory,citrus.foldClustering,ci
       plotSize=10
     }
     # Graph setup
-    g = citrus.createHierarchyGraph(largeEnoughClusters=citrus.foldFeatureSet$allLargeEnoughClusters,mergeOrder=citrus.foldClustering$allClustering$clustering$merge,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,minVertexSize=minVertexSize)
-    l = layout.reingold.tilford(g,root=length(V(g)),circular=T)
+    hierarchyGraph = citrus.createHierarchyGraph(citrus.foldFeatureSet=citrus.foldFeatureSet,citrus.foldClustering=citrus.foldClustering,minVertexSize=minVertexSize)
     
     # Median Plots
-    clusterMedians = t(sapply(citrus.foldFeatureSet$allLargeEnoughClusters,.getClusterMedians,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,data=citrus.combinedFCSSet$data,clusterCols=citrus.foldClustering$allClustering$clusteringColumns))
+    clusterMedians = t(sapply(citrus.foldFeatureSet$allLargeEnoughClusters,citrus:::.getClusterMedians,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,data=citrus.combinedFCSSet$data,clusterCols=citrus.foldClustering$allClustering$clusteringColumns))
     rownames(clusterMedians) = citrus.foldFeatureSet$allLargeEnoughClusters
     colnames(clusterMedians) = .getDisplayNames(citrus.combinedFCSSet,clusteringColumns)
     
-    citrus.plotHierarchicalClusterMedians(outputFile=file.path(outputDirectory,"markerPlots.pdf"),clusterMedians,graph=g,layout=l,plotSize=plotSize,theme=theme)
-    citrus.plotHierarchicalClusterMedians(outputFile=file.path(outputDirectory,"markerPlotsAll.pdf"),clusterMedians,graph=g,layout=l,plotSize=plotSize,theme=theme,singlePDF=T,plotClusterIDs=F)
+    citrus.plotClusteringHierarchy(outputFile=file.path(outputDirectory,"markerPlots.pdf"),clusterColors=clusterMedians,graph=hierarchyGraph$graph,layout=hierarchyGraph$layout,plotSize=plotSize,theme=theme)
+    citrus.plotClusteringHierarchy(outputFile=file.path(outputDirectory,"markerPlotsAll.pdf"),clusterColors=clusterMedians,graph=hierarchyGraph$graph,layout=hierarchyGraph$layout,plotSize=plotSize,theme=theme,singlePDF=T,plotClusterIDs=F)
   }
   
   for (modelType in names(citrus.regressionResults)){
@@ -432,28 +447,10 @@ citrus.plotRegressionResults = function(outputDirectory,citrus.foldClustering,ci
     if ("clusterGraph" %in% plotTypes){
       for (cvPoint in names(citrus.regressionResults[[modelType]]$differentialFeatures)){
         featureClusterMatrix = .getClusterFeatureMatrix(citrus.regressionResults[[modelType]]$differentialFeatures[[cvPoint]][["features"]])
-        citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(modelOutputDirectory,paste("featurePlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,graph=g,layout=l,plotSize=plotSize,theme=theme)
+        citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(modelOutputDirectory,paste("featurePlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,graph=hierarchyGraph$graph,layout=hierarchyGraph$layout,plotSize=plotSize,theme=theme)
       }
     }
   }  
   
 }
 
-.graphColorPalette=function(x,alpha=1){
-  #rainbow(x,alpha=.8,start=.65,end=.15)
-  topo.colors(x,alpha=alpha)
-}
-
-.getDisplayNames=function(citrus.combinedFCSSet,clusteringColumns){
-  colLabels = citrus.combinedFCSSet$fileChannelNames[[1]][[1]]
-  reagentNames = citrus.combinedFCSSet$fileReagentNames[[1]][[1]]
-  displayNames = colLabels
-  displayNames[nchar(reagentNames)>1] = reagentNames[nchar(reagentNames)>1]
-  if (all(is.numeric(clusteringColumns))){
-    return(displayNames[clusteringColumns])
-  } else {
-    names(displayNames) = colLabels
-    return(as.vector(displayNames[clusteringColumns]))
-  }
-  
-}

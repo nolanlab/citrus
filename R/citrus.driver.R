@@ -68,7 +68,7 @@ citrus.full = function(dataDirectory,
     
       
   if (plot){
-    citrus.plotRegressionResults(outputDirectory,citrus.foldClustering,citrus.foldFeatureSet,citrus.regressionResults,citrus.combinedFCSSet,family,labels)  
+    lapply(citrus.regressionResults,citrus.plotRegressionResults,outputDirectory=outputDirectory,citrus.foldClustering=citrus.foldClustering,citrus.foldFeatureSet=citrus.foldFeatureSet,citrus.combinedFCSSet=citrus.combinedFCSSet,family=family,labels=labels)
   }
   results = list(citrus.foldClustering=citrus.foldClustering,citrus.foldFeatureSet=citrus.foldFeatureSet,citrus.regressionResults=citrus.regressionResults)
   class(results) = "citrus.full.result"
