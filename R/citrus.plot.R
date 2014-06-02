@@ -39,10 +39,6 @@
   return(cbind(cluster=do.call("rbind",strsplit(df[,1]," "))[,2],feature=df[,2]))
 }
 
-
-###
-
-
 citrus.plotTypeErrorRate = function(modelType,modelOutputDirectory,regularizationThresholds,thresholdCVRates,finalModel,cvMinima,family){  
     if (modelType=="sam"){
       return()
@@ -257,7 +253,22 @@ citrus.plotClusters = function(clusterIds,clusterAssignments,citrus.combinedFCSS
 # Hierarchical Clustering plots
 ########################################
 
-citrus.createHierarchyGraph = function(citrus.foldFeatureSet,citrus.foldClustering,minVertexSize=6){
+citrus.createHierarchyGraph = function(citrus.foldFeatureSet,citrus.foldClustering,minimumClusterSizePercent=0.05){
+  
+  if (minimumClusterSizePercent<0.005){
+    minVertexSize=0
+    plotSize=35
+  } else if (minimumClusterSizePercent<0.01){
+    minVertexSize=4
+    plotSize=20
+  } else if (minimumClusterSizePercent<0.05){
+    minVertexSize=6
+    plotSize=15
+  } else {
+    minVertexSize=8
+    plotSize=10
+  }
+    
   largeEnoughClusters=citrus.foldFeatureSet$allLargeEnoughClusters
   mergeOrder=citrus.foldClustering$allClustering$clustering$merge
   clusterAssignments=citrus.foldClustering$allClustering$clusterMembership
@@ -277,7 +288,7 @@ citrus.createHierarchyGraph = function(citrus.foldFeatureSet,citrus.foldClusteri
   sizes = sizes+minVertexSize
   g = set.vertex.attribute(g,"size",value=sizes)
   l = layout.reingold.tilford(g,root=length(V(g)),circular=T)
-  result = list(graph=g,layout=l)  
+  result = list(graph=g,layout=l,plotSize=plotSize)  
   return(result)
 }
 
@@ -383,74 +394,55 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
 }
 
 # Plot
-citrus.plotRegressionResults = function(citrus.regressionResult,outputDirectory,citrus.foldClustering,citrus.foldFeatureSet,citrus.combinedFCSSet,family,labels,plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph"),...){
+citrus.plotRegressionResults = function(citrus.regressionResult,outputDirectory,citrus.foldClustering,citrus.foldFeatureSet,citrus.combinedFCSSet,family,labels,plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph"),hierarchyGraph=NULL,...){
   addtlArgs = list(...)
   
   theme="black"
   if ("theme" %in% names(addtlArgs)){
     theme = addtlArgs[["theme"]]
   }
+    
+  modelType=citrus.regressionResult$modelType
+  
+  cat(paste("Plotting results for",modelType,"\n"))
+  
+  # Make model output directoy
+  modelOutputDirectory = file.path(outputDirectory,paste0(modelType,"_results"))
+  dir.create(modelOutputDirectory,showWarnings=F,recursive=T)
+  
+  if ("errorRate" %in% plotTypes){
+    cat("Plotting Error Rate\n")
+    citrus.plotTypeErrorRate(modelType=modelType,modelOutputDirectory=modelOutputDirectory,regularizationThresholds=citrus.regressionResult$regularizationThresholds,thresholdCVRates=citrus.regressionResult$thresholdCVRates,finalModel=citrus.regressionResult$finalModel$model,cvMinima=citrus.regressionResult$cvMinima,family=family)
+  }
+  
+  if ("stratifyingFeatures" %in% plotTypes){
+    cat("Plotting Stratifying Features\n")
+    citrus.plotDifferentialFeatures(differentialFeatures=citrus.regressionResult$differentialFeatures,features=citrus.foldFeatureSet$allFeatures,modelOutputDirectory=modelOutputDirectory,labels=labels,family=family)
+  }
+  
+  if ("stratifyingClusters" %in% plotTypes){
+    cat("Plotting Stratifying Clusters\n")
+    citrus.plotModelClusters(differentialFeatures=citrus.regressionResult$differentialFeatures,modelOutputDirectory=modelOutputDirectory,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,citrus.combinedFCSSet=citrus.combinedFCSSet,clusteringColumns=citrus.foldClustering$allClustering$clusteringColumns)
+  }
+  
   
   if ("clusterGraph" %in% plotTypes){
-    mcsp=0.05
-    if ("mcsp" %in% names(addtlArgs)){
-      mcsp=addtlArgs[["mcsp"]]
-    }
-    if (mcsp<0.005){
-      minVertexSize=0
-      plotSize=35
-    } else if (mcsp<0.01){
-      minVertexSize=4
-      plotSize=20
-    } else if (mcsp<0.05){
-      minVertexSize=6
-      plotSize=15
-    } else {
-      minVertexSize=8
-      plotSize=10
-    }
-    # Graph setup
-    hierarchyGraph = citrus.createHierarchyGraph(citrus.foldFeatureSet=citrus.foldFeatureSet,citrus.foldClustering=citrus.foldClustering,minVertexSize=minVertexSize)
+    # Configure hierarchy graph
+    hierarchyGraph = citrus.createHierarchyGraph(citrus.foldFeatureSet,citrus.foldClustering,minimumClusterSizePercent=citrus.foldFeatureSet$minimumClusterSizePercent)
     
-    # Median Plots
-    clusterMedians = t(sapply(citrus.foldFeatureSet$allLargeEnoughClusters,citrus:::.getClusterMedians,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,data=citrus.combinedFCSSet$data,clusterCols=citrus.foldClustering$allClustering$clusteringColumns))
+    # Plot median of clusters
+    clusterMedians = t(sapply(citrus.foldFeatureSet$allLargeEnoughClusters,.getClusterMedians,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,data=citrus.combinedFCSSet$data,clusterCols=citrus.foldClustering$allClustering$clusteringColumns))
     rownames(clusterMedians) = citrus.foldFeatureSet$allLargeEnoughClusters
     colnames(clusterMedians) = .getDisplayNames(citrus.combinedFCSSet,clusteringColumns)
     
-    citrus.plotClusteringHierarchy(outputFile=file.path(outputDirectory,"markerPlots.pdf"),clusterColors=clusterMedians,graph=hierarchyGraph$graph,layout=hierarchyGraph$layout,plotSize=plotSize,theme=theme)
-    citrus.plotClusteringHierarchy(outputFile=file.path(outputDirectory,"markerPlotsAll.pdf"),clusterColors=clusterMedians,graph=hierarchyGraph$graph,layout=hierarchyGraph$layout,plotSize=plotSize,theme=theme,singlePDF=T,plotClusterIDs=F)
+    citrus.plotClusteringHierarchy(outputFile=file.path(outputDirectory,"markerPlots.pdf"),clusterColors=clusterMedians,graph=hierarchyGraph$graph,layout=hierarchyGraph$layout,plotSize=hierarchyGraph$plotSize,theme=theme)
+    citrus.plotClusteringHierarchy(outputFile=file.path(outputDirectory,"markerPlotsAll.pdf"),clusterColors=clusterMedians,graph=hierarchyGraph$graph,layout=hierarchyGraph$layout,plotSize=hierarchyGraph$plotSize,theme=theme,singlePDF=T,plotClusterIDs=F)
+      
+    for (cvPoint in names(citrus.regressionResult$differentialFeatures)){
+      featureClusterMatrix = .getClusterFeatureMatrix(citrus.regressionResult$differentialFeatures[[cvPoint]][["features"]])
+      citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(modelOutputDirectory,paste("featurePlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,graph=hierarchyGraph$graph,layout=hierarchyGraph$layout,plotSize=hierarchyGraph$plotSize,theme=theme)
+    }
   }
-  
-  for (modelType in names(citrus.regressionResults)){
-    cat(paste("Plotting results for",modelType,"\n"))
-    
-    # Make model output directoy
-    modelOutputDirectory = file.path(outputDirectory,paste0(modelType,"_results"))
-    dir.create(modelOutputDirectory,showWarnings=F,recursive=T)
-    
-    if ("errorRate" %in% plotTypes){
-      cat("Plotting Error Rate\n")
-      citrus.plotTypeErrorRate(modelType=modelType,modelOutputDirectory=modelOutputDirectory,regularizationThresholds=citrus.regressionResults[[modelType]]$regularizationThresholds,thresholdCVRates=citrus.regressionResults[[modelType]]$thresholdCVRates,finalModel=citrus.regressionResults[[modelType]]$finalModel$model,cvMinima=citrus.regressionResults[[modelType]]$cvMinima,family=family)
-    }
-      
-    if ("stratifyingFeatures" %in% plotTypes){
-      cat("Plotting Stratifying Features\n")
-      citrus.plotDifferentialFeatures(differentialFeatures=citrus.regressionResults[[modelType]]$differentialFeatures,features=citrus.foldFeatureSet$allFeatures,modelOutputDirectory=modelOutputDirectory,labels=labels,family=family)
-    }
-    
-    if ("stratifyingClusters" %in% plotTypes){
-      cat("Plotting Stratifying Clusters\n")
-      citrus.plotModelClusters(differentialFeatures=citrus.regressionResults[[modelType]]$differentialFeatures,modelOutputDirectory=modelOutputDirectory,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,citrus.combinedFCSSet=citrus.combinedFCSSet,clusteringColumns=citrus.foldClustering$allClustering$clusteringColumns)
-    }
-    
-      
-    if ("clusterGraph" %in% plotTypes){
-      for (cvPoint in names(citrus.regressionResults[[modelType]]$differentialFeatures)){
-        featureClusterMatrix = .getClusterFeatureMatrix(citrus.regressionResults[[modelType]]$differentialFeatures[[cvPoint]][["features"]])
-        citrus.plotHierarchicalClusterFeatureGroups(outputFile=file.path(modelOutputDirectory,paste("featurePlots_",cvPoint,".pdf",sep="")),featureClusterMatrix=featureClusterMatrix,graph=hierarchyGraph$graph,layout=hierarchyGraph$layout,plotSize=plotSize,theme=theme)
-      }
-    }
-  }  
   
 }
 

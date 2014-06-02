@@ -49,7 +49,7 @@ citrus.buildFoldFeatureSet = function(citrus.foldClustering,citrus.combinedFCSSe
   # Build features for clustering of all samples
   allFeatures = citrus.buildFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,clusterIds=allLargeEnoughClusters,featureType=featureType)
     
-  result = list(foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,leftoutFeatures=leftoutFeatures,allFeatures=allFeatures,allLargeEnoughClusters=allLargeEnoughClusters,folds=citrus.foldClustering$folds,nFolds=citrus.foldClustering$nFolds)
+  result = list(foldLargeEnoughClusters=foldLargeEnoughClusters,foldFeatures=foldFeatures,leftoutFeatures=leftoutFeatures,allFeatures=allFeatures,allLargeEnoughClusters=allLargeEnoughClusters,folds=citrus.foldClustering$folds,nFolds=citrus.foldClustering$nFolds,minimumClusterSizePercent=minimumClusterSizePercent)
   class(result) = "citrus.foldFeatureSet"
   return(result)
   

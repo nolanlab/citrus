@@ -49,7 +49,7 @@ citrus.endpointRegress = function(modelType,citrus.foldFeatureSet,labels,family,
   finalModel = citrus.buildEndpointModel(features=citrus.foldFeatureSet$allFeatures,labels=labels,family=family,type=modelType,regularizationThresholds=regularizationThresholds,...)
   
   # Calculate CV error rates
-  thresholdCVRates = citrus.thresholdCVs.classification(foldModels=foldModels,leftoutFeatures=citrus.foldFeatureSet$leftoutFeatures,foldFeatures=citrus.foldFeatureSet$foldFeatures,modelType=modelType,regularizationThresholds=regularizationThresholds,labels=labels,folds=citrus.foldClustering$folds)
+  thresholdCVRates = citrus.thresholdCVs.classification(foldModels=foldModels,leftoutFeatures=citrus.foldFeatureSet$leftoutFeatures,foldFeatures=citrus.foldFeatureSet$foldFeatures,modelType=modelType,regularizationThresholds=regularizationThresholds,labels=labels,folds=citrus.foldFeatureSet$folds)
   
   # Find CV Minima
   cvMinima = citrus.getCVMinima(modelType,thresholdCVRates)
