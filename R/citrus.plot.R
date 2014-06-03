@@ -81,7 +81,7 @@ citrus.plotTypeErrorRate = function(modelType,modelOutputDirectory,regularizatio
     legendLty = c(1)
     legendPtCex=c(1)
     if (!is.null(thresholdCVRates$fdr)){
-      lines(thresholdCVRates[[modelType]]$fdr,type='o',pch=1,cex=1.5,col="blue")
+      lines(thresholdCVRates$fdr,type='o',pch=1,cex=1.5,col="blue")
       legendLabels = c(legendLabels,"Feature False Discovery Rate")
       legendColors = c(legendColors,"blue")
       legendPchs = c(legendPchs,1)
@@ -427,6 +427,7 @@ citrus.plotRegressionResults = function(citrus.regressionResult,outputDirectory,
   
   
   if ("clusterGraph" %in% plotTypes){
+    cat("Plotting Clustering Hierarchy")
     # Configure hierarchy graph
     hierarchyGraph = citrus.createHierarchyGraph(citrus.foldFeatureSet,citrus.foldClustering,minimumClusterSizePercent=citrus.foldFeatureSet$minimumClusterSizePercent)
     

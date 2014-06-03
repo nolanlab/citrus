@@ -66,61 +66,6 @@ citrus.buildModel.classification = function(features,labels,type,regularizationT
 #}
 
 
-citrus.thresholdCVs.quick = function(foldModels,foldFeatures,modelTypes,regularizationThresholds,labels,family,...){
-  rates = lapply(modelTypes,citrus.thresholdCVs.model.quick,features=foldFeatures[[1]],regularizationThresholds=regularizationThresholds,family=family,labels=labels,...)
-  names(rates)=modelTypes
-  return(rates)
-}
-
-citrus.thresholdCVs.model.quick = function(modelType,features,regularizationThresholds,family,labels,...){
-  typeRegularizationThresholds=regularizationThresholds[[modelType]]
-  errorRates = list(threshold=typeRegularizationThresholds)
-  if (modelType=="pamr"){
-    if (family=="survival"){
-      stop("PAM model not implemeted for survival.")
-    }
-    pamrData = list(x=t(features),y=labels)
-    pamrModel = pamr.train(data=pamrData,threshold=typeRegularizationThresholds,remove.zeros=F)
-    pamrCVModel = pamr.cv(fit=pamrModel,data=pamrData)
-    errorRates$cvm = pamrCVModel$error
-    
-    cvmSD = as.vector(apply(sapply(pamrCVModel$folds,function(foldIndices,y,yhat){
-      apply(apply(yhat[foldIndices,],2,"==",y[foldIndices]),2,sum)/length(foldIndices)
-    },y=labels,yhat=pamrCVModel$yhat),1,sd))
-    
-    errorRates$cvsd = cvmSD / sqrt(length(pamrCVModel$folds))
-    errorRates$fdr =  citrus:::pamr.fdr.new(pamrModel,data=pamrData,nperms=1000)$results[,"Median FDR"]
-  } else if (modelType=="glmnet"){
-    glmnetFamilyMap = list("classification"="binomial","survival"="multinomial")
-    
-    # Ugly hack. Fix to properly set multinomial
-    if (length(unique(labels))>2){
-      glmnetFamilyMap[["classification"]]="multinomial"
-    }
-    
-    addtlArgs = list(...)
-    alpha=1
-    if ("alpha" %in% names(addtlArgs)){
-      alpha=addtlArgs[["alpha"]]
-    }
-    standardize=T
-    if ("standardize" %in% names(addtlArgs)){
-      standardize=addtlArgs[["standardize"]]
-    }
-    glmnetModel = cv.glmnet(x=features,y=labels,family=glmnetFamilyMap[[family]],lambda=typeRegularizationThresholds,type.measure="class",alpha=alpha,standardize=standardize)
-    errorRates$cvm = glmnetModel$cvm
-    errorRates$cvsd = glmnetModel$cvsd
-  } else if (modelType=="sam"){
-    warning("No thresholds for SAM. This is Normal.")
-    return(NA)
-  } else {
-    stop(paste("CV for Model type",modelType,"not implemented"))
-  }
-  
-  return(data.frame(errorRates))
-}
-
-
 citrus.thresholdCVs.classification = function(foldModels,leftoutFeatures,foldFeatures,modelType,regularizationThresholds,labels,folds,...){
   # The following operations are not applicable to SAM models
   if ("sam" %in% modelTypes){

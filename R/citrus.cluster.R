@@ -98,23 +98,25 @@ citrus.clusterFold = function(foldIndex,folds,citrus.combinedFCSSet,clusteringCo
 }
 
 citrus.clusterAndMapFolds = function(citrus.combinedFCSSet,clusteringColumns,labels,clusteringType="hierarchical",nFolds=10,...){
-  addtlArgs = list(...)
   
-  # Define Folds
-  if ("nFolds" %in% names(addtlArgs)){
-    nFolds = addtlArgs[["nFolds"]]
+  result = list()
+  
+  if (nFolds>1){
+    # Define Folds
+    result$folds = pamr:::balanced.folds(y=labels,nfolds=nFolds)  
+    
+    # Cluster each fold of data together
+    result$foldClustering = lapply(1:nFolds,citrus.clusterFold,folds=result$folds,citrus.combinedFCSSet=citrus.combinedFCSSet,clusteringColumns=clusteringColumns,clusteringType=clusteringType)
+    
+    # Map the left out data to the fold clustered data
+    result$foldMappingAssignments = lapply(1:nFolds,citrus.mapFoldDataToClusterSpace,folds=result$folds,foldClustering=result$foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet)  
   }
-  folds = pamr:::balanced.folds(y=labels,nfolds=nFolds)
   
-  # Cluster fold events
-  cat("\n")
-  foldClustering = lapply(1:nFolds,citrus.clusterFold,folds=folds,citrus.combinedFCSSet=citrus.combinedFCSSet,clusteringColumns=clusteringColumns,clusteringType=clusteringType)
-  allClustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns,clusteringType)
+  # Cluster all the data together
+  result$allClustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns,clusteringType)
   
-  # Map leftout data 
-  foldMappingAssignments = lapply(1:nFolds,citrus.mapFoldDataToClusterSpace,folds=folds,foldClustering=foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet)
-
-  result = list(foldClustering=foldClustering,foldMappingAssignments=foldMappingAssignments,allClustering=allClustering,folds=folds,nFolds=nFolds)
+  result$nFolds = nFolds
+  
   class(result) = "citrus.foldClustering"
   return(result)
 }
