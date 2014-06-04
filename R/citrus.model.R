@@ -119,3 +119,84 @@ citrus.thresholdCVs.classification.quick = function(modelType,features,labels,re
   return(data.frame(errorRates))
 }
 
+###############################################
+# Get the minima of models
+###############################################
+citrus.getCVMinima = function(modelType,thresholdCVRates,fdrRate=0.01){
+  cvPoints=list();
+  if (modelType=="sam"){
+    cvPoints[["fdr_0.10"]]=10
+    cvPoints[["fdr_0.05"]]=5
+    cvPoints[["fdr_0.01"]]=1
+  } else {
+    errorRates = thresholdCVRates$cvm
+    SEMs = thresholdCVRates$cvsd
+    FDRRates = thresholdCVRates$fdr
+    cvPoints[["cv.min.index"]] = min(which(errorRates==min(errorRates,na.rm=T)))
+    cvPoints[["cv.min"]] = thresholdCVRates$threshold[cvPoints[["cv.min.index"]]]
+    cvPoints[["cv.1se.index"]] = min(which(errorRates<=(errorRates[cvPoints[["cv.min.index"]]]+SEMs[cvPoints[["cv.min.index"]]])))
+    cvPoints[["cv.1se"]] = thresholdCVRates$threshold[cvPoints[["cv.1se.index"]]]
+    if (!is.null(FDRRates)) {
+      if (any(FDRRates<fdrRate)){
+        if (length(intersect(which(FDRRates<0.01),which(errorRates==min(errorRates,na.rm=T))))>0){
+          cvPoints[["cv.fdr.constrained.index"]] = max(intersect(which(FDRRates<0.01),which(errorRates==min(errorRates,na.rm=T))))
+          cvPoints[["cv.fdr.constrained"]] = thresholdCVRates$threshold[cvPoints[["cv.fdr.constrained.index"]]]
+        }
+      }
+      
+    }
+  }
+  return(cvPoints)
+}
+
+###############################################
+# Get model features
+###############################################
+citrus.extractModelFeatures = function(cvMinima,finalModel,finalFeatures,regularizationThresholds,family){
+  res = list();
+  modelType = finalModel$type
+  finalModel = finalModel$model
+  for (cvPoint in names(cvMinima)[!grepl("index",names(cvMinima))]){
+    threshold = cvMinima[[cvPoint]]
+    thresholdIndex = cvMinima[[paste(cvPoint,"index",sep=".")]]
+    if (modelType=="pamr"){
+      if (finalModel$nonzero[thresholdIndex]>0){
+        f = pamr.listgenes(fit=finalModel,data=list(x=t(finalFeatures),geneids=colnames(finalFeatures)),threshold=threshold)  
+        f = as.vector(f[,1])
+        res[[cvPoint]][["features"]] = f
+        res[[cvPoint]][["clusters"]] = sort(unique(as.numeric(do.call("rbind",strsplit(f,split=" "))[,2])))  
+      } else {
+        res[[cvPoint]][["features"]] = NULL
+        res[[cvPoint]][["clusters"]] = NULL
+      }
+      
+    } else if (modelType=="glmnet"){
+      # THIS NEEDS TO BE FIXED IN ORDER TO SUPPORT MULTINOMIAL REGRESSION WITH GLMNET
+      f = as.matrix(predict(finalModel,newx=finalFeatures,type="coefficient",s=threshold))
+      f = rownames(f)[f!=0]
+      if ("(Intercept)" %in% f){
+        f = f[-(which(f=="(Intercept)"))]
+      }
+      if (length(f)>0){
+        res[[cvPoint]][["features"]] = f
+        res[[cvPoint]][["clusters"]] = sort(unique(as.numeric(do.call("rbind",strsplit(f,split=" "))[,2])))  
+      } else {
+        res[[cvPoint]][["features"]] = NULL;
+        res[[cvPoint]][["clusters"]] = NULL;
+      }
+    } else if (modelType=="sam"){
+      sigGenes = rbind(finalModel$siggenes.table$genes.up,finalModel$siggenes.table$genes.lo)
+      sigGenes = sigGenes[as.numeric(sigGenes[,"q-value(%)"])<threshold,,drop=F]
+      f = sigGenes[,"Gene ID"]
+      if (length(f)>0){
+        #sigGenes = sigGenes[order(abs(as.numeric(sigGenes[,"Fold Change"]))),,drop=F]
+        res[[cvPoint]][["features"]] = f
+        res[[cvPoint]][["clusters"]] = sort(unique(as.numeric(do.call("rbind",strsplit(f,split=" "))[,2])))  
+      } else {
+        res[[cvPoint]][["features"]] = NULL;
+        res[[cvPoint]][["clusters"]] = NULL;
+      }
+    }
+  }
+  return(res)
+}
