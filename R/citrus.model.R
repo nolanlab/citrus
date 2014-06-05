@@ -37,8 +37,14 @@ citrus.buildCrossValidatedEndpointModel = function(type,citrus.foldFeatureSet,la
 }
 
 citrus.endpointRegress = function(modelType,citrus.foldFeatureSet,labels,family,...){
-  
+    
+  if (nrow(citrus.foldFeatureSet$allFeatures)!=length(labels)){
+    stop(paste0("Number of features (",nrow(citrus.foldFeatureSet$allFeatures),") different from length of labels (",length(labels),")."))
+  }
+    
+  # Build results 
   result = list()
+  
   # Reg Thresholds
   result$regularizationThresholds = citrus.generateRegularizationThresholds.classification(features=citrus.foldFeatureSet$allFeatures,labels=labels,modelType=modelType,n=100)
   
