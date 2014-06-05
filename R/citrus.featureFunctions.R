@@ -1,22 +1,33 @@
 ###############################################
 # Generic function for building features
 ###############################################
-citrus.buildFeatures = function(citrus.combinedFCSSet,clusterAssignments,clusterIds,featureType="abundances",...){  
+citrus.buildFeatures = function(citrus.combinedFCSSet,clusterAssignments,clusterIds,featureType="abundances",fileIds=NULL,baselineFileIds=NULL,...){  
 
   #Error check before we actually start the work.
   if ((!all(featureType %in% citrus.featureTypes()))||(length(featureType)<1)){
     stop(paste("featureType must be one of the following:",paste(citrus.featureTypes(),collapse=", "),"\n"))
   }
+    
+  if ((!is.null(fileIds)) && (!is.null(baselineFileIds))){
+    baselineFeatures = do.call(paste0("citrus.calculateFeature.",featureType),args=list(clusterIds=clusterIds,clusterAssignments=clusterAssignments,citrus.combinedFCSSet=citrus.combinedFCSSet,fileIds=baselineFileIds,...))  
+    referenceFeatures = do.call(paste0("citrus.calculateFeature.",featureType),args=list(clusterIds=clusterIds,clusterAssignments=clusterAssignments,citrus.combinedFCSSet=citrus.combinedFCSSet,fileIds=fileIds,...))  
+    differenceFeatures = referenceFeatures-baselineFeatures
+    colnames(differenceFeatures) = paste(colnames(differenceFeatures),"difference")
+    return(differenceFeatures)
+  } else {
+    return(do.call(paste0("citrus.calculateFeature.",featureType),args=list(clusterIds=clusterIds,clusterAssignments=clusterAssignments,citrus.combinedFCSSet=citrus.combinedFCSSet,fileIds=fileIds,...))  )
+  }
   
-  do.call(paste0("citrus.calculateFeature.",featureType),args=list(clusterIds=clusterIds,clusterAssignments=clusterAssignments,citrus.combinedFCSSet=citrus.combinedFCSSet,...))
 }
 
 ################################
 # Abundance Features
 ################################
-citrus.calculateFeature.abundances = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,...){
+citrus.calculateFeature.abundances = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,fileIds=NULL,...){
   eventFileIds = citrus.combinedFCSSet$data[,"fileId"]
-  fileIds = unique(eventFileIds)
+  if (is.null(fileIds)){
+    fileIds = unique(eventFileIds)
+  }
   res = mcmapply(citrus.calculateFileClusterAbundance,
           clusterId=rep(clusterIds,length(fileIds)),
           fileId=rep(fileIds,each=length(clusterIds)),
@@ -25,7 +36,7 @@ citrus.calculateFeature.abundances = function(clusterIds,clusterAssignments,citr
                         eventFileIds=eventFileIds)
           ,...)
   return(
-    matrix(res,ncol=length(clusterIds),byrow=T,dimnames=list(citrus.combinedFCSSet$fileNames,paste("cluster",clusterIds,"abundance")))
+    matrix(res,ncol=length(clusterIds),byrow=T,dimnames=list(citrus.combinedFCSSet$fileNames[fileIds],paste("cluster",clusterIds,"abundance")))
   )
 }
 
@@ -36,13 +47,16 @@ citrus.calculateFileClusterAbundance = function(clusterId,fileId,clusterAssignme
 ################################
 # Median Features
 ################################
-citrus.calculateFeature.medians = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,...){
+citrus.calculateFeature.medians = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,fileIds=NULL,...){
   if (!("medianColumns" %in% names(list(...)))){
     stop("medianColumns argument missing")
   }
-  
   medianColumns = list(...)[["medianColumns"]]
-  fileIds = unique(citrus.combinedFCSSet$data[,"fileId"])
+  
+  if (is.null(fileIds)){
+    fileIds = unique(citrus.combinedFCSSet$data[,"fileId"])  
+  }
+  
   res = mcmapply(citrus.calculateFileClusterMedian,
                  clusterId=rep(rep(clusterIds,length(medianColumns)),length(fileIds)),
                  fileId=rep(fileIds,each=(length(clusterIds)*length(medianColumns))),
@@ -52,7 +66,7 @@ citrus.calculateFeature.medians = function(clusterIds,clusterAssignments,citrus.
                    clusterAssignments=clusterAssignments))
   
   return(
-    matrix(res,nrow=length(fileIds),byrow=T,dimnames=list(citrus.combinedFCSSet$fileNames,paste("cluster",rep(clusterIds,length(medianColumns)),rep(medianColumns,each=length(clusterIds)),"median")))
+    matrix(res,nrow=length(fileIds),byrow=T,dimnames=list(citrus.combinedFCSSet$fileNames[fileIds],paste("cluster",rep(clusterIds,length(medianColumns)),rep(medianColumns,each=length(clusterIds)),"median")))
   )
 }
 
