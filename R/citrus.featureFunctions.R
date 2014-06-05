@@ -1,8 +1,25 @@
 ###############################################
 # Generic function for building features
 ###############################################
-citrus.buildFeatures = function(citrus.combinedFCSSet,clusterAssignments,clusterIds,featureType="abundances",fileIds=NULL,baselineFileIds=NULL,...){  
+citrus.buildFeatures = function(citrus.combinedFCSSet,clusterAssignments,clusterIds,featureType="abundances",conditions=NULL,...){  
 
+  fileIds=NULL
+  baselineFileIds=NULL
+  
+  # If conditions are provided, only calculate features for condition files.
+  if (!is.null(conditions)){
+    # If one condition, just calculate features for that condition.
+    if (length(conditions)==1){
+      fileIds = citrus.combinedFCSSet$fileIds[,conditions[1]]
+      # If two conditions are provided, calculate the difference between those conditions
+    } else if (length(conditions)==2){
+      fileIds = citrus.combinedFCSSet$fileIds[,conditions[2]]
+      baselineFileIds = citrus.combinedFCSSet$fileIds[,conditions[1]]
+    } else {
+      stop("Unexpected number of conditions")
+    }
+  }
+  
   #Error check before we actually start the work.
   if ((!all(featureType %in% citrus.featureTypes()))||(length(featureType)<1)){
     stop(paste("featureType must be one of the following:",paste(citrus.featureTypes(),collapse=", "),"\n"))
@@ -88,6 +105,9 @@ citrus.calculateFileClusterMedian = function(clusterId,fileId,medianColumn,data,
 ###############################################
 citrus.buildFoldFeatureSet = function(citrus.foldClustering,citrus.combinedFCSSet,featureType="abundances",minimumClusterSizePercent=0.05,...){
   result = list()
+  
+  
+  
   if (citrus.foldClustering$nFolds>1){
     # Select clusters in each folds
     # Default is minimum cluster size
@@ -102,7 +122,7 @@ citrus.buildFoldFeatureSet = function(citrus.foldClustering,citrus.combinedFCSSe
   
   # Build features for clustering of all samples
   result$allLargeEnoughClusters = citrus.selectClusters(citrus.clustering=citrus.foldClustering$allClustering,minimumClusterSizePercent=minimumClusterSizePercent)
-  result$allFeatures = citrus.buildFeatures(citrus.combinedFCSSet=citrus.combinedFCSSet,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,clusterIds=result$allLargeEnoughClusters,featureType=featureType,...)
+  result$allFeatures = citrus.buildFeatures(citrus.combinedFCSSet=citrus.combinedFCSSet,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,clusterIds=result$allLargeEnoughClusters,featureType=featureType,fileIds=fileIds,baselineFileIds=baselineFileIds,...)
   
   # Extra feature building parameters, etc
   result$minimumClusterSizePercent=minimumClusterSizePercent
@@ -115,8 +135,9 @@ citrus.buildFoldFeatureSet = function(citrus.foldClustering,citrus.combinedFCSSe
 }
 
 citrus.buildFoldFeatures = function(foldIndex,folds,foldClusterIds,citrus.combinedFCSSet,foldClustering=NULL,foldMappingAssignments=NULL,featureType="abundances",calculateLeftoutFeatureValues=F,...){
-  leavoutFileIndices = folds[[foldIndex]]
   
+  leavoutFileIndices = folds[[foldIndex]]
+    
   if (calculateLeftoutFeatureValues){
     featureFileIds = as.vector(citrus.combinedFCSSet$fileIds[leavoutFileIndices,])
     if (is.null(foldMappingAssignments)){
