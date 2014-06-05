@@ -6,23 +6,15 @@ citrus.full = function(dataDirectory,
                        outputDirectory,
                        modelTypes=c("glmnet"),
                        nFolds=1,
-                       featureTypes=c("abundances"),
+                       featureType=c("abundances"),
                        minimumClusterSizePercent=0.05,
                        fileSampleSize=NULL,
                        transformColumns=NULL,
-                       conditionComparaMatrix=NULL,
-                       plot=T,
                        transformCofactor=NULL,
+                       plot=T,
                        ...){
   
-  #balanceFactor=NULL
-  #if (family=="survival"){
-  #  balanceFactor=as.factor(labels[,"event"])
-  #  if ((ncol(labels)!=2)||(!all(colnames(labels) %in% c("time","event")))){
-  #    stop("Incorrect labeling for files. Expecting 'time' and 'event' label columns.")
-  #  }
-  #}
-  
+
   if (is.null(fileSampleSize)){
     fileSampleSize = 100/minimumClusterSizePercent
   }
@@ -40,7 +32,8 @@ citrus.full = function(dataDirectory,
   save(list=c("citrus.combinedFCSSet","citrus.foldClustering"),file=file.path(outputDirectory,"citrusClustering.rData"),compress=F)
     
   # Calculate fold features
-  citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,minimumClusterSizePercent=minimumClusterSizePercent)
+  #citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,minimumClusterSizePercent=minimumClusterSizePercent,medianColumns=medianColumns,mc.cores=4)
+  citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,minimumClusterSizePercent=minimumClusterSizePercent,...)
   
   # Endpoint regress for each model type
   citrus.regressionResults = lapply(modelTypes,citrus.endpointRegress,citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,family=family)

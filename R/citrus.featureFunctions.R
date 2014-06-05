@@ -36,7 +36,7 @@ citrus.calculateFileClusterAbundance = function(clusterId,fileId,clusterAssignme
 ################################
 # Median Features
 ################################
-citrus.calculate.calculateFeature.medians = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,...){
+citrus.calculateFeature.medians = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,...){
   if (!("medianColumns" %in% names(list(...)))){
     stop("medianColumns argument missing")
   }
@@ -49,8 +49,7 @@ citrus.calculate.calculateFeature.medians = function(clusterIds,clusterAssignmen
                  medianColumn=rep(rep(medianColumns,each=length(clusterIds)),length(fileIds)),
                  MoreArgs=list(
                    data=citrus.combinedFCSSet$data,
-                   clusterAssignments=clusterAssignments)
-        ,...)
+                   clusterAssignments=clusterAssignments))
   
   return(
     matrix(res,nrow=length(fileIds),byrow=T,dimnames=list(citrus.combinedFCSSet$fileNames,paste("cluster",rep(clusterIds,length(medianColumns)),rep(medianColumns,each=length(clusterIds)),"median")))
@@ -71,7 +70,7 @@ citrus.calculateFileClusterMedian = function(clusterId,fileId,medianColumn,data,
 ###############################################
 # Functions for dealing with fold features
 ###############################################
-citrus.buildFoldFeatureSet = function(citrus.foldClustering,citrus.combinedFCSSet,featureType="abundances",minimumClusterSizePercent=0.05){
+citrus.buildFoldFeatureSet = function(citrus.foldClustering,citrus.combinedFCSSet,featureType="abundances",minimumClusterSizePercent=0.05,...){
   result = list()
   if (citrus.foldClustering$nFolds>1){
     # Select clusters in each folds
@@ -79,15 +78,15 @@ citrus.buildFoldFeatureSet = function(citrus.foldClustering,citrus.combinedFCSSe
     result$foldLargeEnoughClusters = lapply(citrus.foldClustering$foldClustering,citrus.selectClusters,minimumClusterSizePercent=minimumClusterSizePercent)  
     
     # Build Training Features
-    result$foldFeatures = lapply(1:citrus.foldClustering$nFolds,citrus.buildFoldFeatures,folds=citrus.foldClustering$folds,foldClusterIds=result$foldLargeEnoughClusters,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,foldClustering=citrus.foldClustering$foldClustering)
+    result$foldFeatures = lapply(1:citrus.foldClustering$nFolds,citrus.buildFoldFeatures,folds=citrus.foldClustering$folds,foldClusterIds=result$foldLargeEnoughClusters,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,foldClustering=citrus.foldClustering$foldClustering,...)
     
     # Build Testing Features
-    result$leftoutFeatures = lapply(1:citrus.foldClustering$nFolds,citrus.buildFoldFeatures,folds=citrus.foldClustering$folds,foldClusterIds=result$foldLargeEnoughClusters,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,foldMappingAssignments=citrus.foldClustering$foldMappingAssignments,calculateLeftoutFeatureValues=T)
+    result$leftoutFeatures = lapply(1:citrus.foldClustering$nFolds,citrus.buildFoldFeatures,folds=citrus.foldClustering$folds,foldClusterIds=result$foldLargeEnoughClusters,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,foldMappingAssignments=citrus.foldClustering$foldMappingAssignments,calculateLeftoutFeatureValues=T,...)
   }
   
   # Build features for clustering of all samples
   result$allLargeEnoughClusters = citrus.selectClusters(citrus.clustering=citrus.foldClustering$allClustering,minimumClusterSizePercent=minimumClusterSizePercent)
-  result$allFeatures = citrus.buildFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,clusterIds=result$allLargeEnoughClusters,featureType=featureType)
+  result$allFeatures = citrus.buildFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,clusterIds=result$allLargeEnoughClusters,featureType=featureType,...)
   
   # Extra feature building parameters, etc
   result$minimumClusterSizePercent=minimumClusterSizePercent

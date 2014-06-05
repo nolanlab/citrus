@@ -27,7 +27,7 @@ citrus.readFCSSet = function(dataDirectory,fileList,conditions=NULL,fileSampleSi
       
       if (useChannelDescriptions){
        channelDescriptions = as.vector(pData(parameters(fcsFile))$desc)
-       colnames(fcsData)[nchar(channelDescriptions)>1] = channelDescriptions[nchar(channelDescriptions)>1]
+       colnames(fcsData)[nchar(channelDescriptions)>2] = channelDescriptions[nchar(channelDescriptions)>2]
       }
       
       fileChannelNames[[conditions[i]]][[fileName]]=as.vector(pData(parameters(fcsFile))$name)
