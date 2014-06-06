@@ -122,15 +122,10 @@ citrus.generateRegularizationThresholds.classification = function(features,label
   if ("standardize" %in% names(addtlArgs)){
     standardize=addtlArgs[["standardize"]]
   }
-  regs = list()
-  
-  #if ("pamr" %in% modelType){
-  #  regs$pamr = rev(pamr.train(data=list(x=t(features),y=labels),n.threshold=n)$threshold)
-  #}
+
   if (modelType=="pamr"){
     return(rev(pamr.train(data=list(x=t(features),y=labels),n.threshold=n)$threshold))
   }
-  
   
   if (modelType=="glmnet"){
     if (length(unique(labels))==2){
