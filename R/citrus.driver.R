@@ -31,29 +31,42 @@ citrus.full = function(dataDirectory,
   citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,labels=labels,nFolds=nFolds)
   save(list=c("citrus.combinedFCSSet","citrus.foldClustering"),file=file.path(outputDirectory,"citrusClustering.rData"),compress=F)
     
-  
+  conditionFeatures = list()
+  conditionRegressionResults = list()
   # Analyze each condition or set of conditions separately 
   for (conditions in allConditions){
+    cat(paste0("Analyzing condition(s): ",paste0(conditions,collapse=" vs. "),"\n"))
     #conditionFileIds = citrus.combinedFCSSet$fileIds[,conditions]
     
     # Calculate fold features
     #citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,minimumClusterSizePercent=minimumClusterSizePercent,medianColumns=medianColumns,mc.cores=4)
-    #citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType="abundances",minimumClusterSizePercent=minimumClusterSizePercent,conditions=conditions,mc.cores=4)
-    citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,...)
+    #citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,minimumClusterSizePercent=minimumClusterSizePercent,conditions=conditions,medianColumns=medianColumns,mc.cores=4)
+    cat("\tBuilding Fold Features\n")
+    citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,conditions=conditions,...)
+    conditionFeatures[[paste(rev(conditions),collapse="_vs_")]] = citrus.foldFeatureSet
     
     # Endpoint regress for each model type
+    #citrus.regressionResults = mclapply(modelTypes,citrus.endpointRegress,citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,family=family)
+    #citrus.regressionResults = citrus.endpointRegress("glmnet",citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,family=family)
+    cat("\tAnalyzing vs. endpoint\n")
     citrus.regressionResults = mclapply(modelTypes,citrus.endpointRegress,citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,family=family,...)
     names(citrus.regressionResults) = modelTypes
+    conditionRegressionResults[[paste(rev(conditions),collapse="_vs_")]] = citrus.regressionResults
     
     # Plot results if requested
     if (plot){
-      mclapply(citrus.regressionResults,citrus.plotRegressionResults,outputDirectory=outputDirectory,citrus.foldClustering=citrus.foldClustering,citrus.foldFeatureSet=citrus.foldFeatureSet,citrus.combinedFCSSet=citrus.combinedFCSSet,family=family,labels=labels,...)
+      cat("\tPlotting Results\n")
+      conditionOutputDir = file.path(outputDirectory,paste(rev(conditions),collapse="_vs_"))
+      dir.create(conditionOutputDir,showWarnings=F)
+      mclapply(citrus.regressionResults,citrus.plotRegressionResults,outputDirectory=conditionOutputDir,citrus.foldClustering=citrus.foldClustering,citrus.foldFeatureSet=citrus.foldFeatureSet,citrus.combinedFCSSet=citrus.combinedFCSSet,family=family,labels=labels,...)
     }  
+    cat("\n")
   }
   
   
+  
   # Return Results
-  results = list(citrus.foldClustering=citrus.foldClustering,citrus.foldFeatureSet=citrus.foldFeatureSet,citrus.regressionResults=citrus.regressionResults)
+  results = list(citrus.foldClustering=citrus.foldClustering,conditionFoldFeatures=conditionFeatures,conditionRegressionResults=conditionRegressionResults)
   class(results) = "citrus.full.result"
   return(results)
 }
