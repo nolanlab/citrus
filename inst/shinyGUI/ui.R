@@ -102,7 +102,7 @@ shinyUI(pageWithSidebar(
                disableInput(checkboxInput(inputId="exportClusters",label="Export Identified Clusters")),
                tags$hr(),
                tags$em("Multithreading Options:",class="control-label"),
-               checkboxInput(inputId="coreLimit",label="Limit Core Usage"),
+               checkboxInput(inputId="coreLimit",label="Set Multicore Usage"),
                numericInput(inputId="analysisCores",label="Number of Cores:",value=1,min=1,max=16)
                
                )

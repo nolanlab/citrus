@@ -52,14 +52,13 @@ citrus.calculateFeature.abundances = function(clusterIds,clusterAssignments,citr
           fileId=rep(fileIds,each=length(clusterIds)),
           MoreArgs=list(
                         clusterAssignments=clusterAssignments,
-                        eventFileIds=eventFileIds)
-          )
+                        eventFileIds=eventFileIds))
   return(
     matrix(res,ncol=length(clusterIds),byrow=T,dimnames=list(citrus.combinedFCSSet$fileNames[fileIds],paste("cluster",clusterIds,"abundance")))
   )
 }
 
-citrus.calculateFileClusterAbundance = function(clusterId,fileId,clusterAssignments,eventFileIds){
+citrus.calculateFileClusterAbundance = function(clusterId,fileId,clusterAssignments,eventFileIds,...){
   sum(which(eventFileIds==fileId) %in% clusterAssignments[[clusterId]])/sum((eventFileIds==fileId))
 }
 
@@ -89,7 +88,7 @@ citrus.calculateFeature.medians = function(clusterIds,clusterAssignments,citrus.
   )
 }
 
-citrus.calculateFileClusterMedian = function(clusterId,fileId,medianColumn,data,clusterAssignments){
+citrus.calculateFileClusterMedian = function(clusterId,fileId,medianColumn,data,clusterAssignments,...){
   clusterData = data[clusterAssignments[[clusterId]],]
   clusterFileDataValues = clusterData[clusterData[,"fileId"]==fileId,medianColumn]
   if (length(clusterFileDataValues)<3){

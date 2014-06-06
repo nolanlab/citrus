@@ -11,6 +11,7 @@ library("citrus",lib.loc=<% if (is.null(templateData[["library"]])){
 
 # Use this line to limit the number of threads used by clustering
 <%if (!templateData[["coreLimit"]]){cat("# ")}%>Rclusterpp.setThreads(<%cat(templateData[["analysisCores"]])%>);
+<%if (!templateData[["coreLimit"]]){cat("# ")}%>options("mc.cores"=<%cat(templateData[["analysisCores"]])%>);
 
 family = "classification"
 dataDirectory = "../"
@@ -77,7 +78,6 @@ results = citrus.full(
             transformColumns=transformColumns,
             transformCofactor=transformCofactor
             <% if ("medianColumns" %in% names(templateData)){cat(",medianColumns=medianColumns")} %>
-            <% if (templateData[["coreLimit"]]){cat(paste0(",mc.cores=",templateData[["analysisCores"]]))}%>
 )
 
 # ==================================================================================================
