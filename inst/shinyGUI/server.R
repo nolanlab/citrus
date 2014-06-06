@@ -117,12 +117,12 @@ shinyServer(function(input, output) {
   })
   
   output$medianCols = renderUI({
-    if ((!is.null(input$computemedians))&&(input$computemedians)){
+    if ((!is.null(input$featureType))&&(input$featureType=="medians")){
       choices = getParameterIntersections(input,fileList,fileCols);
       if (is.null(choices)){
         return(tagList(tags$b("Assign samples to groups to enable selection of median parameters.")))
       } else {
-        return(tagList(tags$hr(),checkboxGroupInput("medianCols",label="Cluster Median Parameters:",choices=choices)))  
+        return(tagList(tags$hr(),checkboxGroupInput("medianColumns",label="Cluster Median Parameters:",choices=choices)))  
       }
     } else {
       return(tags$span(""))  
@@ -196,24 +196,15 @@ shinyServer(function(input, output) {
   output$featureSummary = renderUI({
     featureSetTags = tags$span("None",class="red-error")
     features=list();
-    if (!is.null(input$computeabundances)&&input$computeabundances){
+    if (!is.null(input$featureType)&&(input$featureType=="abundances")){
       features[["Abundances"]] = tags$li("Cluster Abundances")
-    }
-    if (!is.null(input$computemedians)&&input$computemedians){
-        medianCols = input$medianCols
+    } else if (!is.null(input$featureType)&&(input$featureType=="medians")){
+      medianColumns = input$medianColumns
         medianVals = tags$span("No Median Parameters Selected",class="red-error");
-        if (length(input$medianCols)>0){
-          medianVals = tags$span(paste(input$medianCols,collapse=", "))
+        if (length(input$medianColumns)>0){
+          medianVals = tags$span(paste(input$medianColumns,collapse=", "))
         }
         features[["Medians"]] = tags$li(tagList(tags$span("Cluster Medians:"),medianVals))
-    }
-    if (!is.null(input$computeemDists)&&input$computeemDists){
-      emdCols = input$emdCols
-      emdVals = tags$span("No EMD Parameters Selected",class="red-error");
-      if (length(input$emdCols)>0){
-        emdVals = tags$span(paste(input$emdCols,collapse=", "))
-      }
-      features[["EMDs"]] = tags$li(tagList(tags$span("Cluster EM Dists:"),emdVals))
     }
     if (length(features)>0){
       featureSetTags = tags$ul(tagList(features))
@@ -304,14 +295,6 @@ serialGroupSummary = function(groupName,selectedFiles){
     
   }
   return(tags$li(tagList(tags$span(paste(groupName,"Samples: ")),countTag)))
-}
-
-serialFeaturesInput = function(featureType){
-  value = F
-  if (featureType=="abundances"){
-    value=T
-  }
-  checkboxInput(inputId=paste("compute",featureType,sep=""),label=paste("Cluster",featureType),value=value)
 }
 
 serialGroupNameInput = function(x){
@@ -470,15 +453,11 @@ errorCheckInput = function(input){
   if (is.null(input$crossValidationFolds)){
     errors = c(errors,"Number of cross validation folds not specified");
   }
-  computedFeatures = getComputedFeatures(input)
-  if (all(!unlist(computedFeatures))){
+  if (is.null(input$featureType)){
     errors = c(errors,"No computed cluster features selected")
   } else {
-    if (computedFeatures[["medians"]]&&(length(input$medianCols)==0)){
+    if ((input$featureType=="medians")&&(length(input$medianColumns)==0)){
       errors = c(errors,"No cluster median parameters selected")
-    }
-    if (computedFeatures[["emDists"]]&&(length(input$emdCols)==0)){
-      errors = c(errors,"No cluster EMD parameters selected")
     }
   }
   selectedFiles = getSelectedFiles(input)

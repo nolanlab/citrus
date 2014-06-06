@@ -9,32 +9,26 @@ library("citrus",lib.loc=<% if (is.null(templateData[["library"]])){
                               cat(paste("\"",templateData[["library"]],"\"",sep=""))
                             } %>)
 
-# Uncomment this next line if the clustering step crashes on Mac OS X (i.e. abort trap 6)
-# Rclusterpp.setThreads(1);
+# Use this line to limit the number of threads used by clustering
+<%if (!templateData[["coreLimit"]]){cat("# ")}%>Rclusterpp.setThreads(<%cat(templateData[["analysisCores"]])%>);
 
 family = "classification"
 dataDirectory = "../"
 # dataDirectory = <%cat(stringQuote(templateData[["dataDir"]]))%>
 
-outputDir = <%cat("file.path(dataDirectory,\"citrusOutput\")")%>
-clusterCols = c(<%cat(paste(sapply(templateData[["clusterCols"]],stringQuote),collapse=","))%>)
-<% if ("medianCols" %in% names(templateData)) {
-cat(paste("medianColumns=c(",paste(sapply(templateData[["medianCols"]],stringQuote),collapse=","),")\n",sep=""))
+outputDirectory = <%cat("file.path(dataDirectory,\"citrusOutput\")")%>
+clusteringColumns = c(<%cat(paste(sapply(templateData[["clusterCols"]],stringQuote),collapse=","))%>)
+<% if ("medianColumns" %in% names(templateData)) {
+cat(paste("medianColumns=c(",paste(sapply(templateData[["medianColumns"]],stringQuote),collapse=","),")\n",sep=""))
 }%>
-<% if ("emdCols" %in% names(templateData)) {
-cat(paste("emdColumns=c(",paste(sapply(templateData[["emdCols"]],stringQuote),collapse=","),")\n",sep=""))
-}%>
-transformCols = c(<%cat(paste(sapply(templateData[["transformCols"]],stringQuote),collapse=","))%>)
+transformColumns = c(<%cat(ifelse(length(templateData[["transformCols"]])>0,paste(sapply(templateData[["transformCols"]],stringQuote),collapse=","),"NULL"))%>)
 transformCofactor = <%cat(ifelse(length(templateData[["transformCols"]])>0,templateData[["transformCofactor"]],"NULL"))%>
 
 minimumClusterSizePercent = <%cat(templateData[["minimumClusterSizePercent"]])%>
 modelTypes = c(<% cat(paste(sapply(templateData[["classificationModels"]],stringQuote),collapse=",")) %>)
 fileSampleSize = <% cat(templateData[["fileSampleSize"]]) %>
-<% if (templateData[["crossValidationFolds"]]==1){
-  templateData[["crossValidationFolds"]]='"all"'
-}%>
 nFolds = <%cat(templateData[["crossValidationFolds"]]) %>
-featureTypes = c(<%cat(paste(sapply(templateData[["computedFeatures"]],stringQuote),collapse=","))%>)
+featureType = c(<%cat(stringQuote(templateData[["featureType"]]))%>)
 fileList = data.frame(<%
                         if (templateData[["preload"]]){
                           labelAssignments=templateData[["keyFile"]]
@@ -67,22 +61,22 @@ labels = as.factor(c(<%cat(paste(sapply(labels,stringQuote),collapse=","))%>))
 }%>
 
 results = citrus.full(
-            dataDir=dataDirectory,
-            outputDir=outputDir,
-            clusterCols=clusterCols,
-            fileSampleSize=fileSampleSize,
+            dataDirectory=dataDirectory,
+            clusteringColumns=clusteringColumns,
             labels=labels,
-            nFolds=nFolds,
             family=family,
             fileList=fileList,
+            outputDirectory=outputDirectory,
             modelTypes=modelTypes,
-            featureTypes=featureTypes,
+            nFolds=nFolds,
+            plot=T,
+            <% if ("conditionComparaMatrix" %in% names(templateData)){cat("conditionComparaMatrix=conditionComparaMatrix,")} %>
+            fileSampleSize=fileSampleSize,
+            featureType=featureType,
             minimumClusterSizePercent=minimumClusterSizePercent,
-            transformCols=transformCols,
+            transformColumns=transformColumns,
             transformCofactor=transformCofactor
-            <% if ("conditionComparaMatrix" %in% names(templateData)){cat(",conditionComparaMatrix=conditionComparaMatrix")} %>
-            <% if ("medianCols" %in% names(templateData)){cat(",medianColumns=medianColumns")} %>
-            <% if ("emdCols" %in% names(templateData)){cat(",emdColumns=emdColumns")} %>
+            <% if ("medianColumns" %in% names(templateData)){cat(",medianColumns=medianColumns")} %>
 )
 
 # ==================================================================================================
@@ -93,16 +87,11 @@ results = citrus.full(
 # ==================================================================================================
 
 # Cluster all the data
-# clusterResult = citrus.preCluster(dataDir=dataDirectory,outputDir=outputDir,clusterCols=clusterCols,fileSampleSize=fileSampleSize, fileList=fileList,nFolds=nFolds,transformCols=transformCols,transformCofactor=transformCofactor<% if ("conditionComparaMatrix" %in% names(templateData)){cat(", conditionComparaMatrix=conditionComparaMatrix")}%>)
 
 # OR load a previous clustering result. All other variables must be set by previous lines in runCitrus.R
-# load(file.path(outputDir,"citrus.clusterResult.rDat"))
 
 # Build cluster features
-# conditionFeatureList = citrus.buildFeatures(preclusterResult=clusterResult,outputDir=outputDir,featureTypes=featureTypes,minimumClusterSizePercent=minimumClusterSizePercent<% if ("medianCols" %in% names(templateData)){cat(",medianColumns=medianColumns")} %><% if ("emdCols" %in% names(templateData)){cat(",emdColumns=emdColumns")} %>)
 
 # Run the regression 
-# regressionResult = citrus.endpointRegress(conditionFeatureList,family=family,modelTypes=modelTypes,labels=labels)
 
 # Plot Results
-# citrus.plotRegressionResults(outputDir=outputDir,citrus.preclusterResult=clusterResult,conditionFeatureList=conditionFeatureList,citrus.regressionResult=regressionResult,modelTypes=modelTypes,family=family,labels=labels)
