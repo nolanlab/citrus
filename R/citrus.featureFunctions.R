@@ -114,15 +114,18 @@ citrus.buildFoldFeatureSet = function(citrus.foldClustering,citrus.combinedFCSSe
     result$foldLargeEnoughClusters = lapply(citrus.foldClustering$foldClustering,citrus.selectClusters,minimumClusterSizePercent=minimumClusterSizePercent)  
     
     # Build Training Features
+    #result$foldFeatures = lapply(1:citrus.foldClustering$nFolds,citrus.buildFoldFeatures,folds=citrus.foldClustering$folds,foldClusterIds=result$foldLargeEnoughClusters,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType="abundances",foldClustering=citrus.foldClustering$foldClustering,conditions=conditions)
     result$foldFeatures = lapply(1:citrus.foldClustering$nFolds,citrus.buildFoldFeatures,folds=citrus.foldClustering$folds,foldClusterIds=result$foldLargeEnoughClusters,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,foldClustering=citrus.foldClustering$foldClustering,...)
     
     # Build Testing Features
+    #result$leftoutFeatures = lapply(1:citrus.foldClustering$nFolds,citrus.buildFoldFeatures,folds=citrus.foldClustering$folds,foldClusterIds=result$foldLargeEnoughClusters,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType="abundances",foldMappingAssignments=citrus.foldClustering$foldMappingAssignments,calculateLeftoutFeatureValues=T,conditions=conditions)
     result$leftoutFeatures = lapply(1:citrus.foldClustering$nFolds,citrus.buildFoldFeatures,folds=citrus.foldClustering$folds,foldClusterIds=result$foldLargeEnoughClusters,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,foldMappingAssignments=citrus.foldClustering$foldMappingAssignments,calculateLeftoutFeatureValues=T,...)
   }
   
   # Build features for clustering of all samples
   result$allLargeEnoughClusters = citrus.selectClusters(citrus.clustering=citrus.foldClustering$allClustering,minimumClusterSizePercent=minimumClusterSizePercent)
-  result$allFeatures = citrus.buildFeatures(citrus.combinedFCSSet=citrus.combinedFCSSet,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,clusterIds=result$allLargeEnoughClusters,featureType=featureType,fileIds=fileIds,baselineFileIds=baselineFileIds,...)
+  #result$allFeatures = citrus.buildFeatures(citrus.combinedFCSSet=citrus.combinedFCSSet,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,clusterIds=result$allLargeEnoughClusters,featureType="abundances",conditions=conditions)
+  result$allFeatures = citrus.buildFeatures(citrus.combinedFCSSet=citrus.combinedFCSSet,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,clusterIds=result$allLargeEnoughClusters,featureType=featureType,...)
   
   # Extra feature building parameters, etc
   result$minimumClusterSizePercent=minimumClusterSizePercent
