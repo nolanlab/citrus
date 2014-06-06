@@ -103,7 +103,10 @@ citrus.clusterAndMapFolds = function(citrus.combinedFCSSet,clusteringColumns,lab
   
   if (nFolds>1){
     # Define Folds
-    result$folds = pamr:::balanced.folds(y=labels,nfolds=nFolds)  
+    result$folds = pamr:::balanced.folds(y=labels,nfolds=nFolds)
+    
+    # FOLDS MUST BE SORTED
+    result$folds = lapply(result$folds,sort)
     
     # Cluster each fold of data together
     result$foldClustering = lapply(1:nFolds,citrus.clusterFold,folds=result$folds,citrus.combinedFCSSet=citrus.combinedFCSSet,clusteringColumns=clusteringColumns,clusteringType=clusteringType)
