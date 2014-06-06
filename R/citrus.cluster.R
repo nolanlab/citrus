@@ -1,7 +1,6 @@
 #####################
 # Mapping new Stuff
 #####################
-
 citrus.mapToClusterSpace = function(citrus.combinedFCSSet.new,citrus.combinedFCSSet.old,citrus.clustering,mappingColumns=NULL,...){
   if (is.null(mappingColumns)){
     mappingColumns = citrus.clustering$clusteringColumns

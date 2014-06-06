@@ -58,7 +58,7 @@ citrus.full = function(dataDirectory,
       cat("\tPlotting Results\n")
       conditionOutputDir = file.path(outputDirectory,paste(rev(conditions),collapse="_vs_"))
       dir.create(conditionOutputDir,showWarnings=F)
-      mclapply(citrus.regressionResults,citrus.plotRegressionResults,outputDirectory=conditionOutputDir,citrus.foldClustering=citrus.foldClustering,citrus.foldFeatureSet=citrus.foldFeatureSet,citrus.combinedFCSSet=citrus.combinedFCSSet,family=family,labels=labels,...)
+      mclapply(citrus.regressionResults,citrus.plotRegressionResults,outputDirectory=conditionOutputDir,citrus.foldClustering=citrus.foldClustering,citrus.foldFeatureSet=citrus.foldFeatureSet,citrus.combinedFCSSet=citrus.combinedFCSSet,family=family,labels=labels,conditions=conditions)
     }  
     cat("\n")
   }

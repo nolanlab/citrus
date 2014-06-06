@@ -10,7 +10,7 @@
   colLabels = citrus.combinedFCSSet$fileChannelNames[[1]][[1]]
   reagentNames = citrus.combinedFCSSet$fileReagentNames[[1]][[1]]
   displayNames = colLabels
-  displayNames[nchar(reagentNames)>1] = reagentNames[nchar(reagentNames)>1]
+  displayNames[nchar(reagentNames)>2] = reagentNames[nchar(reagentNames)>1]
   if (all(is.numeric(clusteringColumns))){
     return(displayNames[clusteringColumns])
   } else {
@@ -205,17 +205,18 @@ citrus.overlapDensityPlot = function(clusterDataList,backgroundData){
   print(p)
 }
 
-citrus.plotModelClusters = function(differentialFeatures,modelOutputDirectory,clusterAssignments,citrus.combinedFCSSet,clusteringColumns){
+citrus.plotModelClusters = function(differentialFeatures,modelOutputDirectory,clusterAssignments,citrus.combinedFCSSet,clusteringColumns,...){
   for (cvPoint in names(differentialFeatures)){
     clusterIds = as.numeric(differentialFeatures[[cvPoint]][["clusters"]])
     outputFile = file.path(modelOutputDirectory,paste("clusters-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep=""))
-    citrus.plotClusters(clusterIds,clusterAssignments=clusterAssignments,citrus.combinedFCSSet,clusteringColumns,outputFile=outputFile)
+    citrus.plotClusters(clusterIds,clusterAssignments=clusterAssignments,citrus.combinedFCSSet,clusteringColumns,outputFile=outputFile,...)
   }
 }
 
-citrus.plotClusters = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,clusteringColumns,outputFile=NULL){
-  #data = citrus.dataArray$data[citrus.dataArray$data[,"fileId"] %in% citrus.dataArray$fileIds[,conditions],]
+citrus.plotClusters = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,clusteringColumns,outputFile=NULL,conditions=NULL,...){
+  
   data = citrus.combinedFCSSet$data
+  
   if (!is.null(outputFile)){
     pdf(file=outputFile,width=(2.2*length(clusteringColumns)+2),height=(2*length(clusterIds)))  
   }
@@ -227,15 +228,8 @@ citrus.plotClusters = function(clusterIds,clusterAssignments,citrus.combinedFCSS
       clusterDataList[[as.character(clusterId)]]=data[clusterAssignments[[clusterId]],clusteringColumns]
     }
     
-    colLabels = citrus.combinedFCSSet$fileChannelNames[[1]][[1]]
-    reagentNames = citrus.combinedFCSSet$fileReagentNames[[1]][[1]]
-    displayNames = colLabels
-    displayNames[nchar(reagentNames)>1] = reagentNames[nchar(reagentNames)>1]
-    if (is.numeric(clusteringColumns)){
-      colnames(clusterDataList[[as.character(clusterId)]])=displayNames[clusteringColumns]  
-    } else {
-      colnames(clusterDataList[[as.character(clusterId)]])=displayNames[colLabels%in%clusteringColumns]
-    }
+    colnames(clusterDataList[[as.character(clusterId)]])=.getDisplayNames(citrus.combinedFCSSet,clusteringColumns)
+    
   }
   if (nrow(data)>2500){
     bgData = data[sample(1:nrow(data),2500),clusteringColumns]
@@ -422,7 +416,7 @@ citrus.plotRegressionResults = function(citrus.regressionResult,outputDirectory,
   
   if ("stratifyingClusters" %in% plotTypes){
     cat("Plotting Stratifying Clusters\n")
-    citrus.plotModelClusters(differentialFeatures=citrus.regressionResult$differentialFeatures,modelOutputDirectory=modelOutputDirectory,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,citrus.combinedFCSSet=citrus.combinedFCSSet,clusteringColumns=citrus.foldClustering$allClustering$clusteringColumns)
+    citrus.plotModelClusters(differentialFeatures=citrus.regressionResult$differentialFeatures,modelOutputDirectory=modelOutputDirectory,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,citrus.combinedFCSSet=citrus.combinedFCSSet,clusteringColumns=citrus.foldClustering$allClustering$clusteringColumns,...)
   }
   
   
