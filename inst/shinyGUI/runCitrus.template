@@ -77,6 +77,7 @@ results = citrus.full(
             transformColumns=transformColumns,
             transformCofactor=transformCofactor
             <% if ("medianColumns" %in% names(templateData)){cat(",medianColumns=medianColumns")} %>
+            <% if (templateData[["coreLimit"]]){cat(paste0(",mc.cores=",templateData[["analysisCores"]]))}%>
 )
 
 # ==================================================================================================
