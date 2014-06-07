@@ -441,3 +441,15 @@ citrus.plotRegressionResults = function(citrus.regressionResult,outputDirectory,
   
 }
 
+plot.citrus.full.result = function(citrus.full.result,outputDirectory){
+  for (conditionName in names(results$conditions)){
+    cat(paste0("\nPlotting Results for ",conditionName,"\n"))
+    conditionOutputDir = file.path(outputDirectory,conditionName)
+    dir.create(conditionOutputDir,showWarnings=F)
+    mclapply(citrus.full.result$conditionRegressionResults[[conditionName]],citrus.plotRegressionResults,outputDirectory=conditionOutputDir,citrus.foldClustering=citrus.full.result$citrus.foldClustering,citrus.foldFeatureSet=citrus.full.result$conditionFoldFeatures[[conditionName]],citrus.combinedFCSSet=citrus.full.result$citrus.combinedFCSSet,family=citrus.full.result$family,labels=citrus.full.result$labels,conditions=citrus.full.result$conditions[[conditionName]])
+    cat("\n")
+  }
+}
+
+
+
