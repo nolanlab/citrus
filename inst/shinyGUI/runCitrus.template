@@ -62,12 +62,12 @@ labels = as.factor(c(<%cat(paste(sapply(labels,stringQuote),collapse=","))%>))
 }%>
 
 results = citrus.full(
-            dataDirectory=dataDirectory,
-            clusteringColumns=clusteringColumns,
-            labels=labels,
-            family=family,
             fileList=fileList,
+            labels=labels,
+            clusteringColumns=clusteringColumns,
+            dataDirectory=dataDirectory,
             outputDirectory=outputDirectory,
+            family=family,
             modelTypes=modelTypes,
             nFolds=nFolds,
             plot=T,
