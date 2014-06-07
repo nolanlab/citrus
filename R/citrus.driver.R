@@ -1,13 +1,92 @@
-citrus.full = function(dataDirectory,
-                       clusteringColumns,
+#' Perform a full Citrus analysis
+#' 
+#' This function takes FCS data, identifies cell subsets using clustering, 
+#' characterizes the behavior of each identified cluster on a per-sample basis,
+#' and identifies cluster properties associated with an endpoint.
+#' 
+#' @param fileList A data frame containing the names of FCS files to be analyzed. Each column should contain FCS files measured in the same condition. Each row should contain FCS files measured from the same individual under different conditions. See examples below.
+#' @param labels A vector containing the experimental endpoint values for each row of FCS files in the fileList.
+#' @param clusteringColumns A vector containing the names or indices of parameters to be used for clustering.
+#' @param dataDirectory The full path to the directory containing FCS files.
+#' @param outputDirectory The full path to directory analysis output should be placed in. If not \code{NULL}, clustering is saved.
+#' @param family Type of association model to be calculated. Valid values are currently \code{classification}.
+#' @param modelTypes Vector of model types to be used to detect associations with experimental endpoint. Valid values are \code{glmnet}, \code{pamr}, and \code{sam}.
+#' @param nFolds Number of independent clustering folds to be used for model fitting. Should only be >1 if using \code{glmnet} or \code{pamr} models. Default value is 1 and all samples are clustered together.
+#' @param conditionComparaMatrix matrix of condition data to compare. See details.
+#' @param ... Other arguments to be passed to \code{\link{read.FCSSet}}, \code{\link{citrus.buildFoldFeatureSet}}, \code{\link{citrus.endpointRegress}}. 
+#' Useful additional arguments listed in details.
+#' 
+#' @details Citrus is able to analyze FCS data from single conditions or relative to a given baseline 
+#' (i.e. stimulated values relative to an unstimulated baseline). Tell Citrus to compare conditions using 
+#' the conditionComparisonMatrix argument. The conditionComparisonMatrix is an \code{n x n} matrix of logical values
+#' indicating which conditions should be compared where \code{n} is the number of experimental conditions specified in
+#' the fileList. Rows and columns names of the conditionComparsion matrix should be the names of experimental conditions 
+#' in the fileList. A matrix entry of \code{TRUE} indicates that Citrus should calculate the value features in column name
+#' relative to feature values in the row name. \code{TRUE} entries on the diagonal means conditions are analyzed by themselves. 
+#' See Examples.
+#' 
+#' @author Robert Bruggner
+#' 
+#' @examples
+#' # Example with a single experimental condition (unstimulated data) 
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # List disease group of each sample
+#' labels = factor(rep(c("Healthy","Diseased"),each=10))
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Run citrusAnalysis 
+#' results = citrus.full(fileList,labels,clusteringColumns,dataDirectory)
+#' 
+#' # Should be used to plot results
+#' # plot(results, outputDirectory="/path/to/outputDirectory")
+#' 
+#' ############################################
+#' 
+#' # Example using multiple experimental conditions, including a 
+#' # comparison of stimulated to unstimulated damples
+#' 
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example2")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame(unstim=list.files(dataDirectory,pattern="unstim"),stim1=list.files(dataDirectory,pattern="stim1"))
+#' 
+#' # Disease group of each sample
+#' labels = factor(rep(c("Healthy","Diseased"),each=10))
+#' 
+#' # Vector of parameters to be used for clustering
+#' clusteringColumns = c("LineageMarker1","LineageMarker2")
+#' 
+#' # Vector of parameters to calculate medians for
+#' functionalColumns = c("FunctionalMarker1","FunctionalMarker2")
+#' 
+#' # Form condition comparison matrix to tell Citrus which conditions to analyze compare
+#' conditionComparaMatrix = matrix(T,nrow=2,ncol=2,dimnames=list(colnames(fileList),colnames(fileList)))
+#' conditionComparaMatrix[2]=F
+#' 
+#' # Run citrusAnalysis 
+#' results = citrus.full(fileList,labels,clusteringColumns,dataDirectory,
+#'                       conditionComparaMatrix=conditionComparaMatrix,
+#'                       featureType="medians",
+#'                       medianColumns=functionalColumns)
+#'
+#' # Result should be plotted
+#' # plot(results,outputDirectory="/path/to/outputDirectory")
+citrus.full = function(fileList,
                        labels,
-                       family,
-                       fileList,
-                       outputDirectory,
+                       clusteringColumns,
+                       dataDirectory,
+                       outputDirectory=NULL,
+                       family="classification",
                        modelTypes=c("glmnet"),
                        nFolds=1,
-                       plot=T,
-                       conditions=NULL,
                        conditionComparaMatrix=NULL,
                        ...){
   
@@ -16,20 +95,22 @@ citrus.full = function(dataDirectory,
     nFolds=1
   }
   
-  if (!is.null(conditions)){
-    allConditions = as.list(conditions)
-  } else if (!is.null(conditionComparaMatrix)){
+  if (!is.null(conditionComparaMatrix)){
     allConditions = citrus.convertConditionMatrix(conditionComparaMatrix)
   } else {
     allConditions = as.list(colnames(fileList))
   }
+  names(allConditions) = sapply(allConditions,function(x){paste(rev(x),collapse="_vs_")})
   
   # Read in data
-  citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory=dataDirectory,fileList=fileList,useChannelDescriptions=T,...)
+  citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory=dataDirectory,fileList=fileList,...)
     
   # Cluster each fold
   citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,labels=labels,nFolds=nFolds)
-  save(list=c("citrus.combinedFCSSet","citrus.foldClustering"),file=file.path(outputDirectory,"citrusClustering.rData"),compress=F)
+  if (!is.null(outputDirectory)){
+    save(list=c("citrus.combinedFCSSet","citrus.foldClustering"),file=file.path(outputDirectory,"citrusClustering.rData"),compress=F)  
+  }
+  
     
   conditionFeatures = list()
   conditionRegressionResults = list()
@@ -52,28 +133,20 @@ citrus.full = function(dataDirectory,
     citrus.regressionResults = mclapply(modelTypes,citrus.endpointRegress,citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,family=family,...)
     names(citrus.regressionResults) = modelTypes
     conditionRegressionResults[[paste(rev(conditions),collapse="_vs_")]] = citrus.regressionResults
-    
-    # Plot results if requested
-    if (plot){
-      cat("\tPlotting Results\n")
-      conditionOutputDir = file.path(outputDirectory,paste(rev(conditions),collapse="_vs_"))
-      dir.create(conditionOutputDir,showWarnings=F)
-      mclapply(citrus.regressionResults,citrus.plotRegressionResults,outputDirectory=conditionOutputDir,citrus.foldClustering=citrus.foldClustering,citrus.foldFeatureSet=citrus.foldFeatureSet,citrus.combinedFCSSet=citrus.combinedFCSSet,family=family,labels=labels,conditions=conditions,...)
-    }  
     cat("\n")
   }
-  
-  
-  
   # Return Results
-  results = list(citrus.foldClustering=citrus.foldClustering,conditionFoldFeatures=conditionFeatures,conditionRegressionResults=conditionRegressionResults)
+  results = list(citrus.combinedFCSSet=citrus.combinedFCSSet,citrus.foldClustering=citrus.foldClustering,conditionFoldFeatures=conditionFeatures,conditionRegressionResults=conditionRegressionResults,family=family,labels=labels,conditions=allConditions,modelTypes=modelTypes)
   class(results) = "citrus.full.result"
   return(results)
 }
 
+print.citrus.full.result = function(x,...){
+  cat("Citrus full result\n")
+  cat(paste("Family:",x$family,"\n"))
+  cat("Models: ")
+  cat(paste0(paste(unlist(x$modelTypes),collapse=", "),"\n"))
+  cat("Conditions: ")
+  cat(paste0(paste(unlist(x$conditions),collapse=", "),"\n"))
+}
 
-#citrus.mapAndPredict = function(citrusResult,dataDir,newFileList,fileSampleSize,mappingColumns=NULL,transformCols=NULL,transformCofactor=5){
-#  mappingResults = citrus.mapFileDataToClustering(dataDir=dataDir,newFileList=newFileList,fileSampleSize=fileSampleSize,preClusterResult=citrusResult$preClusterResult,mappingColumns=mappingColumns,transformCols=transformColumns,transformCofactor=transformCofactor)
-#  modelLargeEnoughClusters = lapply(names(citrusResult),.extractConditionLargeEnoughClusters,foldFeatures=trainFeatures)
-#  mappedFeatures = citrus.buildFeatures(preclusterResult=mappingResults,outputDir=outputDir,featureTypes=c("abundances","medians"),largeEnoughClusters=trainLargeEnoughClusters,medianColumns=medianCols)
-#}
