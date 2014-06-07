@@ -13,7 +13,7 @@
 #' @param modelTypes Vector of model types to be used to detect associations with experimental endpoint. Valid values are \code{glmnet}, \code{pamr}, and \code{sam}.
 #' @param nFolds Number of independent clustering folds to be used for model fitting. Should only be >1 if using \code{glmnet} or \code{pamr} models. Default value is 1 and all samples are clustered together.
 #' @param conditionComparaMatrix matrix of condition data to compare. See details.
-#' @param ... Other arguments to be passed to \code{\link{read.FCSSet}}, \code{\link{citrus.buildFoldFeatureSet}}, \code{\link{citrus.endpointRegress}}. 
+#' @param ... Other arguments to be passed to \code{\link{citrus.readFCSSet}}, \code{\link{citrus.buildFoldFeatureSet}}, \code{\link{citrus.endpointRegress}}. 
 #' Useful additional arguments listed in details.
 #' 
 #' @details Citrus is able to analyze FCS data from single conditions or relative to a given baseline 
