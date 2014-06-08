@@ -106,13 +106,9 @@ citrus.selectClusters = function(citrus.clustering,method="minimumClusterSize",.
   do.call(paste0("citrus.selectClusters.",method),args=list(citrus.clustering=citrus.clustering,...))
 }
 
-citrus.selectClusters.minimumClusterSize =function(citrus.clustering,...){
-  addtlArgs = list(...)
-  if (!("minimumClusterSizePercent" %in% names(addtlArgs))){
-    stop("Missing 'minimumClusterSizePercent' argument.");
-  }
+citrus.selectClusters.minimumClusterSize =function(citrus.clustering,minimumClusterSizePercent=0.05,...){
   clusterSizes = sapply(citrus.clustering$clusterMembership,length)
-  minimumClusterSize = (length(citrus.clustering$clusterMembership)+1)*addtlArgs[["minimumClusterSizePercent"]]
+  minimumClusterSize = (length(citrus.clustering$clusterMembership)+1)*minimumClusterSizePercent
   return(which(clusterSizes>=minimumClusterSize))
 }
 
