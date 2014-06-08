@@ -441,6 +441,13 @@ citrus.plotRegressionResults = function(citrus.regressionResult,outputDirectory,
   
 }
 
+#' Plot a citrus.full.result
+#' 
+#' @param A citrus.full.result object
+#' @param outptuDirectory Full path to directory in which to place plot output. 
+#' 
+#' @method plot citrus.full.result
+#' @S3method plot citrus.full.result
 plot.citrus.full.result = function(citrus.full.result,outputDirectory){
   for (conditionName in names(results$conditions)){
     cat(paste0("\nPlotting Results for ",conditionName,"\n"))

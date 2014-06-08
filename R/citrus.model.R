@@ -1,3 +1,49 @@
+#' Build an endpoint model 
+#' 
+#' This function constructs an endpoint model using features calculated by citrus. 
+#' 
+#' @param features A numeric matrix of predictive features. Rows are observations and column entries are features. 
+#' @param labels A vector of endpoint values (i.e. class labels) for each row of the feature matrix. 
+#' @param family Family of endpoint model to be constructed. Valid values are \code{classification}. More to come...
+#' @param type Statistical model to be used. For \code{family="classification"}, options are \code{pamr} (Nearest Shrunken Centroid), \code{glmnet} (Lasso-regularized logistic regression), and \code{sam} (Non-parametric test in differences of means). 
+#' @param regularizationThresholds Vector of regularization values for penalized model construction. If \code{NULL}, values are automatically generated. Not valid for \code{sam} models.
+#' @param ... Other parameters passed to model-fitting procedures. 
+#' 
+#' @return An object of class \code{citrus.endpointModel} with properties:
+#' \item{model}{The statistical model fit on supplied data.}
+#' \item{regularizationThresholds}{Regularization Thresholds used to constrain penalized models.}
+#' \item{family}{Family of model.}
+#' \item{type}{Model type.}
+#' 
+#' @author Robert Bruggner
+#' @export
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster data
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns)
+#' 
+#' # Large enough clusters
+#' largeEnoughClusters = citrus.selectClusters(citrus.clustering)
+#' 
+#' # Build features
+#' abundanceFeatures = citrus.buildFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
+#' 
+#' # List disease group of each sample
+#' labels = factor(rep(c("Healthy","Diseased"),each=10))
+#' 
+#' # Build model
+#' endpointModel = citrus.buildEndpointModel(abundanceFeatures,labels)
 citrus.buildEndpointModel = function(features,labels,family="classification",type="pamr",regularizationThresholds=NULL,...){
   if (is.null(regularizationThresholds)){
     regularizationThresholds = do.call(paste0("citrus.generateRegularizationThresholds.",family),args=list(features=features,labels=labels,modelType=type,n=100,...=...))
@@ -19,8 +65,50 @@ citrus.buildFoldEndpointModel = function(foldIndex,folds,foldFeatures,labels,fam
   citrus.buildEndpointModel(foldFeatures[[foldIndex]],labels=foldLabels,family=family,type=type,regularizationThreshold=regularizationThreshold,...)
 }
 
-citrus.buildCrossValidatedEndpointModel = function(type,citrus.foldFeatureSet,labels,regularizationThresholds,family="classification",...){
-  addtlArgs = list(...)
+#' Build models from each fold of clustering
+#' 
+#' Builds a model from features derived from each independent fold of clustering.
+#' 
+#' @param type Model Type. Valid options are \code{pamr}, \code{glmnet}, and \code{sam}.
+#' @param citrus.foldFeatureSet. A \code{citrus.foldFeatureSet} object.
+#' @param labels Endpoint labels for samples. 
+#' @param regularizationThresholds Regularization thresholds for penalized models. 
+#' @param family Family of model to be constructed. Valid options are \code{classification}. More to come.
+#' @param ... Other arguments passed to model-fitting functions.
+#' 
+#' @return A list of models, one model fit on each fold's feature set. 
+#' 
+#' @author Robert Bruggner
+#' @export
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List disease group of each sample
+#' labels = factor(rep(c("Healthy","Diseased"),each=10))
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster each fold
+#' citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,labels,nFolds=4)
+#' 
+#' # Build fold features and leftout features
+#' citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet)
+#' 
+#' # Build fold models 
+#' citrus.foldModels = citrus.buildFoldsEndpointModels(type="pamr",citrus.foldFeatureSet,labels)
+citrus.buildFoldsEndpointModels = function(type,citrus.foldFeatureSet,labels,regularizationThresholds=NULL,family="classification",...){
+  
+  if (is.null(regularizationThresholds)){
+    regularizationThresholds = do.call(paste0("citrus.generateRegularizationThresholds.",family),args=list(features=citrus.foldFeatureSet$allFeatures,labels=labels,modelType=type,n=100,...=...))
+  }
     
   # Build models
   foldModels = lapply(1:citrus.foldFeatureSet$nFolds,
@@ -46,12 +134,12 @@ citrus.endpointRegress = function(modelType,citrus.foldFeatureSet,labels,family,
   result = list()
   
   # Reg Thresholds
-  result$regularizationThresholds = citrus.generateRegularizationThresholds.classification(features=citrus.foldFeatureSet$allFeatures,labels=labels,modelType=modelType,n=100)
+  result$regularizationThresholds = do.call(paste0("citrus.generateRegularizationThresholds.",family),args=list(features=citrus.foldFeatureSet$allFeatures,labels=labels,modelType=modelType,n=100,...=...))
   
   # Fold Models
   if (citrus.foldFeatureSet$nFolds>1){
-    #foldModels = citrus.buildCrossValidatedEndpointModel(type=modelType,citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,regularizationThresholds=regularizationThresholds,family=family)
-    result$foldModels = citrus.buildCrossValidatedEndpointModel(type=modelType,citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,regularizationThresholds=result$regularizationThresholds,family=family,...)
+    #foldModels = citrus.buildFoldsEndpointModels(type=modelType,citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,regularizationThresholds=regularizationThresholds,family=family)
+    result$foldModels = citrus.buildFoldsEndpointModels(type=modelType,citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,regularizationThresholds=result$regularizationThresholds,family=family,...)
   } 
   
   # Final Models
