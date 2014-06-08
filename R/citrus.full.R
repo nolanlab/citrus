@@ -13,7 +13,7 @@
 #' @param modelTypes Vector of model types to be used to detect associations with experimental endpoint. Valid values are \code{glmnet}, \code{pamr}, and \code{sam}.
 #' @param nFolds Number of independent clustering folds to be used for model fitting. Should only be >1 if using \code{glmnet} or \code{pamr} models. Default value is 1 and all samples are clustered together.
 #' @param conditionComparaMatrix matrix of condition data to compare. See details.
-#' @param ... Other arguments to be passed to \code{\link{citrus.readFCSSet}}, \code{\link{citrus.buildFoldFeatureSet}}, \code{\link{citrus.endpointRegress}}. 
+#' @param ... Other arguments to be passed to \code{\link{citrus.readFCSSet}}, \code{\link{citrus.buildFeatures}}, \code{\link{citrus.endpointRegress}}. 
 #' Useful additional arguments listed in details.
 #' 
 #' @details Citrus is able to analyze FCS data from single conditions or relative to a given baseline 
@@ -25,7 +25,32 @@
 #' relative to feature values in the row name. \code{TRUE} entries on the diagonal means conditions are analyzed by themselves. 
 #' See Examples.
 #' 
+#' Other useful arguments to pass to citrus.full include:
+#' 
+#' \code{fileSampleSize}: The number of cells to select from each sample. See \code{\link{citrus.readFCSSet}}.
+#' 
+#' \code{transformColumns}: Vector of parameter names or indicies whose values should transformed. See \code{\link{citrus.readFCSSet}}.
+#' 
+#' \code{transformCofactor}:  Cofactor for arcsin-hyperbolic transform. See \code{\link{citrus.readFCSSet}}.
+#' 
+#' \code{featureType}: The descriptive feature type to be calculated for each cluster. See \code{\link{citrus.buildFeatures}}.
+#' 
+#' \code{minimumClusterSizePercent}: The minimum cluster size as a percentage of total sampled cells. See \code{\link{citrus.buildFeatures}}.
+#' 
+#' @return A citrus.full.result object with the following properties:
+#' \item{citrus.combinedFCSSet}{A \code{citrus.combinedFCSSet} object containing data read from files.}
+#' \item{citrus.foldClustering}{A \code{citrus.foldClustering} object that contains clustering results.}
+#' \item{conditionFoldFeatures}{A list of \code{citrus.foldFeatureSet} objects used for regression, one list element for each set of analyzed conditions.}
+#' \item{conditionRegressionResults}{A list of \code{citrus.regressionResult} objects, one entry for each set of analyzed condition.}
+#' \item{family}{The family of the regression model.}
+#' \item{labels}{Endpoint labels of the analyzed samples.}
+#' \item{conditions}{List of analyzed conditions.}
+#' \item{modelTypes}{Vector of regression models used to test for endpoint associations.}
+#' 
 #' @author Robert Bruggner
+#' @export
+#' 
+#' @seealso \code{\link{citrus.readFCSSet}}, \code{\link{citrus.cluster}},\code{\link{citrus.buildFeatures}}, and \code{\link{citrus.endpointRegress}}
 #' 
 #' @examples
 #' # Example with a single experimental condition (unstimulated data) 
