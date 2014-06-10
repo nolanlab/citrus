@@ -163,6 +163,7 @@ citrus.endpointRegress = function(modelType,citrus.foldFeatureSet,labels,family,
   # Extra info
   result$modelType=modelType
   result$family=family
+  result$labels=labels
   
   class(result) = "citrus.regressionResult"
   return(result)
