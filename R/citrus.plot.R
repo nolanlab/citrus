@@ -290,17 +290,25 @@ citrus.plotClusters = function(clusterIds,clusterAssignments,citrus.combinedFCSS
 #' 
 #' @param citrus.foldFeatureSet A \code{citrus.foldFeatureSet} object. Clusters for which features are calculated are included in the graph.
 #' @param citrus.foldClustering A \code{citrus.foldClustering} object. Used to determine relationships between clusters.
-citrus.createHierarchyGraph = function(citrus.foldFeatureSet,citrus.foldClustering){
+#' 
+#' @author Robert Bruggner
+#' @export
+#' 
+#' @return A \code{graph} object and other properties for plotting. 
+#' \item{graph}{An \code{\link{igraph}} \code{graph} object.}
+#' \item{layout}{An \code{\link{igraph}} \code{layout} for the graph.}
+#' \item{plotSize}{Size of PDF for plotting (inches) calculated based on the number of clusters to be plotted.}
+#' 
+#' 
+citrus.createHierarchyGraph = function(citrus.clustering,selectedClusters){
   
-  largeEnoughClusters=citrus.foldFeatureSet$allLargeEnoughClusters
-  
-  if (length(largeEnoughClusters)>750){
+  if (length(selectedClusters)>750){
     minVertexSize=0
     plotSize=35
-  } else if (length(largeEnoughClusters)>250){
+  } else if (length(selectedClusters)>250){
     minVertexSize=4
     plotSize=20
-  } else if (length(largeEnoughClusters)>100){
+  } else if (length(selectedClusters)>100){
     minVertexSize=6
     plotSize=15
   } else {
@@ -309,11 +317,11 @@ citrus.createHierarchyGraph = function(citrus.foldFeatureSet,citrus.foldClusteri
   }
   
   
-  mergeOrder=citrus.foldClustering$allClustering$clustering$merge
-  clusterAssignments=citrus.foldClustering$allClustering$clusterMembership
+  mergeOrder=citrus.clustering$clustering$merge
+  clusterAssignments=citrus.clustering$clusterMembership
   
-  cmat = matrix(0,ncol=length(largeEnoughClusters),nrow=length(largeEnoughClusters),dimnames=list(largeEnoughClusters,largeEnoughClusters))
-  for (cluster in largeEnoughClusters){
+  cmat = matrix(0,ncol=length(selectedClusters),nrow=length(selectedClusters),dimnames=list(selectedClusters,selectedClusters))
+  for (cluster in selectedClusters){
     children = mergeOrder[cluster,]  
     for (child in children){
       if (as.character(child) %in% rownames(cmat)){
@@ -323,7 +331,7 @@ citrus.createHierarchyGraph = function(citrus.foldFeatureSet,citrus.foldClusteri
   }
   g = graph.adjacency(adjmatrix=cmat,mode="directed",add.colnames='label')
   clusterSizes = do.call("rbind",lapply(clusterAssignments,length))
-  sizes = sapply(log(clusterSizes[largeEnoughClusters]),findInterval,vec=hist(log(clusterSizes[largeEnoughClusters]),breaks=10,plot=F)$breaks)
+  sizes = sapply(log(clusterSizes[selectedClusters]),findInterval,vec=hist(log(clusterSizes[selectedClusters]),breaks=10,plot=F)$breaks)
   sizes = sizes+minVertexSize
   g = set.vertex.attribute(g,"size",value=sizes)
   l = layout.reingold.tilford(g,root=length(V(g)),circular=T)
@@ -468,7 +476,7 @@ citrus.plotRegressionResults = function(citrus.regressionResult,outputDirectory,
   if ("clusterGraph" %in% plotTypes){
     cat("Plotting Clustering Hierarchy")
     # Configure hierarchy graph
-    hierarchyGraph = citrus.createHierarchyGraph(citrus.foldFeatureSet,citrus.foldClustering)
+    hierarchyGraph = citrus.createHierarchyGraph(citrus.clustering=citrus.foldClustering$allClustering,selectedClusters=citrus.foldFeatureSet$allLargeEnoughClusters)
     
     # Plot median of clusters
     clusterMedians = t(sapply(citrus.foldFeatureSet$allLargeEnoughClusters,.getClusterMedians,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,data=citrus.combinedFCSSet$data,clusterCols=citrus.foldClustering$allClustering$clusteringColumns))
