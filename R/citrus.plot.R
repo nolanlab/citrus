@@ -299,7 +299,27 @@ citrus.plotClusters = function(clusterIds,clusterAssignments,citrus.combinedFCSS
 #' \item{layout}{An \code{\link{igraph}} \code{layout} for the graph.}
 #' \item{plotSize}{Size of PDF for plotting (inches) calculated based on the number of clusters to be plotted.}
 #' 
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
 #' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster data
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns)
+#' 
+#' # Large enough clusters
+#' largeEnoughClusters = citrus.selectClusters(citrus.clustering)
+#' 
+#' # Create graph for plotting
+#' hierarchyGraphStuff = citrus.createHierarchyGraph(citrus.clustering,selectedClusters=largeEnoughClusters)
 citrus.createHierarchyGraph = function(citrus.clustering,selectedClusters){
   
   if (length(selectedClusters)>750){
@@ -339,6 +359,61 @@ citrus.createHierarchyGraph = function(citrus.clustering,selectedClusters){
   return(result)
 }
 
+#' Plot clustering hierarchy
+#' 
+#' Plots clustering hierarchy in graph form
+#' 
+#' @param outputFile Full path to output file (should have '.pdf' extension)
+#' @param clusterColors Numeric matrix of values to colors clusters by. See \code{details}.
+#' @param graph Graph object to be plotted
+#' @param layout Layout for graph
+#' @param theme General color theme for plot. Options are \code{'black'} and \code{'white'}.
+#' @param plotSize Size of square pdf (inches).
+#' @param singlePDF Plot graphs for all variables in \code{clusterColors} in a single PDF?
+#' @param ncol Number of columns if plotting all graphs in single PDF.
+#' @param scale Scale up the size of the single PDF plot. 
+#' @param plotClusterIDs Plot cluster IDs on vertices? 
+#' 
+#' @author Robert Bruggner
+#' @export
+#' 
+#' @seealso \code{\link{citrus.createHierarchyGraph}}
+#' 
+#' @details The \code{clusterCols} argument enables multiple plots of the clustering hierarchy to be made, each colored 
+#' by a different variable. \code{clusterCols} should be a numeric matrix with each cluster being plotted represented 
+#' in a different row and each variable to be plotted represented in a different column. Row and column names should be 
+#' cluster IDs and variable names respectively. 
+#' 
+#' @examples
+#' ############
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster data
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns)
+#' 
+#' # Large enough clusters
+#' largeEnoughClusters = citrus.selectClusters(citrus.clustering)
+#' 
+#' # Create graph for plotting
+#' hierarchyGraph = citrus.createHierarchyGraph(citrus.clustering,selectedClusters=largeEnoughClusters)
+#' 
+#' # Create matrix of variables to plot (in this case, cluster medians)
+#' clusterMedians = t(sapply(largeEnoughClusters,citrus:::.getClusterMedians,clusterAssignments=citrus.clustering$clusterMembership,data=citrus.combinedFCSSet$data,clusterCols=clusteringColumns))
+#' rownames(clusterMedians) = largeEnoughClusters
+#' colnames(clusterMedians) = clusteringColumns
+#' 
+#' # Plot Clustering Hierarchy - Uncomment and Specify an output file
+#' # citrus.plotClusteringHierarchy(outputFile="/path/to/output.pdf",clusterColors=clusterMedians,graph=hierarchyGraph$graph,layout=hierarchyGraph$layout,plotSize=hierarchyGraph$plotSize)
 citrus.plotClusteringHierarchy = function(outputFile,clusterColors,graph,layout,theme="black",plotSize=15,singlePDF=F,ncol=3,scale=1,plotClusterIDs=T){
   if (theme=="black"){
     bg="black"
@@ -380,10 +455,62 @@ citrus.plotClusteringHierarchy = function(outputFile,clusterColors,graph,layout,
   dev.off()  
 }
 
-citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureClusterMatrix,graph,layout,clusterMedians=NULL,featureClusterCols=NULL,theme="black",encircle=T,plotSize=15,plotClusterIDs=T){
+#' Plot clustering hierarchy with clusters highlighted
+#' 
+#' Plot clustering heirarchy with a subset of clusters (clusters of interest) highlighted by color and/or encircled. 
+#' 
+#' @param outputFile Full path to output file (should end in '.pdf'). 
+#' @param featureClusterMatrix Matrix of clusters to encircle. See details.
+#' @param graph Graph object to be plotted
+#' @param layout Layout for graph
+#' @param theme General color theme for plot. Options are \code{'black'} and \code{'white'}.
+#' @param plotSize Size of square pdf (inches).
+#' @param plotClusterIDs Plot cluster IDs on vertices? 
+#' @param featureClusterColors Named vector of colors for each vertex. See details.
+#' @param encircle Should related highlighted clusters be encircled? 
+#' 
+#' @details The \code{featureClusterMatrix} argument should be a two column matrix. The first column should be names 'cluster' and rows should contain
+#' a cluster id to be highlighted. The second column should be named 'feature' and should contain a string or property describing 
+#' the general property of interest for this cluster. Entries having the same 'feature' value are plotted in the graph. One plot 
+#' is created for each unique value of the 'feature' column. 
+#' 
+#' The \code{featureClusterColors} argument can be used to supply custom colors for graph vertices. The vector should be a named
+#' vector with each entry being a color value and the name of the entry should be a vertex id (cluster id) that will be colored. 
+#' 
+#' @author Robert Bruggner
+#' @export
+#'
+#' @examples 
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster data
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns)
+#' 
+#' # Large enough clusters
+#' largeEnoughClusters = citrus.selectClusters(citrus.clustering)
+#' 
+#' # Create graph for plotting
+#' hierarchyGraph = citrus.createHierarchyGraph(citrus.clustering,selectedClusters=largeEnoughClusters)
+#' 
+#' # Features to highlight 
+#' featureClusterMatrix = data.frame(cluster=c(19992,19978,19981,19987,19983,19973),feature=rep(c("Property 1","Property 2"),each=3))
+#' 
+#' # Plot features in clustering hierarchy 
+#' # citrus.plotHierarchicalClusterFeatureGroups(outputFile="/path/to/outputFile.pdf",featureClusterMatrix,graph=hierarchyGraph$graph,layout=hierarchyGraph$layout,plotSize=hierarchyGraph$plotSize)
+citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureClusterMatrix,graph,layout,theme="black",plotSize=15,plotClusterIDs=T,featureClusterColors=NULL,encircle=T){
   
-  if (!is.null(featureClusterCols)&&(is.null(names(featureClusterCols)))){
-    stop("featureClusterCols argument must be vector with elements having names of vertices to be colored.")
+  if (!is.null(featureClusterColors)&&(is.null(names(featureClusterColors)))){
+    stop("featureClusterColors argument must be vector with elements having names of vertices to be colored.")
   }
   
   if (theme=="black"){
@@ -411,14 +538,14 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
 
     vertexFont=rep(1,length(V(graph)))
     vertexFont[get.vertex.attribute(graph,"label")%in%featureClusters]=2
-    if (is.null(featureClusterCols)){
+    if (is.null(featureClusterColors)){
       vertexColor=rep(rgb(0,0,.5,.5),length(V(graph)))
       vertexColor[get.vertex.attribute(graph,"label")%in%featureClusters]=rgb(0.5,0,0,.7)
     } else {
       vertexColor=rep(rgb(0,0,.5,.5),length(V(graph)))
       cp = rgb(1,0,0,seq(0,1,by=.05))
-      ct = seq(from=(min(featureClusterCols)-0.01),to=(max(featureClusterCols)+0.01),length.out=20)
-      vertexColor[ match(names(featureClusterCols),get.vertex.attribute(graph,"label")) ] = cp[sapply(featureClusterCols,findInterval,vec=ct)]
+      ct = seq(from=(min(featureClusterColors)-0.01),to=(max(featureClusterColors)+0.01),length.out=20)
+      vertexColor[ match(names(featureClusterColors),get.vertex.attribute(graph,"label")) ] = cp[sapply(featureClusterColors,findInterval,vec=ct)]
     }
     
     vertexLabelColor="white"
@@ -430,7 +557,7 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
     } else {
       plot.igraph(graph,layout=layout,main=feature,edge.color=stroke,vertex.label.color=vertexLabelColor,edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica",vertex.color=vertexColor,vertex.label.font=vertexFont)     
     }
-    if (!is.null(featureClusterCols)){
+    if (!is.null(featureClusterColors)){
       legend_image <- as.raster(matrix(rev(cp), ncol=1))
       rasterImage(legend_image, 1.1, -.5, 1.15,.5)
       text(x=1.15, y = seq(-.5,.5,l=5), labels = .decimalFormat(ct[c(1,floor((length(ct)/4)*1:4))]) ,pos=4,col=stroke)  
@@ -440,9 +567,55 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
   dev.off()
 }
 
-# Plot
-citrus.plotRegressionResults = function(citrus.regressionResult,outputDirectory,citrus.foldClustering,citrus.foldFeatureSet,citrus.combinedFCSSet,family,labels,plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph"),hierarchyGraph=NULL,...){
-  addtlArgs = list(...)
+#' Plot results of a Citrus regression analysis
+#' 
+#' Makes many plots showing results of a Citrus analysis
+#' 
+#' @method plot citrus.regressionResult
+#' @S3method plot citrus.regressionResult
+#' 
+#' @param citrus.regressionResult A \code{citrus.regressionResult} object.
+#' @param outputDirectory Full path to output directory for plots.
+#' @param citrus.foldClustering A \code{citrus.foldClustering} object.
+#' @param citrus.foldFeatureSet A \code{citrus.foldFeatureSet} object. 
+#' @param citrus.combinedFCSSet A \code{citrus.combinedFCSSet} object.
+#' @param plotTypes Vector of plots types to make. Valid options are \code{errorRate} (Cross-validated error rates for predictive models),
+#' \code{stratifyingFeatures} (plots of non-zero model features),\code{stratifyingClusters} (plots of clustering marker distributions in stratifying clusters), and
+#' \code{clusterGraph} (Plots of clustering hierarchy graph).
+#' @param hierarchyGraph A hierarchy graph configuration created by \code{\link{citrus.createHierarchyGraph}}. If \code{NULL}, automatically generated.
+#' 
+#' @author Robert Bruggner
+#' @export
+#' 
+#' @examples 
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # List disease group of each sample
+#' labels = factor(rep(c("Healthy","Diseased"),each=10))
+#' 
+#' # Cluster data
+#' citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,nFolds=1)
+#' 
+#' # Build abundance features
+#' citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet)
+#' 
+#' # Endpoint regress
+#' citrus.regressionResult = citrus.endpointRegress(modelType="pamr",citrus.foldFeatureSet,labels,family="classification")
+#' 
+#' # Plot results
+#' # plot(citrus.regressionResult,outputDirectory,"/path/to/output/directory/",citrus.foldClustering,citrus.foldFeatureSet,citrus.combinedFCSSet)
+plot.citrus.regressionResult = function(citrus.regressionResult,outputDirectory,citrus.foldClustering,citrus.foldFeatureSet,citrus.combinedFCSSet,plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph"),hierarchyGraph=NULL,...){
+addtlArgs = list(...)
   
   theme="black"
   if ("theme" %in% names(addtlArgs)){
@@ -459,12 +632,12 @@ citrus.plotRegressionResults = function(citrus.regressionResult,outputDirectory,
   
   if ("errorRate" %in% plotTypes){
     cat("Plotting Error Rate\n")
-    citrus.plotTypeErrorRate(modelType=modelType,modelOutputDirectory=modelOutputDirectory,regularizationThresholds=citrus.regressionResult$regularizationThresholds,thresholdCVRates=citrus.regressionResult$thresholdCVRates,finalModel=citrus.regressionResult$finalModel$model,cvMinima=citrus.regressionResult$cvMinima,family=family)
+    citrus.plotTypeErrorRate(modelType=modelType,modelOutputDirectory=modelOutputDirectory,regularizationThresholds=citrus.regressionResult$regularizationThresholds,thresholdCVRates=citrus.regressionResult$thresholdCVRates,finalModel=citrus.regressionResult$finalModel$model,cvMinima=citrus.regressionResult$cvMinima,family=citrus.regressionResult$family)
   }
   
   if ("stratifyingFeatures" %in% plotTypes){
     cat("Plotting Stratifying Features\n")
-    citrus.plotDifferentialFeatures(differentialFeatures=citrus.regressionResult$differentialFeatures,features=citrus.foldFeatureSet$allFeatures,modelOutputDirectory=modelOutputDirectory,labels=labels,family=family)
+    citrus.plotDifferentialFeatures(differentialFeatures=citrus.regressionResult$differentialFeatures,features=citrus.foldFeatureSet$allFeatures,modelOutputDirectory=modelOutputDirectory,labels=citrus.regressionResult$labels,family=citrus.regressionResult$family)
   }
   
   if ("stratifyingClusters" %in% plotTypes){
@@ -475,8 +648,12 @@ citrus.plotRegressionResults = function(citrus.regressionResult,outputDirectory,
   
   if ("clusterGraph" %in% plotTypes){
     cat("Plotting Clustering Hierarchy")
-    # Configure hierarchy graph
-    hierarchyGraph = citrus.createHierarchyGraph(citrus.clustering=citrus.foldClustering$allClustering,selectedClusters=citrus.foldFeatureSet$allLargeEnoughClusters)
+    
+    # Configure hierarchy graph if not provided
+    if (is.null(hierarchyGraph)){
+      hierarchyGraph = citrus.createHierarchyGraph(citrus.clustering=citrus.foldClustering$allClustering,selectedClusters=citrus.foldFeatureSet$allLargeEnoughClusters)  
+    }
+    
     
     # Plot median of clusters
     clusterMedians = t(sapply(citrus.foldFeatureSet$allLargeEnoughClusters,.getClusterMedians,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,data=citrus.combinedFCSSet$data,clusterCols=citrus.foldClustering$allClustering$clusteringColumns))
@@ -502,11 +679,13 @@ citrus.plotRegressionResults = function(citrus.regressionResult,outputDirectory,
 #' @method plot citrus.full.result
 #' @S3method plot citrus.full.result
 plot.citrus.full.result = function(citrus.full.result,outputDirectory){
+  
+  # Should 
   for (conditionName in names(results$conditions)){
     cat(paste0("\nPlotting Results for ",conditionName,"\n"))
     conditionOutputDir = file.path(outputDirectory,conditionName)
     dir.create(conditionOutputDir,showWarnings=F)
-    mclapply(citrus.full.result$conditionRegressionResults[[conditionName]],citrus.plotRegressionResults,outputDirectory=conditionOutputDir,citrus.foldClustering=citrus.full.result$citrus.foldClustering,citrus.foldFeatureSet=citrus.full.result$conditionFoldFeatures[[conditionName]],citrus.combinedFCSSet=citrus.full.result$citrus.combinedFCSSet,family=citrus.full.result$family,labels=citrus.full.result$labels,conditions=citrus.full.result$conditions[[conditionName]])
+    mclapply(citrus.full.result$conditionRegressionResults[[conditionName]],plot,outputDirectory=conditionOutputDir,citrus.foldClustering=citrus.full.result$citrus.foldClustering,citrus.foldFeatureSet=citrus.full.result$conditionFoldFeatures[[conditionName]],citrus.combinedFCSSet=citrus.full.result$citrus.combinedFCSSet,family=citrus.full.result$family,labels=citrus.full.result$labels,conditions=citrus.full.result$conditions[[conditionName]])
     cat("\n")
   }
 }
