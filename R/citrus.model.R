@@ -124,6 +124,62 @@ citrus.buildFoldsEndpointModels = function(type,citrus.foldFeatureSet,labels,reg
   return(foldModels)
 }
 
+#' Regress against an experimental endpoint
+
+#' Regress cluster properties against an experimental endpoint of interest. Models are fit on supplied features and constrained 
+#' by regularization thresholds (\code{glmnet} and \code{pamr}) or FDR (\code{sam}). Stratifying features are returned along with 
+#' corresponding cluster IDs. 
+#' 
+#' @param modelType Method to be used for model-fitting. Valid options are: \code{glmnet},\code{pamr}, and \code{sam}.
+#' @param citrus.foldFeatureSet A \code{citrus.foldFeatureSet} object.
+#' @param labels Vector of endpoint values for analyzed samples.
+#' @param family Family of model to fit. Valid options are: \code{classification}.
+#' @param ... Other parameters passed to model-fitting methods.
+#' 
+#' @details If independent clusterings are run (i.e. \code{citrus.clusterAndMapFolds} is run with \code{nFolds > 1}), model are fit on each 
+#' feature set calculated for each clustering fold and final regularization thresholds are selected by predicting endpoint values for leftout samples whose data
+#' was mapped to existing cluster space. If a single clustering was run (i.e. \code{citrus.clusterAndMapFolds} is run with \code{nFolds = 1}), 
+#' cross-validation is used to select final regularization thresholds based on features derived from a clustering of all samples. Regardless
+#' of how regularization thresholds are selected, the final reported features are from the final model constructed from all features, constrained by 
+#' identified optimal regularization thresholds.
+#' 
+#' @return A \code{citrus.regression} object with the following properties:
+#' \item{regularizationThresholds}{Regularization thresholds used to constrain all constructed models. Not applicable for \code{sam} models.}
+#' \item{foldModels}{A \code{citrus.endpointModel} constructed from each independent fold feature set. \code{NULL} if \code{nFolds = 1}.}
+#' \item{finalModel}{A \code{citrus.endpointModel} constructed from features derived from the clustering of all samples together.}
+#' \item{thresholdCVRates}{Matrix containing the average error rate and standard error of models at each regularization threshold. FDR also reported where possible.}
+#' \item{cvMinima}{Values and indicies of pre-selected cross-validation error-rate thresholds.}
+#' \item{differentialFeatures}{Non-zero model features and corresponding clusters from the \code{finalModel} constrained by \code{cvMinima}.}
+#' \item{modelType}{Type of model fit on data.}
+#' \item{family}{Family of regression model.}
+#' \item{labels}{Endpoint labels of analyzed samples.}
+#' 
+#' @author Robert Bruggner
+#' @export
+#' 
+#' @examples
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # List disease group of each sample
+#' labels = factor(rep(c("Healthy","Diseased"),each=10))
+#' 
+#' # Cluster data
+#' citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,nFolds=4)
+#' 
+#' # Build abundance features
+#' citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet)
+#' 
+#' # Endpoint regress
+#' citrus.regressionResult = citrus.endpointRegress(modelType="pamr",citrus.foldFeatureSet,labels,family="classification")
 citrus.endpointRegress = function(modelType,citrus.foldFeatureSet,labels,family,...){
     
   if (nrow(citrus.foldFeatureSet$allFeatures)!=length(labels)){
