@@ -217,7 +217,40 @@ citrus.plotModelClusters = function(differentialFeatures,modelOutputDirectory,cl
   }
 }
 
-citrus.plotClusters = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,clusteringColumns,outputFile=NULL,conditions=NULL,...){
+#' Plot cluster histograms
+#' 
+#' Plot expression of markers in cluster cells relative to all cells
+#' 
+#' @param clusterIds Vector of cluster IDs to plot
+#' @param clusterAssignments List containing indicies of cells assigned to each cluster.
+#' @param citrus.combinedFCSSet Combined FCS data that was clustered.
+#' @param clusteringColumns Columns for which to plot distributions
+#' @param conditions Vector of conditions clustering was performed on.
+#' @param outputFile If not \code{NULL}, plot is written to \code{outputFile}.
+#' @param ... Other parameters (ignored).
+#' 
+#' @author Robert Bruggner
+#' @export
+#' 
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster data
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns)
+#' 
+#' # Plot clusters
+#' citrus.plotClusters(clusterIds=c(19998,19997),clusterAssignments=citrus.clustering$clusterMembership,citrus.combinedFCSSet,clusteringColumns)
+citrus.plotClusters = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,clusteringColumns,conditions=NULL,outputFile=NULL,...){
   
   data = citrus.combinedFCSSet$data
   
@@ -251,23 +284,31 @@ citrus.plotClusters = function(clusterIds,clusterAssignments,citrus.combinedFCSS
 # Hierarchical Clustering plots
 ########################################
 
-citrus.createHierarchyGraph = function(citrus.foldFeatureSet,citrus.foldClustering,minimumClusterSizePercent=0.05){
+#' Create a graph object from clustering hierarchy
+#' 
+#' Create a graph object from clustering hierarchy that may be used by other plotting functions.
+#' 
+#' @param citrus.foldFeatureSet A \code{citrus.foldFeatureSet} object. Clusters for which features are calculated are included in the graph.
+#' @param citrus.foldClustering A \code{citrus.foldClustering} object. Used to determine relationships between clusters.
+citrus.createHierarchyGraph = function(citrus.foldFeatureSet,citrus.foldClustering){
   
-  if (minimumClusterSizePercent<0.005){
+  largeEnoughClusters=citrus.foldFeatureSet$allLargeEnoughClusters
+  
+  if (length(largeEnoughClusters)>750){
     minVertexSize=0
     plotSize=35
-  } else if (minimumClusterSizePercent<0.01){
+  } else if (length(largeEnoughClusters)>250){
     minVertexSize=4
     plotSize=20
-  } else if (minimumClusterSizePercent<0.05){
+  } else if (length(largeEnoughClusters)>100){
     minVertexSize=6
     plotSize=15
   } else {
     minVertexSize=8
     plotSize=10
   }
-    
-  largeEnoughClusters=citrus.foldFeatureSet$allLargeEnoughClusters
+  
+  
   mergeOrder=citrus.foldClustering$allClustering$clustering$merge
   clusterAssignments=citrus.foldClustering$allClustering$clusterMembership
   
@@ -427,7 +468,7 @@ citrus.plotRegressionResults = function(citrus.regressionResult,outputDirectory,
   if ("clusterGraph" %in% plotTypes){
     cat("Plotting Clustering Hierarchy")
     # Configure hierarchy graph
-    hierarchyGraph = citrus.createHierarchyGraph(citrus.foldFeatureSet,citrus.foldClustering,minimumClusterSizePercent=citrus.foldFeatureSet$minimumClusterSizePercent)
+    hierarchyGraph = citrus.createHierarchyGraph(citrus.foldFeatureSet,citrus.foldClustering)
     
     # Plot median of clusters
     clusterMedians = t(sapply(citrus.foldFeatureSet$allLargeEnoughClusters,.getClusterMedians,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,data=citrus.combinedFCSSet$data,clusterCols=citrus.foldClustering$allClustering$clusteringColumns))
