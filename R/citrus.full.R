@@ -166,12 +166,18 @@ citrus.full = function(fileList,
   return(results)
 }
 
-print.citrus.full.result = function(x,...){
+#' Print a summary of a \code{citrus.full.result}
+#' 
+#' @param citrus.full.result A citrus.full.result object
+#' 
+#' @method print citrus.full.result
+#' @S3method print citrus.full.result
+print.citrus.full.result = function(citrus.full.result,...){
   cat("Citrus full result\n")
-  cat(paste("Family:",x$family,"\n"))
+  cat(paste("Family:",citrus.full.result$family,"\n"))
   cat("Models: ")
-  cat(paste0(paste(unlist(x$modelTypes),collapse=", "),"\n"))
+  cat(paste0(paste(unlist(citrus.full.result$modelTypes),collapse=", "),"\n"))
   cat("Conditions: ")
-  cat(paste0(paste(unlist(x$conditions),collapse=", "),"\n"))
+  cat(paste0(paste(unlist(citrus.full.result$conditions),collapse=", "),"\n"))
 }
 
