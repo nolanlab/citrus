@@ -1,4 +1,42 @@
-citrus.readFCSSet = function(dataDirectory,fileList,conditions=NULL,fileSampleSize=NULL,transformColumns=NULL,transformCofactor=5,useChannelDescriptions=F,...){
+#' Read a set of FCS files for analysis
+#' 
+#' Reads and combines data from many FCS files for use with Citrus. 
+#' 
+#' @param dataDirectory Full or relative path to directory containin FCS files.
+#' @param fileList Data frame containing names of files to be read. Each entry should be a file name. FCS files 
+#' from the same experimental condition should be listed in the same column with the column name indicating the experimental 
+#' condition. FCS files from the same sample measured in multiple experimental conditions should be listed in the same row.
+#' See examples. 
+#' @param fileSampleSize Number of cells to be selected from each FCS file. If this number is larger than the number of events
+#' in a given FCS file, all cells from that file are selected. 
+#' @param transformColumns Vector of parameter names or indicies whose values should transformed prior to analysis.
+#' @param Cofactor for arcsin-hyperbolic transform.
+#' @param scaleColumns Vector of parameter names or indicies whose values should be scaled prior to analysis.
+#' @param useChannelDescriptions Should channel descriptive names be used to name data instead of channel names?
+#' @param ... Other undocumented parameters.
+#' 
+#' @return An object of type \code{citrus.combinedFCSSet}.
+#' \item{data}{Combined FCS measurements from files listed in fileList, with paraemters \code{fileEventNumber} and \code{fileId} added. The former
+#' reports the event number in the original source file and the latter records the file from which the event was sampled.}
+#' \item{fileIds}{A matrix recording the assigned fileIds for each file in the fileList argument.}
+#' \item{fileNames}{The corresponding file names for each file, indexed by fileId.}
+#' \item{fileChannelNames}{Names of parameters in each read file.}
+#' \item{fileReagentNames}{Description of parameters in each read file.}
+#' 
+#' @author Robert Bruggner
+#' @export
+#'  
+#' @examples
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed - one condition.
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # Create list of files to be analyzed - two conditions.
+#' fileList = data.frame(unstim=list.files(dataDirectory,pattern="unstim"),stim1=list.files(dataDirectory,pattern="stim1"))
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+citrus.readFCSSet = function(dataDirectory,fileList,fileSampleSize=NULL,transformColumns=NULL,transformCofactor=5,scaleColumns=NULL,useChannelDescriptions=F,...){
   data = list();
   fileCounter = 1;
   fileNames = c();
@@ -6,9 +44,8 @@ citrus.readFCSSet = function(dataDirectory,fileList,conditions=NULL,fileSampleSi
   fileReagentNames = list();
   addtlArgs = list(...)
     
-  if(is.null(conditions)){
-    conditions = colnames(fileList)
-  }
+  conditions = colnames(fileList)
+  
   for (i in 1:length(conditions)){
     cat(paste("Reading Condition ",conditions[i],"\n"));
     conditionData = list();
@@ -66,22 +103,59 @@ citrus.readFCSSet = function(dataDirectory,fileList,conditions=NULL,fileSampleSi
   }
   data = do.call("rbind",data)
   
-  if ("scaleAllCols" %in% names(addtlArgs)){
-    fcsData = apply(fcsData[,addtlArgs[["scaleSamples"]]],2,scale)  
+  if (!is.null(scaleColumns)){
+    fcsData[,scaleColumns] = apply(fcsData[,scaleColumns],2,scale)  
   }
   
-  results = list(data=data,fileIds=matrix(1:(fileCounter-1),ncol=length(conditions),dimnames=list(c(),conditions)),fileNames=fileNames,fileChannelNames=fileChannelNames,fileReagentNames=fileReagentNames,call=match.call())
+  results = list(data=data,fileIds=matrix(1:(fileCounter-1),ncol=length(conditions),dimnames=list(c(),conditions)),fileNames=fileNames,fileChannelNames=fileChannelNames,fileReagentNames=fileReagentNames)
   class(results) = "citrus.combinedFCSSet"
   
   return(results);
 }
 
-print.citrus.combinedFCSSet = function(x,...){
-  cat(paste0("Number Of Files: ",length(x$fileNames),"\n"))
-  cat(paste0("Number Of Events: ",nrow(x$data),"\n"))
-  cat(paste0("Parameter Names:\n",paste0("\t",colnames(x$data),collapse="\n")))
+#' Prints a summary of a citrus.combinedFCSSet.
+#' 
+#' @param citrus.combinedFCSSet A citrus.combinedFCSSet object.
+#' 
+#' @method print citrus.combinedFCSSet
+#' @S3method print citrus.combinedFCSSet
+#' 
+#' @author Robert Bruggner
+#' @export
+print.citrus.combinedFCSSet = function(citrus.combinedFCSSet,...){
+  cat(paste0("Number Of Files: ",length(citrus.combinedFCSSet$fileNames),"\n"))
+  cat(paste0("Number Of Events: ",nrow(citrus.combinedFCSSet$data),"\n"))
+  cat(paste0("Parameter Names:\n",paste0("\t",colnames(citrus.combinedFCSSet$data),collapse="\n")))
 }
 
+#' Masks a citrus.combinedFCSSet
+#' 
+#' Masks a citrus.combinedFCSset to include data from a subset of file ids. 
+#' 
+#' @param citrus.combinedFCSSet A citrus.combinedFCSSet object.
+#' @param fileIds Vector of file IDs for which to retain data. 
+#' 
+#' @return A \code{citrus.combinedFCSSet} object.
+#' @author Robert Bruggner
+#' @export
+#' 
+#' @seealso \code{\link{citrus.readFCSSet}}
+#' 
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read citrus.combinedFCSSet
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # Mask
+#' maskedFCSSet = citrus.maskCombinedFCSSet(citrus.combinedFCSSet,fileIds=1:3)
+#' 
+#' # Check - should be 1,2,3
+#' unique(maskedFCSSet$data[,"fileId"])
 citrus.maskCombinedFCSSet = function(citrus.combinedFCSSet,fileIds){
 
   # Keep any row that has an included file
@@ -102,6 +176,38 @@ citrus.maskCombinedFCSSet = function(citrus.combinedFCSSet,fileIds){
   subset(data,data[,"fileId"]==fileId)
 }
 
+#' Select clusters for further analysis
+#' 
+#' Selects clusters from a set of clusters identified by a clustering method investigate for stratifying signal.
+#' 
+#' @param citrus.clustering A \code{citrus.clustering} object.
+#' @param method Method for determining which clusters from a clustering should be analyzed for stratifying signal.
+#' @param ... Other parameters passed to specific cluster selection methods.
+#' 
+#' @return A vector of cluster IDs. 
+#' 
+#' @author Robert Bruggner
+#' @export
+#' @seealso \code{\link{citrus.selectClusters.minimumClusterSize}}.
+#' 
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster data
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns)
+#' 
+#' # Select clusters that contain at least 1% of clustered events.
+#' largeEnoughClusters = citrus.selectClusters(citrus.clustering,minimumClusterSizePercent=0.01)
 citrus.selectClusters = function(citrus.clustering,method="minimumClusterSize",...){
   do.call(paste0("citrus.selectClusters.",method),args=list(citrus.clustering=citrus.clustering,...))
 }
