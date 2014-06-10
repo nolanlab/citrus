@@ -96,11 +96,17 @@ citrus.clusterFold = function(foldIndex,folds,citrus.combinedFCSSet,clusteringCo
   citrus.cluster(citrus.maskCombinedFCSSet(citrus.combinedFCSSet,fileIds=includeFileIds),clusteringColumns,...)
 }
 
-citrus.clusterAndMapFolds = function(citrus.combinedFCSSet,clusteringColumns,labels,nFolds=10,...){
+citrus.clusterAndMapFolds = function(citrus.combinedFCSSet,clusteringColumns,labels=NULL,nFolds=10,...){
   
   result = list()
   
   if (nFolds>1){
+    
+    # This should eventually changed to just make fold w/o balancing.
+    if (is.null(labels)){
+      stop("Labels must be supplied for balanced fold selection.")
+    }
+    
     # Define Folds
     result$folds = pamr:::balanced.folds(y=labels,nfolds=nFolds)
     
