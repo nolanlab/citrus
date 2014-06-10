@@ -251,100 +251,6 @@ citrus.selectClusters.minimumClusterSize =function(citrus.clustering,minimumClus
 }
 
 
-#citrus.assembleHandGates = function(dataDir,filePopulationList,conditionComparaMatrix=NULL,fileSampleSize=NULL,transformColumns=NULL,transformCofactor=5){
-  
-#  if (!is.null(conditionComparaMatrix)){
-#    allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 
-#    # Perform Internal Consistency Checks!
-#  } else {
-#    allConditions = names(filePopulationList)
-#  }
-  
-#  results = list();
-
-#  for (conditions in allConditions){
-    
-#    cda = data.frame();
-#    eventCounter=0;
-#    populationCounter=1;  
-#    fileNames=list()  
-#    clusterAssignments = list();
-#   fileId=1;  
-#    fileChannelNames = list()
-#    fileReagentNames = list()
-#    fileIds = list();
-#    populationClusterMap = list();
-#    for (condition in conditions){
-#      
-#      nPatients = nrow(filePopulationList[[condition]])
-#      baseFileId = (match(condition,conditions)-1)*nPatients
-#      fileIds[[condition]] = (baseFileId+1):(baseFileId+nPatients)
-#      for (populationName in colnames(filePopulationList[[condition]])){
-#        populationEvents = c();
-#        for (patientId in 1:nPatients){
-#          fcsFileName = filePopulationList[[condition]][patientId,populationName]
-#          fileId = baseFileId+patientId
-#          print(paste("Reading",fcsFileName))
-#          fcsFile = citrus.readFCS(file.path(dataDir,fcsFileName),...)
-#          fileChannelNames[[fcsFileName]] = colnames(fcsFile)
-#          fileReagentNames[[fcsFileName]] = pData(parameters(fcsFile))$desc
-#          fcsFileData = exprs(fcsFile)
-#          if (!is.null(fileSampleSize)){
-#            if (fileSampleSize < nrow(fcsFileData)){
-#              fcsFileData = fcsFileData[sample(1:nrow(fcsFileData),fileSampleSize),]
-#            }
-#          }
-#          lastEvent = nrow(cda)
-#          absoluteEventIds = (lastEvent+1):(eventCounter+nrow(fcsFileData))
-#          cda = rbind(cda,data.frame(fcsFileData,fileId=fileId))
-#          populationEvents = c(populationEvents,absoluteEventIds)
-#          eventCounter = eventCounter+nrow(fcsFileData)
-#          fileNames[[fileId]]=fcsFileName
-#          fileId=fileId+1;
-#        }
-#        
-#        
-#        if (populationName %in% names(populationClusterMap)){
-#          clusterAssignments[[populationClusterMap[[populationName]]]] = c(clusterAssignments[[populationClusterMap[[populationName]]]],populationEvents)
-#        } else {
-#          clusterAssignments[[populationCounter]]=populationEvents;
-#          populationClusterMap[[populationName]]=populationCounter
-#          populationCounter = populationCounter+1;
-#        }
-#        
-#      }
-#    }
-#    
-#    if (!is.null(transformColumns)){
-#      cda[,transformColumns] = cda[,transformColumns]/transformCofactor
-#    }
-#    
-#    results[[paste(conditions,collapse="_vs_")]] = list(folds="all",
-#                                                        foldsClusterAssignments=list(all=clusterAssignments),
-#                                                        conditions=conditions,
-#                                                        citrus.dataArray=list(data=as.matrix(cda),
-#                                                                              fileNames=unlist(fileNames,use.names=F),
-#                                                                              fileIds=do.call("cbind",fileIds),
-#                                                                              fileChannelNames=fileChannelNames,
-#                                                                              fileReagentNames=fileReagentNames),
-#                                                        clusterPopulationNames=names(populationClusterMap));
-#  }
-#  return(results)
-#}
-
-#citrus.leavoutFold = function(x,y,leaveoutSize){
-#  groupCounts = table(y)/length(y)*leaveoutSize
-#  leaveout = list()
-#  for (group in unique(y)){
-#    leaveout[[group]] = sample(which(y==group),groupCounts[which(names(groupCounts)==group)])
-#  }
-#  return(as.vector(unlist(leaveout)))
-#}
-
-citrus.formatDecimal = function(x){
-  sprintf("%1.2f", x)
-}
-
 citrus.convertConditionMatrix = function(conditionMatrix){
   conditions = list();
   for (i in 1:nrow(conditionMatrix)){
@@ -357,39 +263,92 @@ citrus.convertConditionMatrix = function(conditionMatrix){
   return(conditions)
 }
 
+#' Get Citrus package version
+#' 
+#' Get Citrus package version.
+#' 
+#' @return Citrus package version
+#' @author Robert Bruggner
+#' @export
 citrus.version = function(){
   as.character(packageVersion("citrus"))
 }
 
-citrus.fileEventCount = function(dataDir,...){
+#' Counts FCS File events
+#' 
+#' Counts FCS events in all FCS files in a data directory
+#' 
+#' @param dataDirectory Directory from which to read FCS files. 
+#' @param ... Other parameters passed to citrus.readFCS
+#' 
+#' @author Robet Bruggner
+#' @export
+#' 
+#' @return A matrix detailing the number of events and parameters in each directory FCS file.
+#' 
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Get FCS Event Counts
+#' citrus.fileEventCount(dataDirectory)
+citrus.fileEventCount = function(dataDirectory,...){
   lengths = list();
   
-  for (fcsFile in list.files(dataDir,pattern=".fcs",ignore.case=T)){
+  for (fcsFile in list.files(dataDirectory,pattern=".fcs",ignore.case=T)){
     print(paste("Reading",fcsFile))
-    lengths[[fcsFile]] = suppressWarnings(dim(citrus.readFCS(file.path(dataDir,fcsFile),...)))
+    lengths[[fcsFile]] = suppressWarnings(dim(citrus.readFCS(file.path(dataDirectory,fcsFile),...)))
   }
   return(do.call("rbind",lengths))
 }
 
+#' List of computable feature types
+#' 
+#' Returns valid types of descriptive features that Citrus can compute
+#' 
+#' @return Vector of feature types Citrus can compute.
+#' 
+#' @author Robert Bruggner
+#' @export
 citrus.featureTypes = function(){
   return(c("abundances","medians"))
 }
 
+#' List possible model families 
+#' 
+#' Returns valid model family types that Citrus can compute.
+#' 
+#' @return Vector of model families that Citrus can compute.
+#' 
+#' @author Robert Bruggner
+#' @export
 citrus.familyList = function(){
   return(c("classification","survival","quantiative"))
 }
 
+
+#' List possible model types
+#' 
+#' Returns valid model types that Citrus can compute.
+#' 
+#' @return Vector of model types that Citrus can compute.
+#' 
+#' @author Robert Bruggner
+#' @export
 citrus.modelTypes = function(){
   return(c("pamr","glmnet","sam"))
 }
 
 #' Read an FCS file 
 #' 
-#' \code{citrus.readFCS} reads an FCS file while suppressing warnings
+#' Reads an FCS file while suppressing warnings.
 #' 
-#' @param filePath the full path to the FCS file to be read.
-#' @param ... other arguments to be passed to read.FCS
-#' @return a flowCore flowFrame object
+#' @param filePath The full path to the FCS file to be read.
+#' @param ... Other arguments to be passed to read.FCS.
+
+#' @return a \code{\link{flowCore}} flowFrame object.
+#' @author Robert Bruggner
+#' @export 
 #' @seealso \code{\link{flowCore}}
 citrus.readFCS = function(filePath,...){
   addtlArgs = list(...)
@@ -413,35 +372,28 @@ citrus.readFCS = function(filePath,...){
   return(fcs)
 }
 
-citrus.exportConditionClusters = function(conditionClusterIds,preclusterResult,outputDir,sampleIds=NULL){
-  for (conditionName in names(conditionClusterIds)){
-    for (clusterId in conditionClusterIds[[conditionName]]){
-      nFolds = length(preclusterResult[[conditionName]]$foldsCluster)
-      outputFile = file.path(outputDir,paste0(conditionName,"-cluster_",clusterId,".fcs"))
-      citrus.exportCluster(clusterId,
-                           data=preclusterResult[[conditionName]]$citrus.dataArray$data,
-                           clusterAssignments=preclusterResult[[conditionName]]$foldsClusterAssignments[[nFolds]],
-                           outputFile=outputFile,
-                           sampleIds=sampleIds)
-    }
-  }
-}
+#citrus.exportConditionClusters = function(conditionClusterIds,preclusterResult,outputDir,sampleIds=NULL){
+#  for (conditionName in names(conditionClusterIds)){
+#    for (clusterId in conditionClusterIds[[conditionName]]){
+#      nFolds = length(preclusterResult[[conditionName]]$foldsCluster)
+#      outputFile = file.path(outputDir,paste0(conditionName,"-cluster_",clusterId,".fcs"))
+#      citrus.exportCluster(clusterId,
+#                           data=preclusterResult[[conditionName]]$citrus.dataArray$data,
+#                           clusterAssignments=preclusterResult[[conditionName]]$foldsClusterAssignments[[nFolds]],
+#                           outputFile=outputFile,
+#                           sampleIds=sampleIds)
+#    }
+#  }
+#}
 
-#' @title Exports a cluster of cells to an FCS file 
-#' 
-#' @description Export cells in a cluster to an FCS file
-#' 
-#' @param clusterId The numeric ID of the cluster to be exported
-#' @param data The matrix of combined data that was clustered
-#' @param clusterAssignments A list with each element containin the indices of cells in each cluster. Generated by citrus.
-citrus.exportCluster = function(clusterId,data,clusterAssignments,outputFile,sampleIds=NULL){
-  clusterData = data[clusterAssignments[[clusterId]],]
-  if (!is.null(sampleIds)){
-    clusterData = clusterData[clusterData[,"fileId"]%in%sampleIds,]
-  }
-  if (nrow(clusterData)==0){
-    warning(paste("No data for cluster ",clusterId,"in selected files. Not writing to disk."))
-  } else {
-    write.FCS(x=flowFrame(exprs=clusterData),filename=outputFile)  
-  } 
-}
+#citrus.exportCluster = function(clusterId,data,clusterAssignments,outputFile,sampleIds=NULL){
+#  clusterData = data[clusterAssignments[[clusterId]],]
+#  if (!is.null(sampleIds)){
+#    clusterData = clusterData[clusterData[,"fileId"]%in%sampleIds,]
+#  }
+#  if (nrow(clusterData)==0){
+#    warning(paste("No data for cluster ",clusterId,"in selected files. Not writing to disk."))
+#  } else {
+#    write.FCS(x=flowFrame(exprs=clusterData),filename=outputFile)  
+# } 
+#}
