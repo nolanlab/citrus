@@ -6,6 +6,10 @@
   topo.colors(x,alpha=alpha)
 }
 
+.formatDecimal = function(x){
+  sprintf("%1.2f", x)
+}
+
 .getDisplayNames=function(citrus.combinedFCSSet,clusteringColumns){
   colLabels = citrus.combinedFCSSet$fileChannelNames[[1]][[1]]
   reagentNames = citrus.combinedFCSSet$fileReagentNames[[1]][[1]]
@@ -67,7 +71,7 @@ citrus.plotTypeErrorRate = function(modelType,modelOutputDirectory,regularizatio
       lines(c(i,i),c(errorRates[i]+thresholdCVRates[,"cvsd"][i],errorRates[i]-thresholdCVRates[,"cvsd"][i]),col="red",lty=3)
     }
     grid()
-    axis(1,at=1:length(errorRates),labels=sapply(thresholds,citrus.formatDecimal))
+    axis(1,at=1:length(errorRates),labels=sapply(thresholds,.formatDecimal))
     if (family=="survival"){
       axis(2)
     } else {
