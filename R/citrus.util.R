@@ -212,6 +212,38 @@ citrus.selectClusters = function(citrus.clustering,method="minimumClusterSize",.
   do.call(paste0("citrus.selectClusters.",method),args=list(citrus.clustering=citrus.clustering,...))
 }
 
+#' Selects clusters for endpoint analysis
+#' 
+#' Selects clusters for endpoint analysis by cluster size. Selected clusters must have a minimum number of 
+#' cells in them as a proportion of the total number of clustered events. If \code{n} total events are clustered,
+#' clusters contatining at least \code{n * minimumClusterSizePercent} events are selected.
+#' 
+#' @param citrus.clustering A \code{citrus.clustering} object.
+#' @param minimumClusterSizePercent The percentage (0 < x < 1) of the total number of clustered events a cluster 
+#' must contain in order to be selected. 
+#' @param ... Other arguments (ignored).
+#' 
+#' @author Robert Bruggner
+#' @export
+#' @seealso \code{\link{citrus.selectClusters}}
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster data
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns)
+#' 
+#' # Select clusters that contain at least 1% of clustered events.
+#' largeEnoughClusters = citrus.selectClusters.minimumClusterSize(citrus.clustering,minimumClusterSizePercent=0.01)
 citrus.selectClusters.minimumClusterSize =function(citrus.clustering,minimumClusterSizePercent=0.05,...){
   clusterSizes = sapply(citrus.clustering$clusterMembership,length)
   minimumClusterSize = (length(citrus.clustering$clusterMembership)+1)*minimumClusterSizePercent
