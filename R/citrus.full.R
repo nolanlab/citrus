@@ -18,24 +18,26 @@
 #' 
 #' @details Citrus is able to analyze FCS data from single conditions or relative to a given baseline 
 #' (i.e. stimulated values relative to an unstimulated baseline). Tell Citrus to compare conditions using 
-#' the conditionComparisonMatrix argument. The conditionComparisonMatrix is an \code{n x n} matrix of logical values
-#' indicating which conditions should be compared where \code{n} is the number of experimental conditions specified in
+#' the conditionComparisonMatrix argument. The conditionComparisonMatrix is an \eqn{n x n} matrix of logical values
+#' indicating which conditions should be compared where \eqn{n} is the number of experimental conditions specified in
 #' the fileList. Rows and columns names of the conditionComparsion matrix should be the names of experimental conditions 
 #' in the fileList. A matrix entry of \code{TRUE} indicates that Citrus should calculate the value features in column name
 #' relative to feature values in the row name. \code{TRUE} entries on the diagonal means conditions are analyzed by themselves. 
 #' See Examples.
 #' 
 #' Other useful arguments to pass to citrus.full include:
+#' \itemize{
 #' 
-#' \code{fileSampleSize}: The number of cells to select from each sample. See \code{\link{citrus.readFCSSet}}.
+#' \item \code{fileSampleSize}: The number of cells to select from each sample. See \code{\link{citrus.readFCSSet}}.
 #' 
-#' \code{transformColumns}: Vector of parameter names or indicies whose values should transformed. See \code{\link{citrus.readFCSSet}}.
+#' \item \code{transformColumns}: Vector of parameter names or indicies whose values should transformed. See \code{\link{citrus.readFCSSet}}.
 #' 
-#' \code{transformCofactor}:  Cofactor for arcsin-hyperbolic transform. See \code{\link{citrus.readFCSSet}}.
+#' \item \code{transformCofactor}:  Cofactor for arcsin-hyperbolic transform. See \code{\link{citrus.readFCSSet}}.
 #' 
-#' \code{featureType}: The descriptive feature type to be calculated for each cluster. See \code{\link{citrus.buildFeatures}}.
+#' \item \code{featureType}: The descriptive feature type to be calculated for each cluster. See \code{\link{citrus.buildFeatures}}.
 #' 
-#' \code{minimumClusterSizePercent}: The minimum cluster size as a percentage of total sampled cells. See \code{\link{citrus.buildFeatures}}.
+#' \item \code{minimumClusterSizePercent}: The minimum cluster size as a percentage of total sampled cells. See \code{\link{citrus.buildFeatures}}.
+#' }
 #' 
 #' @return A citrus.full.result object with the following properties:
 #' \item{citrus.combinedFCSSet}{A \code{citrus.combinedFCSSet} object containing data read from files.}
