@@ -111,15 +111,16 @@ citrus.thresholdCVs.classification = function(modelType,foldFeatures,labels,regu
   return(predictions[[index]]==labels[folds[[index]]])
 }
 
-citrus.predict.classification = function(model,features){
-  if (model$type=="glmnet"){
-    predictions = predict(model$model,newx=features,type="class")
-  } else if (model$type=="pamr"){
-    predictions = pamr.predictmany(fit=model$model,newx=t(features))$predclass
+#' @rdname citrus.predict
+citrus.predict.classification = function(citrus.endpointModel,newFeatures){
+  if (citrus.endpointModel$type=="glmnet"){
+    predictions = predict(citrus.endpointModel$model,newx=newFeatures,type="class")
+  } else if (citrus.endpointModel$type=="pamr"){
+    predictions = pamr.predictmany(fit=citrus.endpointModel$model,newx=t(newFeatures))$predclass
   } else {
-    stop(paste("don't know how to predict for class",model$type));
+    stop(paste("don't know how to predict for class",citrus.endpointModel$type));
   }
-  rownames(predictions) = rownames(features)
+  rownames(predictions) = rownames(newFeatures)
   return(predictions)
 }
 
