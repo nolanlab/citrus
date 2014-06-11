@@ -1,6 +1,86 @@
-###############################################
-# Generic function for building features
-###############################################
+#' Calculate descriptive cluster features
+#' 
+#' Calculate descriptive properties for each cluster in each sample
+#' 
+#' @param citrus.combinedFCSSet A \code{citrus.combinedFCSSet} object.
+#' @param clusterAssignments List of indicies of cluster assignments for each cluster.
+#' @param clusterIds Vector of cluster ID's for which to calculate features.
+#' @param featureType Type of feature to calculate. Valid options are: \code{abundances} and \code{medians}.
+#' See \code{citrus.calculateFeature.*} functions for feature-type specific arguments. 
+#' @param conditions Vector of conditions for which to calculate features. See details.
+#' @param ... Other arguments passed to individual feature-calculation functions.
+#' 
+#' @details If \code{conditions=NULL}, \code{citrus.buildFeatures} constructs features for all samples 
+#' in the \code{citrus.combinedFCSSet}. If \code{conditions} is a single element, \code{citrus.buildFeatures} 
+#' constructs features for samples in that condition. If \code{conditions} contains two elements, the first
+#' condition is used as a baseline condition, the second is used as a comparison condition, and \code{citrus.buildFeatures}
+#' returns the difference in feature values between the comparison and baseline conditions. 
+#' 
+#' @return Matrix of cluster features
+#' 
+#' @seealso \code{\link{citrus.calculateFeature.abundances}}, \code{\link{citrus.calculateFeature.medians}}
+#' @author Robert Bruggner
+#' @export 
+#' 
+#' @examples
+#' ######################################################
+#' # Calculate cluster abundances for single condition
+#' ######################################################
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster data
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns)
+#' 
+#' # Large enough clusters
+#' largeEnoughClusters = citrus.selectClusters(citrus.clustering)
+#' 
+#' # Build features
+#' abundanceFeatures = citrus.buildFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
+#' 
+#' 
+#' ######################################################
+#' # Calculate median levels of functional markers in 
+#' # stimulated conditions relative to unstimluated
+#' # condtion 
+#' ######################################################
+#' # Where the data Lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example2")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame(unstim=list.files(dataDirectory,pattern="unstim"),stim1=list.files(dataDirectory,pattern="stim1"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # Vector of parameters to be used for clustering
+#' clusteringColumns = c("LineageMarker1","LineageMarker2")
+#' 
+#' # Vector of parameters to calculate medians for
+#' functionalColumns = c("FunctionalMarker1","FunctionalMarker2")
+#' 
+#' # Cluster data
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns)
+#' 
+#' # Large enough clusters
+#' largeEnoughClusters = citrus.selectClusters(citrus.clustering)
+#' 
+#' # Build features
+#' medianDifferenceFeatures = citrus.buildFeatures(citrus.combinedFCSSet,
+#'                                                 clusterAssignments=citrus.clustering$clusterMembership,
+#'                                                 clusterIds=largeEnoughClusters,
+#'                                                 featureType="medians",
+#'                                                 medianColumns=functionalColumns,
+#'                                                 conditions=c("unstim","stim1"))
 citrus.buildFeatures = function(citrus.combinedFCSSet,clusterAssignments,clusterIds,featureType="abundances",conditions=NULL,...){  
 
   fileIds=NULL
@@ -39,9 +119,25 @@ citrus.buildFeatures = function(citrus.combinedFCSSet,clusterAssignments,cluster
   
 }
 
-################################
-# Abundance Features
-################################
+#' Calculate descriptive cluster features
+#' 
+#' Calculate descriptive cluster features.
+#' 
+#' @name citrus.calculateFeatures
+#' @param clusterIds Cluster IDs that descriptive features should be calculated for.
+#' @param clusterAssignments List with indicies of cells belonging to each cluster. 
+#' @param citrus.combinedFCSSet A \code{citrus.combinedFCSSet} object.
+#' @param fileIds Vector of file IDs to calculate features for. If \code{NULL}, calculates
+#' features for all samples in \code{citrus.combinedFCSSet}.
+#' @param medianColumns Vector of parameter names or numeric indicies of parameters for which to calculate cluster median values for. 
+#' @param ... Other arguments (ignored).
+#' 
+#' @details See \code{\link{citrus.buildFeatures}} for examples.
+#' 
+#' @author Robert Bruggner
+#' @export 
+#' 
+#' @seealso \code{\link{citrus.buildFeatures}}, \code{\link{citrus.buildFoldFeatureSet}} 
 citrus.calculateFeature.abundances = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,fileIds=NULL,...){
   eventFileIds = citrus.combinedFCSSet$data[,"fileId"]
   if (is.null(fileIds)){
@@ -62,14 +158,9 @@ citrus.calculateFileClusterAbundance = function(clusterId,fileId,clusterAssignme
   sum(which(eventFileIds==fileId) %in% clusterAssignments[[clusterId]])/sum((eventFileIds==fileId))
 }
 
-################################
 # Median Features
-################################
-citrus.calculateFeature.medians = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,fileIds=NULL,...){
-  if (!("medianColumns" %in% names(list(...)))){
-    stop("medianColumns argument missing")
-  }
-  medianColumns = list(...)[["medianColumns"]]
+#' @rdname citrus.calculateFeatures
+citrus.calculateFeature.medians = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,medianColumns,fileIds=NULL,...){
   
   if (is.null(fileIds)){
     fileIds = unique(citrus.combinedFCSSet$data[,"fileId"])  
@@ -102,11 +193,54 @@ citrus.calculateFileClusterMedian = function(clusterId,fileId,medianColumn,data,
 ###############################################
 # Functions for dealing with fold features
 ###############################################
+#' Build cluster features for folds of clustering
+#'
+#' Build cluster features for each fold of clustering. If multiple folds of clustering have been performed, \code{citrus.buildFoldFeatureSet}
+#' builds features for clustered and leftout samples for each fold.
+#' 
+#' @param citrus.foldClustering A \code{citrus.foldClustering} object
+#' @param citrus.combinedFCSSet A \code{citrus.combinedFCSSet} object
+#' @param featureType Type of feature to be calculated. Valid options are: \code{abundances} and \code{medians}. See \code{\link{citrus.buildFeatures}} for additional argument details.
+#' @param minimumClusterSizePercent Minimum cluster size percent used to select clusters for analysis. See \code{\link{citrus.selectClusters}}.
+#' @param ... Additional arguments passed to feature-type specific calculation functions.
+#' 
+#' @return A \code{citrus.foldFeatureSet} object with properties:
+#' \item{foldLargeEnoughClusters}{List of selected clusters for each fold of clustering.}
+#' \item{foldFeatures}{List of features constructed from fold clustered samples.}
+#' \item{leftoutFeatures}{List of features constructed from non-clustered samples that were mapped to the fold clustering space.}
+#' \item{allLargeEnoughClusters}{Selected clusters from clustering of all samples.}
+#' \item{allFeatures}{Features constructed from clustering of all samples.}
+#' \item{minimumClusterSizePercent}{User-specified minimum cluster size percent.}
+#' \item{folds}{List of sample folds.}
+#' \item{nFolds}{Number of folds.}
+#' 
+#' @author Robert Bruggner
+#' @export 
+#' 
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List disease group of each sample
+#' labels = factor(rep(c("Healthy","Diseased"),each=10))
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster each fold
+#' citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,labels,nFolds=4)
+#' 
+#' # Build fold features and leftout features
+#' citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet)
 citrus.buildFoldFeatureSet = function(citrus.foldClustering,citrus.combinedFCSSet,featureType="abundances",minimumClusterSizePercent=0.05,...){
   result = list()
-  
-  
-  
+    
   if (citrus.foldClustering$nFolds>1){
     # Select clusters in each folds
     # Default is minimum cluster size
@@ -130,7 +264,6 @@ citrus.buildFoldFeatureSet = function(citrus.foldClustering,citrus.combinedFCSSe
   result$minimumClusterSizePercent=minimumClusterSizePercent
   result$folds=citrus.foldClustering$folds
   result$nFolds=citrus.foldClustering$nFolds
-  result$minimumClusterSizePercent=minimumClusterSizePercent
   
   class(result) = "citrus.foldFeatureSet"
   return(result)

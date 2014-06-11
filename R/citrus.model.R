@@ -1,7 +1,7 @@
 #' Build an endpoint model 
 #' 
 #' This function constructs an endpoint model using features calculated by citrus. 
-#' 
+#' @name citrus.buildModel
 #' @param features A numeric matrix of predictive features. Rows are observations and column entries are features. 
 #' @param labels A vector of endpoint values (i.e. class labels) for each row of the feature matrix. 
 #' @param family Family of endpoint model to be constructed. Valid values are \code{classification}. More to come...
@@ -46,7 +46,7 @@
 #' endpointModel = citrus.buildEndpointModel(abundanceFeatures,labels)
 citrus.buildEndpointModel = function(features,labels,family="classification",type="pamr",regularizationThresholds=NULL,...){
   if (is.null(regularizationThresholds)){
-    regularizationThresholds = do.call(paste0("citrus.generateRegularizationThresholds.",family),args=list(features=features,labels=labels,modelType=type,n=100,...=...))
+    regularizationThresholds = citrus.generateRegularizationThresholds(features=features,labels=labels,modelType=type,family=family,...)
   }
   model = do.call(paste("citrus.buildModel",family,sep="."),args=list(features=features,labels=labels,type=type,regularizationThresholds=regularizationThresholds,...=...))
   result = list(model=model,regularizationThresholds=regularizationThresholds,family=family,type=type)
@@ -60,9 +60,154 @@ print.citrus.endpointModel = function(x,...){
   cat(paste("\tType:",x$type,"\n"))
 }
 
-citrus.buildFoldEndpointModel = function(foldIndex,folds,foldFeatures,labels,family,type,regularizationThreshold,...){
-  foldLabels = labels[-folds[[foldIndex]]]
-  citrus.buildEndpointModel(foldFeatures[[foldIndex]],labels=foldLabels,family=family,type=type,regularizationThreshold=regularizationThreshold,...)
+#' Generate model regularization thresholds 
+#' 
+#' Generate a range of regularization thresholds for model construction
+#' @param features Features used to construct model
+#' @param labels Endpoint lables for samples and features
+#' @param modelType Method used to construct endpoint model. Valid options are: \code{pamr} and \code{glmnet}.
+#' @param family Model family. Valid options are: \code{classification}.
+#' @param n Number of regularization thresholds to generate
+#' @param ... Other arguments passed to model-fitting methods
+#' 
+#' @return A vector of regularization threshold values.
+#' 
+#' @author Robert Bruggner
+#' @export
+#' 
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster data
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns)
+#' 
+#' # Large enough clusters
+#' largeEnoughClusters = citrus.selectClusters(citrus.clustering)
+#' 
+#' # Build features
+#' abundanceFeatures = citrus.buildFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
+#' 
+#' # List disease group of each sample
+#' labels = factor(rep(c("Healthy","Diseased"),each=10))
+#' 
+#' # Calculate regularization thresholds
+#' regularizationThresholds = citrus.generateRegularizationThresholds(abundanceFeatures,labels,modelType="pamr",family="classification")
+citrus.generateRegularizationThresholds = function(features,labels,modelType,family,n=100,...){
+  do.call(paste0("citrus.generateRegularizationThresholds.",family),args=list(features=features,labels=labels,modelType=modelType,n=n,...=...))
+}
+
+#' Calculate model error rates 
+#' 
+#' Calculate model error rates at different regularization thresholds. 
+#' 
+#' @name citrus.thresholdCVs
+#' @param modelType Type of model to be constructed. Valid options are: \code{pamr} and \code{glmnet}.
+#' @param foldFeatures List of features with each entry containing features from an independent clustering.
+#' @param features Features calculated from a clustering of all samples.
+#' @param labels Endpoint labels of clustered samples.
+#' @param regularizationThresholds Thresholds for model regularization.
+#' @param family Model family. Valid options are: \code{classification}.
+#' @param folds List of fold indices
+#' @param foldModels Models constructed from each fold of features.
+#' @param leftoutFeatures Features calculated for leftout samples mapped to clustered data space.
+#' @param nCVFolds Number of folds for quick cross-validation.
+#' @param ... Other parameters passsed to model-fitting methods.
+#' 
+#' @details If independent fold-clustering and fold-features are calculated, use \code{citrus.thresholdCVs}. 
+#' If features are derived from a clustering of all samples together, use \code{citrus.thresholdCVs.quick}. See examples.
+#' 
+#' @return Matrix of model error rates, standard error of error estimates, and false discovery rates (if possible) at 
+#' supplied regularization thresholds.
+#' 
+#' @author Robert Bruggner
+#' @export 
+#' 
+#' @examples
+#' ########################################
+#' # Example of citrus.thresholdCVs.quick
+#' ########################################
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster data
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns)
+#' 
+#' # Large enough clusters
+#' largeEnoughClusters = citrus.selectClusters(citrus.clustering)
+#' 
+#' # Build features
+#' abundanceFeatures = citrus.buildFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
+#' 
+#' # List disease group of each sample
+#' labels = factor(rep(c("Healthy","Diseased"),each=10))
+#' 
+#' # Calculate regularization thresholds
+#' regularizationThresholds = citrus.generateRegularizationThresholds.classification(abundanceFeatures,labels,modelType="pamr")
+#' 
+#' # Calculate CV Error rates
+#' thresholdCVRates = citrus.thresholdCVs.quick("pamr",abundanceFeatures,labels,regularizationThresholds,family="classification") 
+#' 
+#' ########################################
+#' # Example of citrus.thresholdCVs
+#' ########################################
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List disease group of each sample
+#' labels = factor(rep(c("Healthy","Diseased"),each=10))
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster each fold
+#' citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,labels,nFolds=4)
+#' 
+#' # Build fold features and leftout features
+#' citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet)
+#' 
+#' # Build fold models 
+#' citrus.foldModels = citrus.buildFoldsEndpointModels(type="pamr",citrus.foldFeatureSet,labels)
+#' 
+#' citrus.thresholdCVs(modelType="pamr",
+#'                     foldFeatures=citrus.foldFeatureSet$foldFeatures,
+#'                     labels=labels,
+#'                     regularizationThresholds=citrus.foldModels[[1]]$regularizationThresholds,
+#'                     family="classification",
+#'                     folds=citrus.foldFeatureSet$folds,
+#'                     foldModels=citrus.foldModels,
+#'                     leftoutFeatures=citrus.foldFeatureSet$leftoutFeatures)
+citrus.thresholdCVs = function(modelType,foldFeatures,labels,regularizationThresholds,family,folds,foldModels,leftoutFeatures,...){
+  do.call(paste0("citrus.thresholdCVs.",family),args=list(modelType=modelType,foldFeatures=foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,folds=folds,foldModels=foldModels,leftoutFeatures=leftoutFeatures,...=...))
+}
+
+#' @name citrus.thresholdCVs
+citrus.thresholdCVs.quick = function(modelType,features,labels,regularizationThresholds,family,nCVFolds=10,...){
+  do.call(paste0("citrus.thresholdCVs.quick.",family),args=list(modelType=modelType,features=features,labels=labels,regularizationThresholds=regularizationThresholds,nCVFolds=nCVFolds,...=...))  
 }
 
 #' Build models from each fold of clustering
@@ -107,7 +252,7 @@ citrus.buildFoldEndpointModel = function(foldIndex,folds,foldFeatures,labels,fam
 citrus.buildFoldsEndpointModels = function(type,citrus.foldFeatureSet,labels,regularizationThresholds=NULL,family="classification",...){
   
   if (is.null(regularizationThresholds)){
-    regularizationThresholds = do.call(paste0("citrus.generateRegularizationThresholds.",family),args=list(features=citrus.foldFeatureSet$allFeatures,labels=labels,modelType=type,n=100,...=...))
+    regularizationThresholds = citrus.generateRegularizationThresholds(features=citrus.foldFeatureSet$allFeatures,labels=labels,modelType=type,family=family,...)
   }
     
   # Build models
@@ -123,6 +268,12 @@ citrus.buildFoldsEndpointModels = function(type,citrus.foldFeatureSet,labels,reg
   class(foldModels) = "citrus.foldModels"
   return(foldModels)
 }
+
+citrus.buildFoldEndpointModel = function(foldIndex,folds,foldFeatures,labels,family,type,regularizationThreshold,...){
+  foldLabels = labels[-folds[[foldIndex]]]
+  citrus.buildEndpointModel(foldFeatures[[foldIndex]],labels=foldLabels,family=family,type=type,regularizationThreshold=regularizationThreshold,...)
+}
+
 
 #' Regress against an experimental endpoint
 #'
@@ -174,7 +325,7 @@ citrus.buildFoldsEndpointModels = function(type,citrus.foldFeatureSet,labels,reg
 #' labels = factor(rep(c("Healthy","Diseased"),each=10))
 #' 
 #' # Cluster data
-#' citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,nFolds=4)
+#' citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,labels,nFolds=4)
 #' 
 #' # Build abundance features
 #' citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet)
@@ -191,7 +342,7 @@ citrus.endpointRegress = function(modelType,citrus.foldFeatureSet,labels,family,
   result = list()
   
   # Reg Thresholds
-  result$regularizationThresholds = do.call(paste0("citrus.generateRegularizationThresholds.",family),args=list(features=citrus.foldFeatureSet$allFeatures,labels=labels,modelType=modelType,n=100,...=...))
+  result$regularizationThresholds = citrus.generateRegularizationThresholds(features=citrus.foldFeatureSet$allFeatures,labels=labels,modelType=modelType,family=family,...)
   
   # Fold Models
   if (citrus.foldFeatureSet$nFolds>1){
@@ -205,9 +356,20 @@ citrus.endpointRegress = function(modelType,citrus.foldFeatureSet,labels,family,
   
   # Calculate CV error rates
   if (citrus.foldFeatureSet$nFolds>1){
-    result$thresholdCVRates = do.call(paste0("citrus.thresholdCVs.",family),args=list(foldModels=result$foldModels,leftoutFeatures=citrus.foldFeatureSet$leftoutFeatures,foldFeatures=citrus.foldFeatureSet$foldFeatures,modelType=modelType,regularizationThresholds=result$regularizationThresholds,labels=labels,folds=citrus.foldFeatureSet$folds))
+    result$thresholdCVRates = citrus.thresholdCVs(modelType=modelType,
+                                                  foldFeatures=citrus.foldFeatureSet$foldFeatures,
+                                                  labels=labels,
+                                                  regularizationThresholds=result$regularizationThresholds,
+                                                  family=family,
+                                                  folds=citrus.foldFeatureSet$folds,
+                                                  foldModels=result$foldModels,
+                                                  leftoutFeatures=citrus.foldFeatureSet$leftoutFeatures)
   } else {
-    result$thresholdCVRates = do.call(paste0("citrus.thresholdCVs.",family,".quick"),args=list(modelType=modelType,features=citrus.foldFeatureSet$allFeatures,labels=labels,regularizationThresholds=result$regularizationThresholds)) 
+    result$thresholdCVRates = citrus.thresholdCVs.quick(modelType=modelType,
+                                                        features=citrus.foldFeatureSet$allFeatures,
+                                                        labels=labels,
+                                                        regularizationThresholds=result$regularizationThresholds,
+                                                        family=family) 
   }
   
   
@@ -271,10 +433,10 @@ citrus.endpointRegress = function(modelType,citrus.foldFeatureSet,labels,family,
 #' labels = factor(rep(c("Healthy","Diseased"),each=10))
 #' 
 #' # Calculate regularization thresholds
-#' regularizationThresholds = citrus.generateRegularizationThresholds.classification(abundanceFeatures,labels,modelType="pamr")
+#' regularizationThresholds = citrus.generateRegularizationThresholds(abundanceFeatures,labels,modelType="pamr",family="classification")
 #' 
 #' # Calculate CV Error rates
-#' thresholdCVRates = citrus.thresholdCVs.classification.quick("pamr",abundanceFeatures,labels,regularizationThresholds) 
+#' thresholdCVRates = citrus.thresholdCVs.quick("pamr",abundanceFeatures,labels,regularizationThresholds,family="classification") 
 #' 
 #' # Get pre-selected CV Minima
 #' cvMinima = citrus.getCVMinima("pamr",thresholdCVRates)
@@ -345,10 +507,10 @@ citrus.getCVMinima = function(modelType,thresholdCVRates,fdrRate=0.01){
 #' labels = factor(rep(c("Healthy","Diseased"),each=10))
 #' 
 #' # Calculate regularization thresholds
-#' regularizationThresholds = citrus.generateRegularizationThresholds.classification(abundanceFeatures,labels,modelType="pamr")
+#' regularizationThresholds = citrus.generateRegularizationThresholds(abundanceFeatures,labels,modelType="pamr",family="classification")
 #' 
 #' # Calculate CV Error rates
-#' thresholdCVRates = citrus.thresholdCVs.classification.quick("pamr",abundanceFeatures,labels,regularizationThresholds) 
+#' thresholdCVRates = citrus.thresholdCVs.quick("pamr",abundanceFeatures,labels,regularizationThresholds,family="classification") 
 #' 
 #' # Get pre-selected CV Minima
 #' cvMinima = citrus.getCVMinima("pamr",thresholdCVRates)
