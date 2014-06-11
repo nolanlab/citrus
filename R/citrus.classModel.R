@@ -39,32 +39,49 @@ citrus.buildModel.classification = function(features,labels,type,regularizationT
   return(model)
 }
 
-
-#citrus.buildFoldModels = function(index,folds,foldFeatures,labels,type,regularizationThresholds,family,...){
-#  if (!((length(folds[[index]])==1) && (folds[[index]]=="all"))){
-#    if (!is.null(dim(labels))){
-#      labels = labels[-folds[[index]],]
-#    } else {
-#      labels = labels[-folds[[index]]]
-#    }
-#  }
-#  do.call(paste("citrus.buildModel",family,sep="."),args=list(features=foldFeatures[[index]],labels=labels,type=type,regularizationThresholds=regularizationThresholds,finalModelIndex=length(folds),thisFoldIndex=index,...=...))
-#}
-
-#citrus.cvIteration.classification = function(i,modelType,features,labels,regularizationThresholds,nFolds,pamrModel=NULL,alpha=NULL,standardize=NULL){
-#  if (modelType == "pamr"){
-#    return(pamr.cv(fit=pamrModel,data=features,nfold=nFolds)$error)
-#  } else if (modelType=="glmnet"){
-#    family="binomial"
-#    if (length(unique(labels))>2){
-#      family="multinomial"
-#    }
-#    return(cv.glmnet(x=features,y=labels,family=family,lambda=regularizationThresholds,type.measure="class",nfolds=nFolds,alpha=alpha,standardize=standardize)$cvm)
-#  } else {
-#    stop(paste("Model Type",modelType,"unknown."));
-#  }
-#}
-
+citrus.thresholdCVs.classification.quick = function(modelType,features,labels,regularizationThresholds,nCVFolds=10,...){
+  
+  errorRates = list()
+  errorRates$threshold=regularizationThresholds
+  
+  if (modelType=="pamr"){
+    pamrData = list(x=t(features),y=labels)
+    pamrModel = pamr.train(data=pamrData,threshold=regularizationThresholds,remove.zeros=F)
+    pamrCVModel = pamr.cv(fit=pamrModel,data=pamrData,nfold=nCVFolds)
+    errorRates$cvm = pamrCVModel$error
+    
+    cvmSD = as.vector(apply(sapply(pamrCVModel$folds,function(foldIndices,y,yhat){
+      apply(apply(yhat[foldIndices,],2,"==",y[foldIndices]),2,sum)/length(foldIndices)
+    },y=labels,yhat=pamrCVModel$yhat),1,sd))
+    
+    errorRates$cvsd = cvmSD / sqrt(length(pamrCVModel$folds))
+    errorRates$fdr =  citrus:::pamr.fdr.new(pamrModel,data=pamrData,nperms=1000)$results[,"Median FDR"]
+  } else if (modelType=="glmnet"){
+    glmnetFamily="binomial"
+    if (length(unique(labels))>2){
+      glmnetFamily="multinomial"
+    }
+    addtlArgs = list(...)
+    alpha=1
+    if ("alpha" %in% names(addtlArgs)){
+      alpha=addtlArgs[["alpha"]]
+    }
+    standardize=T
+    if ("standardize" %in% names(addtlArgs)){
+      standardize=addtlArgs[["standardize"]]
+    }
+    glmnetModel = cv.glmnet(x=features,y=labels,family=glmnetFamily,lambda=regularizationThresholds,type.measure="class",alpha=alpha,standardize=standardize)
+    errorRates$cvm = glmnetModel$cvm
+    errorRates$cvsd = glmnetModel$cvsd
+  } else if (modelType=="sam"){
+    warning("No thresholds for SAM. This is Normal.")
+    return(NA)
+  } else {
+    stop(paste("CV for Model type",modelType,"not implemented"))
+  }
+  
+  return(data.frame(errorRates))
+}
 
 citrus.thresholdCVs.classification = function(foldModels,leftoutFeatures,foldFeatures,modelType,regularizationThresholds,labels,folds,...){
   # The following operations are not applicable to SAM models
@@ -76,7 +93,7 @@ citrus.thresholdCVs.classification = function(foldModels,leftoutFeatures,foldFea
   }
   
   leftoutPredictions = lapply(1:length(leftoutFeatures),citrus.foldPredict,models=foldModels,features=leftoutFeatures)
-    
+  
   predictionSuccess = lapply(1:length(leftoutPredictions),citrus.foldScore,folds=folds,predictions=leftoutPredictions,labels=labels)
   
   thresholdErrorRates = citrus.calculatePredictionErrorRate(predictionSuccess=predictionSuccess,regularizationThresholds=regularizationThresholds)
@@ -89,7 +106,6 @@ citrus.thresholdCVs.classification = function(foldModels,leftoutFeatures,foldFea
   }
   return(results)
 }
-
 
 citrus.foldPredict = function(index,models,features){
   citrus.predict.classification(models[[index]],features[[index]])
@@ -112,7 +128,7 @@ citrus.predict.classification = function(model,features){
 }
 
 
-citrus.generateRegularizationThresholds.classification = function(features,labels,modelType,n,...){
+citrus.generateRegularizationThresholds.classification = function(features,labels,modelType,n=100,...){
   addtlArgs = list(...)
   alpha=1
   if ("alpha" %in% names(addtlArgs)){
