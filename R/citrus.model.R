@@ -125,7 +125,7 @@ citrus.buildFoldsEndpointModels = function(type,citrus.foldFeatureSet,labels,reg
 }
 
 #' Regress against an experimental endpoint
-
+#'
 #' Regress cluster properties against an experimental endpoint of interest. Models are fit on supplied features and constrained 
 #' by regularization thresholds (\code{glmnet} and \code{pamr}) or FDR (\code{sam}). Stratifying features are returned along with 
 #' corresponding cluster IDs. 
@@ -158,6 +158,7 @@ citrus.buildFoldsEndpointModels = function(type,citrus.foldFeatureSet,labels,reg
 #' @export
 #' 
 #' @examples
+#' # Where the data lives
 #' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
 #' 
 #' # Create list of files to be analyzed
@@ -214,7 +215,7 @@ citrus.endpointRegress = function(modelType,citrus.foldFeatureSet,labels,family,
   result$cvMinima = citrus.getCVMinima(modelType,thresholdCVRates=result$thresholdCVRates)
   
   # Extract differential features
-  result$differentialFeatures = citrus.extractModelFeatures(cvMinima=result$cvMinima,finalModel=result$finalModel,finalFeatures=citrus.foldFeatureSet$allFeatures,regularizationThresholds=result$regularizationThresholds,family=family)
+  result$differentialFeatures = citrus.extractModelFeatures(cvMinima=result$cvMinima,finalModel=result$finalModel,finalFeatures=citrus.foldFeatureSet$allFeatures)
   
   # Extra info
   result$modelType=modelType
@@ -226,53 +227,57 @@ citrus.endpointRegress = function(modelType,citrus.foldFeatureSet,labels,family,
 }
 
 
-citrus.thresholdCVs.classification.quick = function(modelType,features,labels,regularizationThresholds,nCVFolds=10,...){
-  
-  errorRates = list()
-  errorRates$threshold=regularizationThresholds
-  
-  if (modelType=="pamr"){
-    pamrData = list(x=t(features),y=labels)
-    pamrModel = pamr.train(data=pamrData,threshold=regularizationThresholds,remove.zeros=F)
-    pamrCVModel = pamr.cv(fit=pamrModel,data=pamrData,nfold=nCVFolds)
-    errorRates$cvm = pamrCVModel$error
-    
-    cvmSD = as.vector(apply(sapply(pamrCVModel$folds,function(foldIndices,y,yhat){
-      apply(apply(yhat[foldIndices,],2,"==",y[foldIndices]),2,sum)/length(foldIndices)
-    },y=labels,yhat=pamrCVModel$yhat),1,sd))
-    
-    errorRates$cvsd = cvmSD / sqrt(length(pamrCVModel$folds))
-    errorRates$fdr =  citrus:::pamr.fdr.new(pamrModel,data=pamrData,nperms=1000)$results[,"Median FDR"]
-  } else if (modelType=="glmnet"){
-    glmnetFamily="binomial"
-    if (length(unique(labels))>2){
-      glmnetFamily="multinomial"
-    }
-    addtlArgs = list(...)
-    alpha=1
-    if ("alpha" %in% names(addtlArgs)){
-      alpha=addtlArgs[["alpha"]]
-    }
-    standardize=T
-    if ("standardize" %in% names(addtlArgs)){
-      standardize=addtlArgs[["standardize"]]
-    }
-    glmnetModel = cv.glmnet(x=features,y=labels,family=glmnetFamily,lambda=regularizationThresholds,type.measure="class",alpha=alpha,standardize=standardize)
-    errorRates$cvm = glmnetModel$cvm
-    errorRates$cvsd = glmnetModel$cvsd
-  } else if (modelType=="sam"){
-    warning("No thresholds for SAM. This is Normal.")
-    return(NA)
-  } else {
-    stop(paste("CV for Model type",modelType,"not implemented"))
-  }
-  
-  return(data.frame(errorRates))
-}
-
-###############################################
-# Get the minima of models
-###############################################
+#' Get regularization thresholds of pre-selected cross-validation points
+#' 
+#' #' Get regularization thresholds of pre-selected cross-validation points and their indicies. 
+#' 
+#' @param modelType Method to be used for model-fitting. Valid options are: \code{glmnet},\code{pamr}, and \code{sam}.
+#' @param thresholdCVRates Matrix of error rates at regularizationThresholds returned by \code{citrus.thresholdCVs.*} function.
+#' @param fdrRate FDR Maximum used to determine FDR-constrained model regularization threshold.
+#' 
+#' @return List of regularization thresholds and indicies based on pre-selected cross-validation error rates points.
+#' 
+#' @details For predictive models (i.e. \code{pamr} or \code{glmnet}), returns indicies of regularization thresholds
+#' producing the minimum cross validation error rate (\code{cv.min}), the simplest model having error within 1
+#' standard error of the minimum (\code{cv.1se}), and the model with the minimum error having an FDR rate < \code{fdrRate} (\code{cv.fdr.constrained})
+#' when possible.
+#' 
+#' @author Robert Bruggner
+#' @export
+#' 
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster data
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns)
+#' 
+#' # Large enough clusters
+#' largeEnoughClusters = citrus.selectClusters(citrus.clustering)
+#' 
+#' # Build features
+#' abundanceFeatures = citrus.buildFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
+#' 
+#' # List disease group of each sample
+#' labels = factor(rep(c("Healthy","Diseased"),each=10))
+#' 
+#' # Calculate regularization thresholds
+#' regularizationThresholds = citrus.generateRegularizationThresholds.classification(abundanceFeatures,labels,modelType="pamr")
+#' 
+#' # Calculate CV Error rates
+#' thresholdCVRates = citrus.thresholdCVs.classification.quick("pamr",abundanceFeatures,labels,regularizationThresholds) 
+#' 
+#' # Get pre-selected CV Minima
+#' cvMinima = citrus.getCVMinima("pamr",thresholdCVRates)
 citrus.getCVMinima = function(modelType,thresholdCVRates,fdrRate=0.01){
   cvPoints=list();
   if (modelType=="sam"){
@@ -300,10 +305,60 @@ citrus.getCVMinima = function(modelType,thresholdCVRates,fdrRate=0.01){
   return(cvPoints)
 }
 
-###############################################
-# Get model features
-###############################################
-citrus.extractModelFeatures = function(cvMinima,finalModel,finalFeatures,regularizationThresholds,family){
+#' Report model features at pre-specified thresholds.
+#' 
+#' Report model features at pre-specific thresholds. For predictive models, reports non-zero model features at specified
+#' regularization thresholds. For FDR-constrained models, reports features below specified false discovery rates.
+#' 
+#' @param cvMinima List of regularization indicies at which to extract model features, produced by \code{\link{citrus.getCVMinima}}.
+#' @param finalModel Predictive model from which to extract non-zero features.
+#' @param finalFeatures Features used to construct \code{finalModel}.
+#' 
+#' @return List of significant features and clusters at specified thresholds.
+#' 
+#' @author Robert Bruggner
+#' @export
+#' 
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster data
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns)
+#' 
+#' # Large enough clusters
+#' largeEnoughClusters = citrus.selectClusters(citrus.clustering)
+#' 
+#' # Build features
+#' abundanceFeatures = citrus.buildFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
+#' 
+#' # List disease group of each sample
+#' labels = factor(rep(c("Healthy","Diseased"),each=10))
+#' 
+#' # Calculate regularization thresholds
+#' regularizationThresholds = citrus.generateRegularizationThresholds.classification(abundanceFeatures,labels,modelType="pamr")
+#' 
+#' # Calculate CV Error rates
+#' thresholdCVRates = citrus.thresholdCVs.classification.quick("pamr",abundanceFeatures,labels,regularizationThresholds) 
+#' 
+#' # Get pre-selected CV Minima
+#' cvMinima = citrus.getCVMinima("pamr",thresholdCVRates)
+#' 
+#' # Build Final Model
+#' finalModel = citrus.buildEndpointModel(abundanceFeatures,labels,family="classification",type="pamr",regularizationThresholds)
+#' 
+#' # Get model features
+#' citrus.extractModelFeatures(cvMinima,finalModel,abundanceFeatures)
+citrus.extractModelFeatures = function(cvMinima,finalModel,finalFeatures){
   res = list();
   modelType = finalModel$type
   finalModel = finalModel$model
