@@ -215,11 +215,11 @@ citrus.selectClusters = function(citrus.clustering,method="minimumClusterSize",.
 #' Selects clusters for endpoint analysis
 #' 
 #' Selects clusters for endpoint analysis by cluster size. Selected clusters must have a minimum number of 
-#' cells in them as a proportion of the total number of clustered events. If \code{n} total events are clustered,
-#' clusters contatining at least \code{n * minimumClusterSizePercent} events are selected.
+#' cells in them as a proportion of the total number of clustered events. If \eqn{n} total events are clustered,
+#' clusters contatining at least \eqn{n * minimumClusterSizePercent} events are selected.
 #' 
 #' @param citrus.clustering A \code{citrus.clustering} object.
-#' @param minimumClusterSizePercent The percentage (0 < x < 1) of the total number of clustered events a cluster 
+#' @param minimumClusterSizePercent The percentage \eqn{0 < x < 1} of the total number of clustered events a cluster 
 #' must contain in order to be selected. 
 #' @param ... Other arguments (ignored).
 #' 
