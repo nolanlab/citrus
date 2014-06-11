@@ -91,6 +91,7 @@ citrus.traverseMergeOrder = function(node,mergeOrder){
 #' Get ancestors or decendants of a cluster
 #'
 #' Get ancestors or decendants of a cluster for hierarchical clustering
+#' @name citrus.getRelatedClusterIds
 #' @param clusterId ID of a cluster for which to retreive related clusters. 
 #' @param mergeOrder \code{mergeOrder} result from \code{hclust} object.
 #' 
@@ -136,7 +137,7 @@ citrus.getClusterDecendants = function(clusterId,mergeOrder){
   return(c(left,right))
 }
 
-#' @rdname citrus.getClusterDecendants
+#' @rdname citrus.getRelatedClusterIds
 citrus.getClusterAncestors = function(clusterId,mergeOrder){
   parent = which(mergeOrder==clusterId,arr.ind=T)[1]
   if (is.na(parent)){
