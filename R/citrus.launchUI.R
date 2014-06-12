@@ -10,7 +10,8 @@
 #' @export
 #' 
 #' @examples
-#' citrus.launchUI(file.path(system.file(package = "citrus"),"extdata","example1"))
+#' # Uncomment to run
+#' # citrus.launchUI(file.path(system.file(package = "citrus"),"extdata","example1"))
 citrus.launchUI = function(dataDirectory=NULL){  
   
   library("shiny")
