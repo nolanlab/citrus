@@ -37,7 +37,7 @@
 #' largeEnoughClusters = citrus.selectClusters(citrus.clustering)
 #' 
 #' # Build features
-#' abundanceFeatures = citrus.buildFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
+#' abundanceFeatures = citrus.calculateFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
 #' 
 #' # List disease group of each sample
 #' labels = factor(rep(c("Healthy","Diseased"),each=10))
@@ -95,7 +95,7 @@ print.citrus.endpointModel = function(x,...){
 #' largeEnoughClusters = citrus.selectClusters(citrus.clustering)
 #' 
 #' # Build features
-#' abundanceFeatures = citrus.buildFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
+#' abundanceFeatures = citrus.calculateFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
 #' 
 #' # List disease group of each sample
 #' labels = factor(rep(c("Healthy","Diseased"),each=10))
@@ -155,7 +155,7 @@ citrus.generateRegularizationThresholds = function(features,labels,modelType,fam
 #' largeEnoughClusters = citrus.selectClusters(citrus.clustering)
 #' 
 #' # Build features
-#' abundanceFeatures = citrus.buildFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
+#' abundanceFeatures = citrus.calculateFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
 #' 
 #' # List disease group of each sample
 #' labels = factor(rep(c("Healthy","Diseased"),each=10))
@@ -188,7 +188,7 @@ citrus.generateRegularizationThresholds = function(features,labels,modelType,fam
 #' citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,labels,nFolds=4)
 #' 
 #' # Build fold features and leftout features
-#' citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet)
+#' citrus.foldFeatureSet = citrus.calculateFoldFeatureset(citrus.foldClustering,citrus.combinedFCSSet)
 #' 
 #' # Build fold models 
 #' citrus.foldModels = citrus.buildFoldsEndpointModels(type="pamr",citrus.foldFeatureSet,labels)
@@ -248,8 +248,8 @@ citrus.thresholdCVs.quick = function(modelType,features,labels,regularizationThr
 #' largeEnoughClusters = citrus.selectClusters(citrus.clustering)
 #' 
 #' # Clustered Features and mapped features
-#' clusteredFeatures = citrus.buildFeatures(citrus.combinedFCSSet1,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
-#' mappedFeatures = citrus.buildFeatures(citrus.combinedFCSSet2,clusterAssignments=citrus.mapping$clusterMembership,clusterIds=largeEnoughClusters)
+#' clusteredFeatures = citrus.calculateFeatures(citrus.combinedFCSSet1,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
+#' mappedFeatures = citrus.calculateFeatures(citrus.combinedFCSSet2,clusterAssignments=citrus.mapping$clusterMembership,clusterIds=largeEnoughClusters)
 #' 
 #' # Labels
 #' labels = factor(rep(c("Healthy","Diseased"),each=10))
@@ -298,7 +298,7 @@ citrus.predict = function(citrus.endpointModel,newFeatures){
 #' citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,labels,nFolds=4)
 #' 
 #' # Build fold features and leftout features
-#' citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet)
+#' citrus.foldFeatureSet = citrus.calculateFoldFeatureset(citrus.foldClustering,citrus.combinedFCSSet)
 #' 
 #' # Build fold models 
 #' citrus.foldModels = citrus.buildFoldsEndpointModels(type="pamr",citrus.foldFeatureSet,labels)
@@ -381,7 +381,7 @@ citrus.buildFoldEndpointModel = function(foldIndex,folds,foldFeatures,labels,fam
 #' citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,labels,nFolds=4)
 #' 
 #' # Build abundance features
-#' citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet)
+#' citrus.foldFeatureSet = citrus.calculateFoldFeatureset(citrus.foldClustering,citrus.combinedFCSSet)
 #' 
 #' # Endpoint regress
 #' citrus.regressionResult = citrus.endpointRegress(modelType="pamr",citrus.foldFeatureSet,labels,family="classification")
@@ -480,7 +480,7 @@ citrus.endpointRegress = function(modelType,citrus.foldFeatureSet,labels,family,
 #' largeEnoughClusters = citrus.selectClusters(citrus.clustering)
 #' 
 #' # Build features
-#' abundanceFeatures = citrus.buildFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
+#' abundanceFeatures = citrus.calculateFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
 #' 
 #' # List disease group of each sample
 #' labels = factor(rep(c("Healthy","Diseased"),each=10))
@@ -554,7 +554,7 @@ citrus.getCVMinima = function(modelType,thresholdCVRates,fdrRate=0.01){
 #' largeEnoughClusters = citrus.selectClusters(citrus.clustering)
 #' 
 #' # Build features
-#' abundanceFeatures = citrus.buildFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
+#' abundanceFeatures = citrus.calculateFeatures(citrus.combinedFCSSet,clusterAssignments=citrus.clustering$clusterMembership,clusterIds=largeEnoughClusters)
 #' 
 #' # List disease group of each sample
 #' labels = factor(rep(c("Healthy","Diseased"),each=10))

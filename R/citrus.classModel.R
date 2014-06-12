@@ -1,4 +1,6 @@
 #' @rdname citrus.buildModel
+#' @name citrus.buildModel
+#' @export
 citrus.buildModel.classification = function(features,labels,type,regularizationThresholds,...){
   
   addtlArgs = list(...)
@@ -41,6 +43,8 @@ citrus.buildModel.classification = function(features,labels,type,regularizationT
 }
 
 #' @rdname citrus.thresholdCVs
+#' @name citrus.thresholdCVs
+#' @export
 citrus.thresholdCVs.quick.classification = function(modelType,features,labels,regularizationThresholds,nCVFolds=10,...){
   
   errorRates = list()
@@ -86,6 +90,8 @@ citrus.thresholdCVs.quick.classification = function(modelType,features,labels,re
 }
 
 #' @rdname citrus.thresholdCVs
+#' @name citrus.thresholdCVs
+#' @export
 citrus.thresholdCVs.classification = function(modelType,foldFeatures,labels,regularizationThresholds,folds,foldModels,leftoutFeatures,...){
     
   leftoutPredictions = lapply(1:length(leftoutFeatures),.foldPredict,models=foldModels,features=leftoutFeatures)
@@ -112,6 +118,8 @@ citrus.thresholdCVs.classification = function(modelType,foldFeatures,labels,regu
 }
 
 #' @rdname citrus.predict
+#' @name citrus.predict
+#' @export
 citrus.predict.classification = function(citrus.endpointModel,newFeatures){
   if (citrus.endpointModel$type=="glmnet"){
     predictions = predict(citrus.endpointModel$model,newx=newFeatures,type="class")
@@ -125,6 +133,8 @@ citrus.predict.classification = function(citrus.endpointModel,newFeatures){
 }
 
 #' @rdname citrus.generateRegularizationThresholds
+#' @name citrus.generateRegularizationThresholds
+#' @export
 citrus.generateRegularizationThresholds.classification = function(features,labels,modelType,n=100,...){
   addtlArgs = list(...)
   alpha=1

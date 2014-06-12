@@ -13,7 +13,7 @@
 #' @param modelTypes Vector of model types to be used to detect associations with experimental endpoint. Valid values are \code{glmnet}, \code{pamr}, and \code{sam}.
 #' @param nFolds Number of independent clustering folds to be used for model fitting. Should only be >1 if using \code{glmnet} or \code{pamr} models. Default value is 1 and all samples are clustered together.
 #' @param conditionComparaMatrix matrix of condition data to compare. See details.
-#' @param ... Other arguments to be passed to \code{\link{citrus.readFCSSet}}, \code{\link{citrus.buildFeatures}}, \code{\link{citrus.endpointRegress}}. 
+#' @param ... Other arguments to be passed to \code{\link{citrus.readFCSSet}}, \code{\link{citrus.calculateFeatures}}, \code{\link{citrus.endpointRegress}}. 
 #' Useful additional arguments listed in details.
 #' 
 #' @details Citrus is able to analyze FCS data from single conditions or relative to a given baseline 
@@ -34,9 +34,9 @@
 #' 
 #' \item \code{transformCofactor}:  Cofactor for arcsin-hyperbolic transform. See \code{\link{citrus.readFCSSet}}.
 #' 
-#' \item \code{featureType}: The descriptive feature type to be calculated for each cluster. See \code{\link{citrus.buildFeatures}}.
+#' \item \code{featureType}: The descriptive feature type to be calculated for each cluster. See \code{\link{citrus.calculateFeatures}}.
 #' 
-#' \item \code{minimumClusterSizePercent}: The minimum cluster size as a percentage of total sampled cells. See \code{\link{citrus.buildFeatures}}.
+#' \item \code{minimumClusterSizePercent}: The minimum cluster size as a percentage of total sampled cells. See \code{\link{citrus.calculateFeatures}}.
 #' }
 #' 
 #' @return A citrus.full.result object with the following properties:
@@ -52,7 +52,7 @@
 #' @author Robert Bruggner
 #' @export
 #' 
-#' @seealso \code{\link{citrus.readFCSSet}}, \code{\link{citrus.cluster}},\code{\link{citrus.buildFeatures}}, and \code{\link{citrus.endpointRegress}}
+#' @seealso \code{\link{citrus.readFCSSet}}, \code{\link{citrus.cluster}},\code{\link{citrus.calculateFeatures}}, and \code{\link{citrus.endpointRegress}}
 #' 
 #' @examples
 #' # Example with a single experimental condition (unstimulated data) 
@@ -147,10 +147,10 @@ citrus.full = function(fileList,
     #conditionFileIds = citrus.combinedFCSSet$fileIds[,conditions]
     
     # Calculate fold features
-    #citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,minimumClusterSizePercent=minimumClusterSizePercent,medianColumns=medianColumns,mc.cores=4)
-    #citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,minimumClusterSizePercent=minimumClusterSizePercent,conditions=conditions,medianColumns=medianColumns,mc.cores=4)
+    #citrus.foldFeatureSet = citrus.calculateFoldFeatureset(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,minimumClusterSizePercent=minimumClusterSizePercent,medianColumns=medianColumns,mc.cores=4)
+    #citrus.foldFeatureSet = citrus.calculateFoldFeatureset(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,minimumClusterSizePercent=minimumClusterSizePercent,conditions=conditions,medianColumns=medianColumns,mc.cores=4)
     cat("\tBuilding Fold Features\n")
-    citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,conditions=conditions,...)
+    citrus.foldFeatureSet = citrus.calculateFoldFeatureset(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,conditions=conditions,...)
     conditionFeatures[[paste(rev(conditions),collapse="_vs_")]] = citrus.foldFeatureSet
     
     # Endpoint regress for each model type

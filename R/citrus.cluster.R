@@ -138,6 +138,8 @@ citrus.getClusterDecendants = function(clusterId,mergeOrder){
 }
 
 #' @rdname citrus.getRelatedClusterIds
+#' @name citrus.getRelatedClusterIds
+#' @export
 citrus.getClusterAncestors = function(clusterId,mergeOrder){
   parent = which(mergeOrder==clusterId,arr.ind=T)[1]
   if (is.na(parent)){
