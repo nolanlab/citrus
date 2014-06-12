@@ -7,6 +7,9 @@ Citrus is a package for identifying clusters of cells in multidimensional flow c
 * Example analyses available on the [[https://github.com/nolanlab/citrus/wiki/Examples|Examples Page]].
 * See the [[https://github.com/nolanlab/citrus/wiki/Citrus-FAQ|Citrus FAQ]] for questions related to building and/or running Citrus.
 ===Version History===
+;Version 0.08
+: - Completely refactored codebase that is hopefully much more intuitive. 
+: - Documentation added. 
 ;Version 0.07
 : - Multiclass analysis available for SAM and Nearest Shrunken Centroid models
 : - Small GUI enhancements
