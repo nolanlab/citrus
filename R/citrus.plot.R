@@ -680,6 +680,9 @@ addtlArgs = list(...)
 #' @S3method plot citrus.full.result
 plot.citrus.full.result = function(citrus.full.result,outputDirectory){
   
+  if (!file.exists(outputDirectory)){
+    stop(paste0("Output directory '",outputDirectory,"' does not exist."))
+  }
   # Should 
   for (conditionName in names(results$conditions)){
     cat(paste0("\nPlotting Results for ",conditionName,"\n"))
