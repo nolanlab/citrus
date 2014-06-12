@@ -1,98 +1,75 @@
-citrus.mapFileDataToClustering = function(dataDir,newFileList,preClusterResult,fileSampleSize,mappingColumns=NULL,transformCols=NULL,transformCofactor=5,...){
-  conditions = strsplit(names(preClusterResult),"_vs_")
-  mappingResult = list()
-  for (conditionName in names(preClusterResult)){
-    conditions = strsplit(conditionName,"_vs_")[[1]]
-    mappingResult[[conditionName]]$citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=newFileList,conditions=conditions,transformCols=transformCols,fileSampleSize=fileSampleSize,transformCofactor=transformCofactor,...)
-    
-    if (is.null(mappingColumns)){
-      mappingColumns = preClusterResult[[conditionName]]$clusterColumns
-    }
-    
-    cat(paste("Mapping",nrow(mappingResult[[conditionName]]$citrus.dataArray$data),"events to existing cluster space.\n"));
-    mappingResult[[conditionName]]$foldsClusterAssignments = list()
-    mappingResult[[conditionName]]$foldsClusterAssignments[["mappingResult"]] = citrus.mapDataToClusterSpace(data=preClusterResult[[conditionName]]$citrus.dataArray$data[,mappingColumns],
-                                 clusterAssignments=preClusterResult[[conditionName]]$foldsClusterAssignments[[which(preClusterResult[[conditionName]]$folds=="all")]],
-                                 newData=mappingResult[[conditionName]]$citrus.dataArray$data[,mappingColumns],...)
-    mappingResult[[conditionName]]$folds = list("mappingResult")
-    mappingResult[[conditionName]]$conditions = conditions
-    mappingResult[[conditionName]]$clusterColumns = preClusterResult[[conditionName]]$clusterColumns
-  }
-  return(mappingResult)
-}
-
-
-citrus.foldCluster = function(foldMembership,citrus.dataArray,clusterCols,conditions,...){
-  if ((length(foldMembership)==1) && (foldMembership=="all")){
-    cat("Clustering All\n")
-    includeFileIds = as.vector(citrus.dataArray$fileIds[,conditions])
-  } else {
-    includeFileIds = as.vector(citrus.dataArray$fileIds[-foldMembership,conditions])
-    cat(paste("Clustering fileIds",paste(includeFileIds,collapse=", "),"\n"))
-  }
-  if (any(!is.numeric(clusterCols))){
-    containedCols = setdiff(clusterCols,colnames(citrus.dataArray$data))
-    if (length(containedCols)>0){
-      stop(paste("Cluster cols",paste(containedCols,collapse=", "),"not found. Valid channel names:",paste(colnames(citrus.dataArray$data),collapse=", ")))
-    }  
-  }
-  return(citrus.cluster(citrus.dataArray$data[citrus.dataArray$data[,"fileId"] %in% includeFileIds,clusterCols],...))
-}
-
-citrus.cluster = function(data,...){
-  cat(paste("Clustering",nrow(data),"events\n"));
-  
-  clusterType="hierarchical"
-  if ("clusterType" %in% names(list(...))){
-    clusterType = list(...)[["clusterType"]]
-  }
-  if (clusterType=="hierarchical"){
-    return(Rclusterpp.hclust(data))  
-  } else {
-    stop(paste("Don't know how to cluster using",clusterType))
+#' Map new data to existing clusters
+#' 
+#' Map new data to clusters defined by a clustering. 
+#' 
+#' @param citrus.combinedFCSSet.new A \code{citrus.combinedFCSSet} object containing new data to be mapped.
+#' @param citrus.combinedFCSSet.old A \code{citrus.combinedFCSSet} object containing new data that has been clustered.
+#' @param citrus.clustering A clustering of data in \code{citrus.combinedFCSSet.old}.
+#' @param mappingColumns Parameters to be used for mapping new data to existing cluster space. If \code{NULL}, then parameters 
+#' used to cluster \code{citrus.combinedFCSSet.old} are used.
+#' @param ... Additional arguments (ignored).
+#' 
+#' @return A \code{citrus.mapping} object
+#' \item{clusterMembership}{List of event indices, reporting which events in \code{citrus.combinedFCSSet.new} belong to each cluster in \code{citrus.clustering}.}
+#' \item{mappingColumns}{Columns used to match new data events with existing clustered data.}
+#' 
+#' @author Robert Bruggner
+#' @export
+#' 
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # List of files to be clustered
+#' fileList1 = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs")[seq(from=2,to=20,by=2)])
+#' 
+#' # List of files to be mapped
+#' fileList2 = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs")[seq(from=1,to=19,by=2)])
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet1 = citrus.readFCSSet(dataDirectory,fileList1)
+#' citrus.combinedFCSSet2 = citrus.readFCSSet(dataDirectory,fileList2)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster first dataset
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet1,clusteringColumns)
+#' 
+#' # Map new data to exsting clustering
+#' citrus.mapping = citrus.mapToClusterSpace(citrus.combinedFCSSet.new=citrus.combinedFCSSet1,citrus.combinedFCSSet.old=citrus.combinedFCSSet2,citrus.clustering)
+citrus.mapToClusterSpace = function(citrus.combinedFCSSet.new,citrus.combinedFCSSet.old,citrus.clustering,mappingColumns=NULL,...){
+  if (is.null(mappingColumns)){
+    mappingColumns = citrus.clustering$clusteringColumns
   }
   
+  # Map new data to nearest neighbor in existing clustered dataset
+  cat(paste("Mapping",nrow(citrus.combinedFCSSet.new$data),"events\n"))
+  nearestNeighborMap = citrus.assignToCluster(tbl=citrus.combinedFCSSet.new$data[,mappingColumns],cluster_data=citrus.combinedFCSSet.old$data[,mappingColumns],cluster_assign=rep(1,nrow(citrus.combinedFCSSet.old$data)))
+  
+  # Assign new data to the same clusters as its nearest neighbor in the existing clustered dataset
+  newDataClusterAssignments = mclapply(citrus.clustering$clusterMembership,citrus.mapNeighborsToCluster,nearestNeighborMap=nearestNeighborMap,...)
+  
+  result = list(clusterMembership=newDataClusterAssignments,mappingColumns=mappingColumns)
+  class(result) = "citrus.mapping"
+  return(result)
 }
-
-citrus.calculateCompleteHierarchicalMembership = function(clustering,...){
-  clusterType="hierarchical"
-  if ("clusterType" %in% names(list(...))){
-    clusterType = list(...)[["clusterType"]]
-  }
-  if (clusterType=="hierarchical"){
-    mergeOrder = clustering$merge
-    if ("mc.cores" %in% names(list(...))){
-      return(mclapply(as.list(1:nrow(mergeOrder)),citrus.traverseMergeOrder,mergeOrder=mergeOrder,mc.cores=list(...)[["mc.cores"]]))
-    } else {
-      return(lapply(as.list(1:nrow(mergeOrder)),citrus.traverseMergeOrder,mergeOrder=mergeOrder))
-    }
-  } else {
-    stop(paste("Don't know how to caclulate complete clustering for clusterType",clusterType))
-  }
-}
-
-citrus.mapFoldDataToClusterSpace = function(index,citrus.dataArray,foldClusterAssignments,folds,conditions,clusterCols,...){
-  if ((length(folds[[index]])==1) && (folds[[index]]=="all")){
-    return(NULL)
-  }
-  foldFileIds = as.vector(citrus.dataArray$fileIds[-folds[[index]],conditions])
-  leftoutFileIds = as.vector(citrus.dataArray$fileIds[folds[[index]],conditions])
-  return(citrus.mapDataToClusterSpace(data=citrus.dataArray$data[citrus.dataArray$data[,"fileId"]%in%foldFileIds,clusterCols],clusterAssignments=foldClusterAssignments[[index]],newData=citrus.dataArray$data[citrus.dataArray$data[,"fileId"]%in%leftoutFileIds,clusterCols],...))  
-}
-
-citrus.mapDataToClusterSpace = function(data,clusterAssignments,newData,...){  
-  nnMap = citrus.assignToCluster(tbl=newData,cluster_data=data,cluster_assign=rep(1,nrow(data)))
-  addtlArgs = list(...)
-  if ("mc.cores" %in% names(addtlArgs)){
-    return(mclapply(clusterAssignments,citrus.mapNeighborsToCluster,nearestNeighborMap=nnMap,mc.cores=addtlArgs[["mc.cores"]]))
-  } else {
-    return(lapply(clusterAssignments,citrus.mapNeighborsToCluster,nearestNeighborMap=nnMap))
-  }
-}  
 
 citrus.mapNeighborsToCluster = function(clusterMembers,nearestNeighborMap){
   which(nearestNeighborMap %in% clusterMembers)
 }
+
+citrus.mapFoldDataToClusterSpace = function(foldIndex,folds,foldClustering,citrus.combinedFCSSet,...){
+  leavoutFileIds = as.vector(citrus.combinedFCSSet$fileIds[folds[[foldIndex]],])
+  includeFileIds = setdiff(as.vector(citrus.combinedFCSSet$fileIds),leavoutFileIds)
+  
+  
+  citrus.mapToClusterSpace(citrus.combinedFCSSet.new=citrus.maskCombinedFCSSet(citrus.combinedFCSSet,leavoutFileIds),
+                           citrus.combinedFCSSet.old=citrus.maskCombinedFCSSet(citrus.combinedFCSSet,includeFileIds),
+                           citrus.clustering=foldClustering[[foldIndex]],
+                           mappingColumns=foldClustering[[foldIndex]]$clusteringColumns,...)
+}
+
 
 citrus.traverseMergeOrder = function(node,mergeOrder){
   left = mergeOrder[node,1]
@@ -111,9 +88,42 @@ citrus.traverseMergeOrder = function(node,mergeOrder){
   return(c(leftAtom,rightAtom));
 }
 
-citrus.getClusterDecendants = function(node,mergeOrder){
-  left = mergeOrder[node,1]
-  right = mergeOrder[node,2]
+#' Get ancestors or decendants of a cluster
+#'
+#' Get ancestors or decendants of a cluster for hierarchical clustering
+#' @name citrus.getRelatedClusterIds
+#' @param clusterId ID of a cluster for which to retreive related clusters. 
+#' @param mergeOrder \code{mergeOrder} result from \code{hclust} object.
+#' 
+#' @return Vector of cluster ids that are decendants of \code{clusterId} argument.
+#' 
+#' @author Robert Bruggner
+#' @export
+#' 
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster data
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns)
+#' 
+#' # Get decendants
+#' citrus.getClusterDecendants(15000,citrus.clustering$clustering$merge)
+#' 
+#' # Get ancestors
+#' citrus.getClusterAncestors(15000,citrus.clustering$clustering$merge)
+citrus.getClusterDecendants = function(clusterId,mergeOrder){
+  left = mergeOrder[clusterId,1]
+  right = mergeOrder[clusterId,2]
   if (left>0){
     left = c(left,citrus.getClusterDecendants(left,mergeOrder))
   } else {
@@ -127,8 +137,11 @@ citrus.getClusterDecendants = function(node,mergeOrder){
   return(c(left,right))
 }
 
-citrus.getClusterAncestors = function(node,mergeOrder){
-  parent = which(mergeOrder==node,arr.ind=T)[1]
+#' @rdname citrus.getRelatedClusterIds
+#' @name citrus.getRelatedClusterIds
+#' @export
+citrus.getClusterAncestors = function(clusterId,mergeOrder){
+  parent = which(mergeOrder==clusterId,arr.ind=T)[1]
   if (is.na(parent)){
     return(c())
   } else {
@@ -136,73 +149,159 @@ citrus.getClusterAncestors = function(node,mergeOrder){
   }
 }
 
-citrus.preCluster = function(dataDir,outputDir,clusterCols,fileSampleSize,fileList,nFolds=5,folds=NULL,transformCols=NULL,clusterConditionList=NULL,conditionComparaMatrix=NULL,balanceFactor=NULL,transformCofactor=5,...){
-  
-  addtlArgs = list(...)
-  
-  res=list()
-  if (!file.exists(outputDir)){
-    stop(paste("Output directory",outputDir,"not found."))
-  }
-  
-  if (!is.null(clusterConditionList)){
-    allConditions = clusterConditionList
-  } else if (!is.null(conditionComparaMatrix)){
-    allConditions = citrus.convertConditionMatrix(conditionComparaMatrix) 
-  } else {
-    allConditions = as.list(colnames(fileList))
-  }
-  
-  if (is.null(balanceFactor)){
-    balanceFactor = as.factor(sample(c(0,1),nrow(fileList),replace=T))
-  } else if (length(levels(balanceFactor))==1){
-    balanceFactor = as.factor(sample(c(0,1),length(balanceFactor),replace=T))
-  }
-  if (nFolds=="all"){
-    folds = list()
-    nAllFolds=1
-  } else if (!is.null(folds)){
-    nAllFolds = length(folds)+1  
-  } else {
-    folds = pamr:::balanced.folds(y=balanceFactor,nfolds=nFolds)
-    nAllFolds = nFolds+1  
-  }
-  folds[[nAllFolds]]="all"
-  
-  
-  if ("conditionParallelClusters" %in% names(addtlArgs)){
-    clusterResult = parLapply(addtlArgs[["conditionParallelClusters"]],allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,clusterCols=clusterCols,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,outputDir=outputDir,...)  
-  } else {
-    clusterResult = lapply(allConditions,citrus.preClusterCondition,dataDir=dataDir,fileList=fileList,clusterCols=clusterCols,folds=folds,nFolds=nFolds,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,outputDir=outputDir,...)  
-  }
-    
-  names(clusterResult) = lapply(allConditions,paste,collapse="_vs_")
-  
-  save(clusterResult,file=file.path(outputDir,"citrus.clusterResult.rDat"))
-  
-  return(clusterResult)
+#' Cluster a \code{citrus.combinedFCSSet}
+#' 
+#' Cluster data in a \code{citrus.combinedFCS} set object
+#' 
+#' @param citrus.combinedFCSSet A \code{citrus.combinedFCSSet} object.
+#' @param clusteringColumns Vector of names or indicies of data to be used for clustering.
+#' @param clusteringType Type of clustering to be perfomed. Valid options are: \code{hierarchical}.
+#' @param ... Other arguments passed to specific clustering algorithm.
+#' 
+#' @return A \code{citrus.clustering} object.
+#' \item{clustering}{Clustering object returned by clustering algorithm.}
+#' \item{clusterMembership}{List, containing indicies of cells in \code{citrus.combinedFCSSet} data that belong to each cluster.}
+#' \item{type}{Type of clustering performed.}
+#' \item{clusteringColumns}{Parameters used for clustering}
+#' 
+#' @author Robert Bruggner
+#' @export
+#' 
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster data
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns)
+citrus.cluster = function(citrus.combinedFCSSet,clusteringColumns,clusteringType="hierarchical",...){
+  clustering = do.call(paste0("citrus.cluster.",clusteringType),args=list(data=citrus.combinedFCSSet$data[,clusteringColumns]))
+  clusterMembership = do.call(paste0("citrus.calculateClusteringMembership.",clusteringType),args=list(clustering=clustering))
+  result = list(clustering=clustering,clusterMembership=clusterMembership,type=clusteringType,clusteringColumns=clusteringColumns)
+  class(result) = "citrus.clustering"
+  return(result)
 }
 
-citrus.preClusterCondition = function(conditions,dataDir,fileList,clusterCols,folds,nFolds,fileSampleSize,transformCols,transformCofactor,outputDir,...){
+
+#' @export
+#' @name citrus.cluster
+print.citrus.clustering = function(citrus.clustering){
+  cat("Citrus clustering\n")
+  cat(paste0("\tType:\t\t",citrus.clustering$type,"\n"))
+  cat(paste0("\tClusters:\t",length(citrus.clustering$clusterMembership),"\n"))
+}
+
+citrus.clusterFold = function(foldIndex,folds,citrus.combinedFCSSet,clusteringColumns,...){
+  leavoutFileIds = as.vector(citrus.combinedFCSSet$fileIds[folds[[foldIndex]],])
+  includeFileIds = setdiff(as.vector(citrus.combinedFCSSet$fileIds),leavoutFileIds)
+  citrus.cluster(citrus.maskCombinedFCSSet(citrus.combinedFCSSet,fileIds=includeFileIds),clusteringColumns,...)
+}
+
+#' Cluster independent folds of data
+#' 
+#' Cluster subsets of data from different samples and maps leftout sample data to fold cluster space.
+#' 
+#' @param citrus.combinedFCSSet A \code{citrus.combinedFCSSet} object.
+#' @param clusteringColumns Vector of parameter names or indicies to be used for clustering.
+#' @param labels Labels of samples being clustered. If supplied, used for balancing folds for clustering
+#' @param nFolds Number of independent folds of clustering to perform. If \code{nFolds=1}, all data are 
+#' clustered together and model is regression model is constructed from single feature set.
+#' @param ... Other arguments passed to specific clustering functions.
+#' 
+#' @return A \code{citrus.foldClustering} object
+#' \item{folds}{Indicies of sample rows to be omitted during each fold of clustering. Only defined if \code{nFolds > 1}.}
+#' \item{foldClustering}{\code{citrus.clustering} objects for each fold. Only defined if \code{nFolds > 1}.}
+#' \item{foldMappingAssignments}{\code{citrus.mapping} objects for each fold, containing mapping of data from left-out samples. Only defined if \code{nFolds > 1}}
+#' \item{allClustering}{\code{citrus.clusteringObject} from all sample data.}
+#' \item{nFolds}{Number of independent folds.}
+#' 
+#' @author Robert Bruggner
+#' @export
+#' 
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List disease group of each sample
+#' labels = factor(rep(c("Healthy","Diseased"),each=10))
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster each fold
+#' citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,labels,nFolds=4)
+citrus.clusterAndMapFolds = function(citrus.combinedFCSSet,clusteringColumns,labels=NULL,nFolds=1,...){
   
-  cat(paste("Clustering Condition",paste(conditions,collapse=" vs "),"\n"))
+  result = list()
   
-  addtlArgs = list(...)
-  
-  citrus.dataArray = citrus.readFCSSet(dataDir=dataDir,fileList=fileList,conditions=conditions,fileSampleSize=fileSampleSize,transformCols=transformCols,transformCofactor=transformCofactor,...)
-  
-  foldsCluster = lapply(folds,citrus.foldCluster,citrus.dataArray=citrus.dataArray,clusterCols=clusterCols,conditions=conditions,...)
-  cat("Assigning Events to Clusters\n")
-  foldsClusterAssignments = lapply(foldsCluster,citrus.calculateCompleteHierarchicalMembership,...)  
-  
-  preclusterObject = list(folds=folds,foldsCluster=foldsCluster,foldsClusterAssignments=foldsClusterAssignments,conditions=conditions,citrus.dataArray=citrus.dataArray,clusterColumns=clusterCols)
-  if (nFolds!="all"){
-    cat("Assigning Leftout Events to Clusters\n")
-    leftoutClusterAssignments = lapply(1:nFolds,citrus.mapFoldDataToClusterSpace,citrus.dataArray=citrus.dataArray,foldClusterAssignments=foldsClusterAssignments,folds=folds,conditions=conditions,clusterCols=clusterCols,...)  
-    preclusterObject$leftoutClusterAssignments=leftoutClusterAssignments
+  if (nFolds>1){
+    
+    # This should eventually changed to just make fold w/o balancing.
+    if (is.null(labels)){
+      stop("Labels must be supplied for balanced fold selection.")
+    }
+    
+    # Define Folds
+    result$folds = pamr:::balanced.folds(y=labels,nfolds=nFolds)
+    
+    # FOLDS MUST BE SORTED
+    result$folds = lapply(result$folds,sort)
+    
+    # Cluster each fold of data together
+    result$foldClustering = lapply(1:nFolds,citrus.clusterFold,folds=result$folds,citrus.combinedFCSSet=citrus.combinedFCSSet,clusteringColumns=clusteringColumns,...)
+    
+    # Map the left out data to the fold clustered data
+    result$foldMappingAssignments = lapply(1:nFolds,citrus.mapFoldDataToClusterSpace,folds=result$folds,foldClustering=result$foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet)  
   }
   
-  return(preclusterObject)
+  # Cluster all the data together
+  result$allClustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns,...)
   
+  result$nFolds = nFolds
+  
+  class(result) = "citrus.foldClustering"
+  return(result)
 }
-  
+
+#' @export
+#' @name citrus.clusterAndMapFolds
+print.citrus.foldClustering = function(citrus.foldClustering){
+  cat("citrus.foldClustering\n")
+  cat(paste("\tNumber of Folds: ",length(citrus.foldClustering$folds),"\n"))
+}
+
+citrus.cluster.hierarchical = function(data){
+  cat(paste("Clustering",nrow(data),"events\n"));
+  return(Rclusterpp.hclust(data))  
+}
+
+citrus.calculateClusteringMembership.hierarchical = function(clustering,...){
+  clusterType="hierarchical"
+  if ("clusterType" %in% names(list(...))){
+    clusterType = list(...)[["clusterType"]]
+  }
+  if (clusterType=="hierarchical"){
+    mergeOrder = clustering$merge
+    if ("mc.cores" %in% names(list(...))){
+      return(mclapply(as.list(1:nrow(mergeOrder)),citrus.traverseMergeOrder,mergeOrder=mergeOrder,mc.cores=list(...)[["mc.cores"]]))
+    } else {
+      return(lapply(as.list(1:nrow(mergeOrder)),citrus.traverseMergeOrder,mergeOrder=mergeOrder))
+    }
+  } else {
+    stop(paste("Don't know how to caclulate complete clustering for clusterType",clusterType))
+  }
+}

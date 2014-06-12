@@ -79,9 +79,8 @@ shinyUI(pageWithSidebar(
             ),
       
       tabPanel("Cluster Characterization",
-                uiOutput("calculatedFeatures"),
-                uiOutput("medianCols"),
-                uiOutput("emdCols")
+                radioButtons(inputId="featureType",label="Feature Types:",choices=citrus.featureTypes(),selected="abundances"),
+                uiOutput("medianCols")
                ),
       
       tabPanel("Regression Model Configuration",
@@ -100,7 +99,12 @@ shinyUI(pageWithSidebar(
                tags$hr(),
                tags$em("TBD Runtime Options:",class="control-label"),
                tags$br(),
-               disableInput(checkboxInput(inputId="exportClusters",label="Export Identified Clusters"))
+               disableInput(checkboxInput(inputId="exportClusters",label="Export Identified Clusters")),
+               tags$hr(),
+               tags$em("Multithreading Options:",class="control-label"),
+               checkboxInput(inputId="coreLimit",label="Set Multicore Usage"),
+               numericInput(inputId="analysisCores",label="Number of Cores:",value=1,min=1,max=16)
+               
                )
       )
       

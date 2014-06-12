@@ -1,4 +1,5 @@
 citrus.generateRegularizationThresholds.survival = function(features,labels,modelTypes,n,...){
+  stop("Survival currently unsupported.")
   addtlArgs = list(...)
   standardize=T
   if ("standardize" %in% names(addtlArgs)){
@@ -24,7 +25,7 @@ citrus.generateRegularizationThresholds.survival = function(features,labels,mode
 }
 
 citrus.buildModel.survival = function(features,labels,type,regularizationThresholds,...){
-  
+  stop("Survival currently unsupported.")
   addtlArgs = list(...)
   alpha=1
   if ("alpha" %in% names(addtlArgs)){

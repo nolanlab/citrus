@@ -1,4 +1,18 @@
-citrus.launchUI = function(dataDirectory=NULL,host="localhost",...){  
+#' Launch web-based interface for configuring and running citrus
+#' 
+#' Launches shiny-based interface to configuring and running Citrus. Creates runCitrus.R that can be used to run analysis
+#' in data directory. 
+#' 
+#' @param dataDirectory If specified, launches configuration UI with files in data directory. If \code{NULL}, 
+#' prompts user to select a single FCS file in data directory. 
+#' 
+#' @author Robert Bruggner
+#' @export
+#' 
+#' @examples
+#' # Uncomment to run
+#' # citrus.launchUI(file.path(system.file(package = "citrus"),"extdata","example1"))
+citrus.launchUI = function(dataDirectory=NULL){  
   
   library("shiny")
   library("brew")

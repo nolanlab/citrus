@@ -6,6 +6,6 @@ library("brew")
 
 dataDir="~/Desktop/work/citrus/inst/extdata/example1/"
 
-debugTemplate=F
+debugTemplate=T
 
 runApp("inst/shinyGUI")
