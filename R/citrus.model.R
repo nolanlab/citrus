@@ -204,12 +204,18 @@ citrus.generateRegularizationThresholds = function(features,labels,modelType,fam
 #'                     foldModels=citrus.foldModels,
 #'                     leftoutFeatures=citrus.foldFeatureSet$leftoutFeatures)
 citrus.thresholdCVs = function(modelType,foldFeatures,labels,regularizationThresholds,family,folds,foldModels,leftoutFeatures,...){
+  if (modelType=="sam"){
+    return(NULL)
+  }
   do.call(paste0("citrus.thresholdCVs.",family),args=list(modelType=modelType,foldFeatures=foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,folds=folds,foldModels=foldModels,leftoutFeatures=leftoutFeatures,...=...))
 }
 
 #' @rdname citrus.thresholdCVs
 #' @export 
 citrus.thresholdCVs.quick = function(modelType,features,labels,regularizationThresholds,family,nCVFolds=10,...){
+  if (modelType=="sam"){
+    return(NULL)
+  }
   do.call(paste0("citrus.thresholdCVs.quick.",family),args=list(modelType=modelType,features=features,labels=labels,regularizationThresholds=regularizationThresholds,nCVFolds=nCVFolds,...=...))  
 }
 
@@ -401,7 +407,7 @@ citrus.endpointRegress = function(modelType,citrus.foldFeatureSet,labels,family,
   result$regularizationThresholds = citrus.generateRegularizationThresholds(features=citrus.foldFeatureSet$allFeatures,labels=labels,modelType=modelType,family=family,...)
   
   # Fold Models
-  if (citrus.foldFeatureSet$nFolds>1){
+  if ((citrus.foldFeatureSet$nFolds>1)&&(modelType!="sam")){
     #foldModels = citrus.buildFoldsEndpointModels(type=modelType,citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,regularizationThresholds=regularizationThresholds,family=family)
     result$foldModels = citrus.buildFoldsEndpointModels(type=modelType,citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,regularizationThresholds=result$regularizationThresholds,family=family,...)
   } 
