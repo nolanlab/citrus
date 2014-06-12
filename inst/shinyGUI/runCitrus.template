@@ -80,6 +80,9 @@ results = citrus.full(
             <% if ("medianColumns" %in% names(templateData)){cat(",medianColumns=medianColumns")} %>
 )
 
+# plot results
+plot(results,outputDirectory)
+
 # ==================================================================================================
 # The following lines perform the same analysis as the citrus.full() function but broken down
 # into component steps. This is may be more useful to run if you plan on running the clustering
