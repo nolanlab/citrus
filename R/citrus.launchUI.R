@@ -49,6 +49,7 @@ citrus.launchUI = function(dataDirectory=NULL){
   return(paste("Citrus Output in:",outputPath))  
 }
 
+#' @export
 citrus.getFileCols = function(fileName,dataDir,...){
   cat(paste0("Reading parameters in ",fileName,"\n"));
   fcsFile = citrus.readFCS(file.path(dataDir,fileName),which.lines=1)
