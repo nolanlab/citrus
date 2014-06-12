@@ -36,7 +36,7 @@
 #' # Create list of files to be analyzed - two conditions.
 #' fileList = data.frame(unstim=list.files(dataDirectory,pattern="unstim"),stim1=list.files(dataDirectory,pattern="stim1"))
 #' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
-citrus.readFCSSet = function(dataDirectory,fileList,fileSampleSize=NULL,transformColumns=NULL,transformCofactor=5,scaleColumns=NULL,useChannelDescriptions=F,...){
+citrus.readFCSSet = function(dataDirectory,fileList,fileSampleSize=1000,transformColumns=NULL,transformCofactor=5,scaleColumns=NULL,useChannelDescriptions=F,...){
   data = list();
   fileCounter = 1;
   fileNames = c();

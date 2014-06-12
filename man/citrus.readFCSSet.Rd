@@ -4,7 +4,7 @@
 \alias{print.citrus.combinedFCSSet}
 \title{Read a set of FCS files for analysis}
 \usage{
-citrus.readFCSSet(dataDirectory, fileList, fileSampleSize = NULL,
+citrus.readFCSSet(dataDirectory, fileList, fileSampleSize = 1000,
   transformColumns = NULL, transformCofactor = 5, scaleColumns = NULL,
   useChannelDescriptions = F, ...)
 
