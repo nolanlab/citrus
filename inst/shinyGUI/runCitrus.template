@@ -14,8 +14,10 @@ library("citrus",lib.loc=<% if (is.null(templateData[["library"]])){
 <%if (!templateData[["coreLimit"]]){cat("# ")}%>options("mc.cores"=<%cat(templateData[["analysisCores"]])%>);
 
 family = "classification"
-dataDirectory = "../"
-# dataDirectory = <%cat(stringQuote(templateData[["dataDir"]]))%>
+
+# Change if you want to run from command line
+# dataDirectory = "../"
+dataDirectory = <%cat(stringQuote(templateData[["dataDir"]]))%>
 
 outputDirectory = <%cat("file.path(dataDirectory,\"citrusOutput\")")%>
 clusteringColumns = c(<%cat(paste(sapply(templateData[["clusterCols"]],stringQuote),collapse=","))%>)
@@ -89,12 +91,28 @@ plot(results,outputDirectory)
 # the clustering, feature extraction, regression, and plotting functionlines. 
 # ==================================================================================================
 
+# Read Data
+# citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList,fileSampleSize,transformColumns,transformCofactor)
+
 # Cluster all the data
+# citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,labels,nFolds)
 
 # OR load a previous clustering result. All other variables must be set by previous lines in runCitrus.R
+# load(file.path(outputDirectory,"citrusClustering.rData"))
+
+# Make vector of conditions for analysis. If comparing two conditions, should be 
+# two elements - first element is baseline condition and second is comparison condition.
+# conditions = colnames(fileList)[1]
 
 # Build cluster features
+# citrus.foldFeatureSet = citrus.calculateFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet,
+#                                                         featureType=featureType,
+#                                                         minmumClusterSizePercent=minimumClusterSizePercent,
+#                                                         conditions=conditions<% if ("medianColumns" %in% names(templateData)){cat(",\n#                                                         medianColumns=medianColumns")} %>
+#                                                         )
 
-# Run the regression 
+# Build regression models for each model type
+# citrus.regressionResults = mclapply(modelTypes,citrus.endpointRegress,citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,family=family)
 
-# Plot Results
+# Plot Results for each model
+# lapply(citrus.regressionResults,plot,outputDirectory=outputDirectory,citrus.foldClustering=citrus.foldClustering,citrus.foldFeatureSet=citrus.foldFeatureSet,citrus.combinedFCSSet=citrus.combinedFCSSet)
