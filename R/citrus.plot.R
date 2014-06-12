@@ -571,8 +571,8 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
 #' 
 #' Makes many plots showing results of a Citrus analysis
 #' 
-#' @method plot citrus.regressionResult
-#' @S3method plot citrus.regressionResult
+#' @name plot.citrus.regressionResult
+#' @export 
 #' 
 #' @param citrus.regressionResult A \code{citrus.regressionResult} object.
 #' @param outputDirectory Full path to output directory for plots.
@@ -585,7 +585,6 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
 #' @param hierarchyGraph A hierarchy graph configuration created by \code{\link{citrus.createHierarchyGraph}}. If \code{NULL}, automatically generated.
 #' 
 #' @author Robert Bruggner
-#' @export
 #' 
 #' @examples 
 #' # Where the data lives
@@ -607,7 +606,7 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
 #' citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,nFolds=1)
 #' 
 #' # Build abundance features
-#' citrus.foldFeatureSet = citrus.buildFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet)
+#' citrus.foldFeatureSet = citrus.calculateFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet)
 #' 
 #' # Endpoint regress
 #' citrus.regressionResult = citrus.endpointRegress(modelType="pamr",citrus.foldFeatureSet,labels,family="classification")
@@ -672,12 +671,15 @@ addtlArgs = list(...)
 }
 
 #' Plot a citrus.full.result
-#' 
+#' @name plot.citrus.full.result
 #' @param citrus.full.result A citrus.full.result object
 #' @param outputDirectory Full path to directory in which to place plot output. 
 #' 
-#' @method plot citrus.full.result
-#' @S3method plot citrus.full.result
+#' @export
+#' 
+#' @author Robert Bruggner
+#' 
+#' @details See \code{\link{citrus.full}} for examples.
 plot.citrus.full.result = function(citrus.full.result,outputDirectory){
   
   if (!file.exists(outputDirectory)){

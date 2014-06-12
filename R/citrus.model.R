@@ -1,7 +1,7 @@
 #' Build an endpoint model 
 #' 
 #' This function constructs an endpoint model using features calculated by citrus. 
-#' @name citrus.buildModel
+#' @name citrus.buildEndpointModel
 #' @param features A numeric matrix of predictive features. Rows are observations and column entries are features. 
 #' @param labels A vector of endpoint values (i.e. class labels) for each row of the feature matrix. 
 #' @param family Family of endpoint model to be constructed. Valid values are \code{classification}. More to come...
@@ -54,10 +54,12 @@ citrus.buildEndpointModel = function(features,labels,family="classification",typ
   return(result)  
 }
 
-print.citrus.endpointModel = function(x,...){
+#' @export
+#' @name citrus.buildEndpointModel
+print.citrus.endpointModel = function(citrus.endpointModel,...){
   cat("Citrus Model\n")
-  cat(paste("\tFamily:",x$family,"\n"))
-  cat(paste("\tType:",x$type,"\n"))
+  cat(paste("\tFamily:",citrus.endpointModel$family,"\n"))
+  cat(paste("\tType:",citrus.endpointModel$type,"\n"))
 }
 
 #' Generate model regularization thresholds 
@@ -188,7 +190,7 @@ citrus.generateRegularizationThresholds = function(features,labels,modelType,fam
 #' citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,labels,nFolds=4)
 #' 
 #' # Build fold features and leftout features
-#' citrus.foldFeatureSet = citrus.calculateFoldFeatureset(citrus.foldClustering,citrus.combinedFCSSet)
+#' citrus.foldFeatureSet = citrus.calculateFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet)
 #' 
 #' # Build fold models 
 #' citrus.foldModels = citrus.buildFoldsEndpointModels(type="pamr",citrus.foldFeatureSet,labels)
@@ -205,7 +207,8 @@ citrus.thresholdCVs = function(modelType,foldFeatures,labels,regularizationThres
   do.call(paste0("citrus.thresholdCVs.",family),args=list(modelType=modelType,foldFeatures=foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,folds=folds,foldModels=foldModels,leftoutFeatures=leftoutFeatures,...=...))
 }
 
-#' @name citrus.thresholdCVs
+#' @rdname citrus.thresholdCVs
+#' @export 
 citrus.thresholdCVs.quick = function(modelType,features,labels,regularizationThresholds,family,nCVFolds=10,...){
   do.call(paste0("citrus.thresholdCVs.quick.",family),args=list(modelType=modelType,features=features,labels=labels,regularizationThresholds=regularizationThresholds,nCVFolds=nCVFolds,...=...))  
 }
@@ -298,7 +301,7 @@ citrus.predict = function(citrus.endpointModel,newFeatures){
 #' citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,labels,nFolds=4)
 #' 
 #' # Build fold features and leftout features
-#' citrus.foldFeatureSet = citrus.calculateFoldFeatureset(citrus.foldClustering,citrus.combinedFCSSet)
+#' citrus.foldFeatureSet = citrus.calculateFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet)
 #' 
 #' # Build fold models 
 #' citrus.foldModels = citrus.buildFoldsEndpointModels(type="pamr",citrus.foldFeatureSet,labels)
@@ -381,7 +384,7 @@ citrus.buildFoldEndpointModel = function(foldIndex,folds,foldFeatures,labels,fam
 #' citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,labels,nFolds=4)
 #' 
 #' # Build abundance features
-#' citrus.foldFeatureSet = citrus.calculateFoldFeatureset(citrus.foldClustering,citrus.combinedFCSSet)
+#' citrus.foldFeatureSet = citrus.calculateFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet)
 #' 
 #' # Endpoint regress
 #' citrus.regressionResult = citrus.endpointRegress(modelType="pamr",citrus.foldFeatureSet,labels,family="classification")

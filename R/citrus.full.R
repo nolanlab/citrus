@@ -147,10 +147,10 @@ citrus.full = function(fileList,
     #conditionFileIds = citrus.combinedFCSSet$fileIds[,conditions]
     
     # Calculate fold features
-    #citrus.foldFeatureSet = citrus.calculateFoldFeatureset(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,minimumClusterSizePercent=minimumClusterSizePercent,medianColumns=medianColumns,mc.cores=4)
-    #citrus.foldFeatureSet = citrus.calculateFoldFeatureset(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,minimumClusterSizePercent=minimumClusterSizePercent,conditions=conditions,medianColumns=medianColumns,mc.cores=4)
+    #citrus.foldFeatureSet = citrus.calculateFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,minimumClusterSizePercent=minimumClusterSizePercent,medianColumns=medianColumns,mc.cores=4)
+    #citrus.foldFeatureSet = citrus.calculateFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,minimumClusterSizePercent=minimumClusterSizePercent,conditions=conditions,medianColumns=medianColumns,mc.cores=4)
     cat("\tBuilding Fold Features\n")
-    citrus.foldFeatureSet = citrus.calculateFoldFeatureset(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,conditions=conditions,...)
+    citrus.foldFeatureSet = citrus.calculateFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,conditions=conditions,...)
     conditionFeatures[[paste(rev(conditions),collapse="_vs_")]] = citrus.foldFeatureSet
     
     # Endpoint regress for each model type
@@ -168,12 +168,8 @@ citrus.full = function(fileList,
   return(results)
 }
 
-#' Print a summary of a \code{citrus.full.result}
-#' 
-#' @param citrus.full.result A citrus.full.result object
-#' 
-#' @method print citrus.full.result
-#' @S3method print citrus.full.result
+#' @export
+#' @name citrus.full
 print.citrus.full.result = function(citrus.full.result,...){
   cat("Citrus full result\n")
   cat(paste("Family:",citrus.full.result$family,"\n"))

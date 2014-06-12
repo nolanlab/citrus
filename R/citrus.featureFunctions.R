@@ -137,7 +137,7 @@ citrus.calculateFeatures = function(citrus.combinedFCSSet,clusterAssignments,clu
 #' @author Robert Bruggner
 #' @export 
 #' 
-#' @seealso \code{citrus.calculateFeatures}, \code{citrus.calculateFoldFeatureset}
+#' @seealso \code{citrus.calculateFeatures}, \code{citrus.calculateFoldFeatureSet}
 citrus.calculateFeature.abundances = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,fileIds=NULL,...){
   eventFileIds = citrus.combinedFCSSet$data[,"fileId"]
   if (is.null(fileIds)){
@@ -197,7 +197,7 @@ citrus.calculateFileClusterMedian = function(clusterId,fileId,medianColumn,data,
 ###############################################
 #' Build cluster features for folds of clustering
 #'
-#' Build cluster features for each fold of clustering. If multiple folds of clustering have been performed, \code{citrus.calculateFoldFeatureset}
+#' Build cluster features for each fold of clustering. If multiple folds of clustering have been performed, \code{citrus.calculateFoldFeatureSet}
 #' builds features for clustered and leftout samples for each fold.
 #' 
 #' @param citrus.foldClustering A \code{citrus.foldClustering} object
@@ -239,8 +239,8 @@ citrus.calculateFileClusterMedian = function(clusterId,fileId,medianColumn,data,
 #' citrus.foldClustering = citrus.clusterAndMapFolds(citrus.combinedFCSSet,clusteringColumns,labels,nFolds=4)
 #' 
 #' # Build fold features and leftout features
-#' citrus.foldFeatureSet = citrus.calculateFoldFeatureset(citrus.foldClustering,citrus.combinedFCSSet)
-citrus.calculateFoldFeatureset = function(citrus.foldClustering,citrus.combinedFCSSet,featureType="abundances",minimumClusterSizePercent=0.05,...){
+#' citrus.foldFeatureSet = citrus.calculateFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet)
+citrus.calculateFoldFeatureSet = function(citrus.foldClustering,citrus.combinedFCSSet,featureType="abundances",minimumClusterSizePercent=0.05,...){
   result = list()
     
   if (citrus.foldClustering$nFolds>1){

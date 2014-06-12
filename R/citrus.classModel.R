@@ -1,5 +1,5 @@
-#' @rdname citrus.buildModel
-#' @name citrus.buildModel
+#' @rdname citrus.buildEndpointModel
+#' @name citrus.buildEndpointModel
 #' @export
 citrus.buildModel.classification = function(features,labels,type,regularizationThresholds,...){
   

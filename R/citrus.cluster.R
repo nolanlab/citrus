@@ -190,11 +190,10 @@ citrus.cluster = function(citrus.combinedFCSSet,clusteringColumns,clusteringType
   return(result)
 }
 
-#' Print summary of \code{citrus.clustering} object
-#' 
-#' @method print citrus.clustering
-#' @S3method print citrus.clustering
-print.citrus.clustering = function(citrus.clustering,...){
+
+#' @export
+#' @name citrus.cluster
+print.citrus.clustering = function(citrus.clustering){
   cat("Citrus clustering\n")
   cat(paste0("\tType:\t\t",citrus.clustering$type,"\n"))
   cat(paste0("\tClusters:\t",length(citrus.clustering$clusterMembership),"\n"))
@@ -278,13 +277,11 @@ citrus.clusterAndMapFolds = function(citrus.combinedFCSSet,clusteringColumns,lab
   return(result)
 }
 
-#' Print summary of \code{citrus.foldClustering} object
-#' 
-#' @method print citrus.foldClustering
-#' @S3method print citrus.foldClustering
-print.citrus.foldClustering = function(x,...){
+#' @export
+#' @name citrus.clusterAndMapFolds
+print.citrus.foldClustering = function(citrus.foldClustering){
   cat("citrus.foldClustering\n")
-  cat(paste("\tNumber of Folds: ",length(x$folds),"\n"))
+  cat(paste("\tNumber of Folds: ",length(citrus.foldClustering$folds),"\n"))
 }
 
 citrus.cluster.hierarchical = function(data){

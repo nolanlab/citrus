@@ -113,16 +113,10 @@ citrus.readFCSSet = function(dataDirectory,fileList,fileSampleSize=NULL,transfor
   return(results);
 }
 
-#' Prints a summary of a citrus.combinedFCSSet.
-#' 
-#' @param citrus.combinedFCSSet A citrus.combinedFCSSet object.
-#' 
-#' @method print citrus.combinedFCSSet
-#' @S3method print citrus.combinedFCSSet
-#' 
-#' @author Robert Bruggner
+
 #' @export
-print.citrus.combinedFCSSet = function(citrus.combinedFCSSet,...){
+#' @name citrus.readFCSSet
+print.citrus.combinedFCSSet = function(citrus.combinedFCSSet){
   cat(paste0("Number Of Files: ",length(citrus.combinedFCSSet$fileNames),"\n"))
   cat(paste0("Number Of Events: ",nrow(citrus.combinedFCSSet$data),"\n"))
   cat(paste0("Parameter Names:\n",paste0("\t",colnames(citrus.combinedFCSSet$data),collapse="\n")))
