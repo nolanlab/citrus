@@ -148,14 +148,14 @@ citrus.full = function(fileList,
     
     # Calculate fold features
     #citrus.foldFeatureSet = citrus.calculateFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,minimumClusterSizePercent=minimumClusterSizePercent,medianColumns=medianColumns,mc.cores=4)
-    #citrus.foldFeatureSet = citrus.calculateFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,featureType=featureType,minimumClusterSizePercent=minimumClusterSizePercent,conditions=conditions,medianColumns=medianColumns,mc.cores=4)
+    #citrus.foldFeatureSet = citrus.calculateFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,conditions=conditions,featureType="medians",medianColumns=medianColumns)
     cat("\tBuilding Fold Features\n")
     citrus.foldFeatureSet = citrus.calculateFoldFeatureSet(citrus.foldClustering=citrus.foldClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,conditions=conditions,...)
     conditionFeatures[[paste(rev(conditions),collapse="_vs_")]] = citrus.foldFeatureSet
     
     # Endpoint regress for each model type
     #citrus.regressionResults = mclapply(modelTypes,citrus.endpointRegress,citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,family=family)
-    #citrus.regressionResults = citrus.endpointRegress("glmnet",citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,family=family)
+    #citrus.regressionResults = citrus.endpointRegress("sam",citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,family=family)
     cat("\tAnalyzing vs. endpoint\n")
     citrus.regressionResults = mclapply(modelTypes,citrus.endpointRegress,citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,family=family,...)
     names(citrus.regressionResults) = modelTypes
