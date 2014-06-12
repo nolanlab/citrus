@@ -70,7 +70,6 @@ results = citrus.full(
             family=family,
             modelTypes=modelTypes,
             nFolds=nFolds,
-            plot=T,
             <% if ("conditionComparaMatrix" %in% names(templateData)){cat("conditionComparaMatrix=conditionComparaMatrix,")} %>
             fileSampleSize=fileSampleSize,
             featureType=featureType,
