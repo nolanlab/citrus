@@ -1,0 +1,18 @@
+citHeader("To cite the R package 'citrus' in your publication please use:")
+
+citEntry(entry  = "article",
+         title  = "Automated identification of stratifying signatures in cellular subpopulations",
+         author = personList(
+                 person(given="Robert", family="Bruggner"),
+                 person(given="Bernd", family="Bodenmiller"),
+                 person(given="David", family="Dill"),
+                 person(given="Rob", family="Tibshirani"),
+                 person(given="Garry", family="Nolan")
+  		),
+	    journal = "Proc Natl Acad Sci USA",
+	    year = "2014",
+      doi = "10.1073/pnas.1408792111",
+      url = "http://dx.doi.org/10.1073/pnas.1408792111",
+      note = paste("R package version ", R.Version()$major, ".", R.Version()$minor, sep = ""),
+  	  textVersion = "Bruggner, R. V., Bodenmiller, B., Dill, D. L., Tibshirani, R. J. & Nolan, G. P. Automated identification of stratifying signatures in cellular subpopulations. Proc Natl Acad Sci USA(2014). doi:10.1073/pnas.1408792111"
+)
