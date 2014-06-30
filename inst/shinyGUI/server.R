@@ -1,11 +1,15 @@
 shinyServer(function(input, output) {
   
+  currentGroupNames = reactive({getGroupNames(input)})
+  currentClusterParameters = reactive({getParameterIntersections(input,fileList,fileCols)})
+  currentSelectedFiles = reactive({getSelectedFiles(input)})
+  
   output$groupNameInput = renderUI({
     return(tagList(lapply(1:input$numberOfGroups,serialGroupNameInput)))
   })
   
   output$sampleGroupSelector = renderUI({
-    return(tagList(lapply(getGroupNames(input),serialGroupSelectors,fileList=fileList)))
+    return(tagList(lapply(currentGroupNames(),serialGroupSelectors,fileList=fileList)))
   })
   
   output$sampleGroupsTable = renderTable({
@@ -19,12 +23,12 @@ shinyServer(function(input, output) {
   # Estimates the number of events to be clustered. May be
   # less if files have fewer events than specified sample size
   output$estimatedClusteredEvents = renderUI({
-    eventEstimate = format(input$fileSampleSize*length(unlist(getSelectedFiles(input))),big.mark=",",scientific=F)
+    eventEstimate = format(input$fileSampleSize*length(unlist(currentSelectedFiles())),big.mark=",",scientific=F)
     return(tags$div(paste0("Estimated maximum number of events to be clustered: ",eventEstimate)))
   })
   
   output$estimatedClusterSize = renderUI({
-    numFiles = length(unlist(getSelectedFiles(input)))
+    numFiles = length(unlist(currentSelectedFiles()))
     eventEstimate = input$fileSampleSize*numFiles
     minClusterSize = format(floor(eventEstimate*(input$minimumClusterSizePercent/100)),big.mark=",",scientific=F)
     return(tags$div(paste0("Estimated minimum cluster size: ",minClusterSize," cells")))
@@ -70,7 +74,7 @@ shinyServer(function(input, output) {
   })
   
   output$clusterCols = renderUI({
-    choices = getParameterIntersections(input,fileList,fileCols);
+    choices = isolate(currentClusterParameters())
     if (is.null(choices)){
       return(tagList(tags$b("Assign files to groups to enable selection of clustering parameters.")))
     } else {
@@ -84,7 +88,7 @@ shinyServer(function(input, output) {
   })
   
   output$transformCols = renderUI({
-    choices = getParameterIntersections(input,fileList,fileCols);
+    choices = isolate(currentClusterParameters())
     if (is.null(choices)){
       return(tagList(tags$b("Assign samples to groups to enable selection of transform parameters.")))
     } else {
@@ -98,15 +102,6 @@ shinyServer(function(input, output) {
     }
   })
   
-  #output$scaleCols = renderUI({
-  #  choices = getParameterIntersections(input,fileList,fileCols);
-  #  if (is.null(choices)){
-  #    return(tagList(tags$b("Assign samples to groups to enable selection of transform parameters.")))
-  #  } else {
-  #    return(checkboxGroupInput("scaleCols",label="Scale",choices=choices))  
-  #  }
-  #})
-  
   
   output$calculatedFeatures = renderUI({
     return(tagList(
@@ -118,7 +113,7 @@ shinyServer(function(input, output) {
   
   output$medianCols = renderUI({
     if ((!is.null(input$featureType))&&(input$featureType=="medians")){
-      choices = getParameterIntersections(input,fileList,fileCols);
+      choices = isolate(currentClusterParameters())
       if (is.null(choices)){
         return(tagList(tags$b("Assign samples to groups to enable selection of median parameters.")))
       } else {
@@ -129,21 +124,9 @@ shinyServer(function(input, output) {
     }
   })
   
-  output$emdCols = renderUI({
-    if ((!is.null(input$computeemDists))&&(input$computeemDists)){
-      choices = getParameterIntersections(input,fileList,fileCols);
-      if (is.null(choices)){
-        return(tagList(tags$b("Assign samples to groups to enable selection of emd parameters.")))
-      } else {
-        return(selectInput("emdCols",label="Cluster EMD Parameters",choices=choices,multiple=T))  
-      }
-    } else {
-      return(tags$span(""))  
-    }
-  })
   
   output$crossValidationRange = renderUI({
-    selectedFiles = getSelectedFiles(input)
+    selectedFiles = currentSelectedFiles()
     nFiles = length(unlist(selectedFiles))
     
     if ((length(names(selectedFiles))<2)||(!all(unlist(lapply(selectedFiles,length))>1))){
@@ -154,11 +137,11 @@ shinyServer(function(input, output) {
   })
   
   output$groupSummary = renderUI({
-    selectedFiles=getSelectedFiles(input)
-    groupNames = getGroupNames(input)
+    selectedFiles=currentSelectedFiles()
+    groupNames = currentGroupNames()
     return(
       tagList(
-        tags$ul(lapply(groupNames,serialGroupSummary,selectedFiles=selectedFiles))
+        tags$ul(lapply(currentGroupNames(),serialGroupSummary,selectedFiles=selectedFiles))
       )
     )
   })
@@ -378,7 +361,7 @@ getGroupNames = function(input){
   if (preload){
     return(unique(keyFile[,labelCol]))
   }
-  
+
   inputList = reactiveValuesToList(input)
   vals = c()
   for (i in 1:input$numberOfGroups){
