@@ -1,8 +1,9 @@
 shinyServer(function(input, output) {
   
+  
   currentGroupNames = reactive({getGroupNames(input)})
-  currentClusterParameters = reactive({getParameterIntersections(input,fileList,fileCols)})
-  currentSelectedFiles = reactive({getSelectedFiles(input)})
+  #currentClusterParameters = reactive({getParameterIntersections(input,fileList,fileCols)})
+  #currentSelectedFiles = reactive({getSelectedFiles(input)})
   
   output$groupNameInput = renderUI({
     return(tagList(lapply(1:input$numberOfGroups,serialGroupNameInput)))
@@ -23,12 +24,15 @@ shinyServer(function(input, output) {
   # Estimates the number of events to be clustered. May be
   # less if files have fewer events than specified sample size
   output$estimatedClusteredEvents = renderUI({
-    eventEstimate = format(input$fileSampleSize*length(unlist(currentSelectedFiles())),big.mark=",",scientific=F)
+    #selectedFiles = currentSelectedFiles()
+    selectedFiles = getSelectedFiles(input)
+    eventEstimate = format(input$fileSampleSize*length(unlist(selectedFiles)),big.mark=",",scientific=F)
     return(tags$div(paste0("Estimated maximum number of events to be clustered: ",eventEstimate)))
   })
   
   output$estimatedClusterSize = renderUI({
-    numFiles = length(unlist(currentSelectedFiles()))
+    numFiles = length(unlist(getSelectedFiles(input)))
+    #numFiles = length(unlist(currentSelectedFiles()))
     eventEstimate = input$fileSampleSize*numFiles
     minClusterSize = format(floor(eventEstimate*(input$minimumClusterSizePercent/100)),big.mark=",",scientific=F)
     return(tags$div(paste0("Estimated minimum cluster size: ",minClusterSize," cells")))
@@ -74,7 +78,8 @@ shinyServer(function(input, output) {
   })
   
   output$clusterCols = renderUI({
-    choices = isolate(currentClusterParameters())
+    choices = isolate(getParameterIntersections(input,fileList,fileCols))
+    #choices = isolate(currentClusterParameters())
     if (is.null(choices)){
       return(tagList(tags$b("Assign files to groups to enable selection of clustering parameters.")))
     } else {
@@ -88,7 +93,8 @@ shinyServer(function(input, output) {
   })
   
   output$transformCols = renderUI({
-    choices = isolate(currentClusterParameters())
+    choices = isolate(getParameterIntersections(input,fileList,fileCols))
+    #choices = isolate(currentClusterParameters())
     if (is.null(choices)){
       return(tagList(tags$b("Assign samples to groups to enable selection of transform parameters.")))
     } else {
@@ -113,7 +119,8 @@ shinyServer(function(input, output) {
   
   output$medianCols = renderUI({
     if ((!is.null(input$featureType))&&(input$featureType=="medians")){
-      choices = isolate(currentClusterParameters())
+      choices = isolate(getParameterIntersections(input,fileList,fileCols))
+      #choices = isolate(currentClusterParameters())
       if (is.null(choices)){
         return(tagList(tags$b("Assign samples to groups to enable selection of median parameters.")))
       } else {
@@ -126,7 +133,8 @@ shinyServer(function(input, output) {
   
   
   output$crossValidationRange = renderUI({
-    selectedFiles = currentSelectedFiles()
+    selectedFiles = getSelectedFiles(input)
+    #selectedFiles = currentSelectedFiles()
     nFiles = length(unlist(selectedFiles))
     
     if ((length(names(selectedFiles))<2)||(!all(unlist(lapply(selectedFiles,length))>1))){
@@ -137,11 +145,12 @@ shinyServer(function(input, output) {
   })
   
   output$groupSummary = renderUI({
-    selectedFiles=currentSelectedFiles()
+    #selectedFiles=currentSelectedFiles()
+    selectedFiles = getSelectedFiles(input)
     groupNames = currentGroupNames()
     return(
       tagList(
-        tags$ul(lapply(currentGroupNames(),serialGroupSummary,selectedFiles=selectedFiles))
+        tags$ul(lapply(groupNames,serialGroupSummary,selectedFiles=selectedFiles))
       )
     )
   })
@@ -362,12 +371,11 @@ getGroupNames = function(input){
     return(unique(keyFile[,labelCol]))
   }
 
-  inputList = reactiveValuesToList(input)
   vals = c()
   for (i in 1:input$numberOfGroups){
     name = paste("Group",i,"name",sep="_");
-    if (name %in% names(inputList)){
-      vals[i]=inputList[[name]]  
+    if (name %in% names(input)){
+      vals[i]=input[[name]]  
     } else {
       vals[i] = "EmptyGroup";
     }
