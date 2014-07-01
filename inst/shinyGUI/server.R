@@ -1,7 +1,7 @@
 shinyServer(function(input, output) {
   
   
-  currentGroupNames = reactive({getGroupNames(input)})
+  #currentGroupNames = reactive({})
   #currentClusterParameters = reactive({getParameterIntersections(input,fileList,fileCols)})
   #currentSelectedFiles = reactive({getSelectedFiles(input)})
   
@@ -10,7 +10,7 @@ shinyServer(function(input, output) {
   })
   
   output$sampleGroupSelector = renderUI({
-    return(tagList(lapply(currentGroupNames(),serialGroupSelectors,fileList=fileList)))
+    return(tagList(lapply(getGroupNames(input),serialGroupSelectors,fileList=fileList)))
   })
   
   output$sampleGroupsTable = renderTable({
@@ -147,7 +147,8 @@ shinyServer(function(input, output) {
   output$groupSummary = renderUI({
     #selectedFiles=currentSelectedFiles()
     selectedFiles = getSelectedFiles(input)
-    groupNames = currentGroupNames()
+    groupNames = getGroupNames(input)
+    #groupNames = currentGroupNames()
     return(
       tagList(
         tags$ul(lapply(groupNames,serialGroupSummary,selectedFiles=selectedFiles))
