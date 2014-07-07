@@ -13,6 +13,8 @@
 #' @param Cofactor for arcsin-hyperbolic transform.
 #' @param scaleColumns Vector of parameter names or indicies whose values should be scaled prior to analysis.
 #' @param useChannelDescriptions Should channel descriptive names be used to name data instead of channel names?
+#' @param readParameters Vector of parameter names (or descriptions if \code{useChannelDescriptions='T'}) to be read from each FCS file. Can be used to specify common parameters
+#' among FCS files that contain different measured parameters.
 #' @param ... Other undocumented parameters.
 #' 
 #' @return An object of type \code{citrus.combinedFCSSet}.
@@ -36,7 +38,7 @@
 #' # Create list of files to be analyzed - two conditions.
 #' fileList = data.frame(unstim=list.files(dataDirectory,pattern="unstim"),stim1=list.files(dataDirectory,pattern="stim1"))
 #' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
-citrus.readFCSSet = function(dataDirectory,fileList,fileSampleSize=1000,transformColumns=NULL,transformCofactor=5,scaleColumns=NULL,useChannelDescriptions=F,...){
+citrus.readFCSSet = function(dataDirectory,fileList,fileSampleSize=1000,transformColumns=NULL,transformCofactor=5,scaleColumns=NULL,useChannelDescriptions=F,readParameters=NULL,...){
   data = list();
   fileCounter = 1;
   fileNames = c();
@@ -65,6 +67,10 @@ citrus.readFCSSet = function(dataDirectory,fileList,fileSampleSize=1000,transfor
       if (useChannelDescriptions){
        channelDescriptions = as.vector(pData(parameters(fcsFile))$desc)
        colnames(fcsData)[nchar(channelDescriptions)>2] = channelDescriptions[nchar(channelDescriptions)>2]
+      }
+      
+      if (!is.null(readParameters)){
+        fcsData = fcsData[,readParameters]
       }
       
       fileChannelNames[[conditions[i]]][[fileName]]=as.vector(pData(parameters(fcsFile))$name)

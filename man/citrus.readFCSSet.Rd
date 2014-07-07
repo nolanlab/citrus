@@ -6,7 +6,7 @@
 \usage{
 citrus.readFCSSet(dataDirectory, fileList, fileSampleSize = 1000,
   transformColumns = NULL, transformCofactor = 5, scaleColumns = NULL,
-  useChannelDescriptions = F, ...)
+  useChannelDescriptions = F, readParameters = NULL, ...)
 
 print.citrus.combinedFCSSet(citrus.combinedFCSSet)
 }
@@ -28,6 +28,9 @@ in a given FCS file, all cells from that file are selected.}
 \item{scaleColumns}{Vector of parameter names or indicies whose values should be scaled prior to analysis.}
 
 \item{useChannelDescriptions}{Should channel descriptive names be used to name data instead of channel names?}
+
+\item{readParameters}{Vector of parameter names (or descriptions if \code{useChannelDescriptions='T'}) to be read from each FCS file. Can be used to specify common parameters
+among FCS files that contain different measured parameters.}
 
 \item{...}{Other undocumented parameters.}
 }
