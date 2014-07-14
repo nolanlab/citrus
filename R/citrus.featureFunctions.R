@@ -182,13 +182,12 @@ citrus.calculateFeature.medians = function(clusterIds,clusterAssignments,citrus.
 }
 
 citrus.calculateFileClusterMedian = function(clusterId,fileId,medianColumn,data,clusterAssignments,...){
+  if (length(clusterAssignments[[clusterId]])<3){
+    return(0)
+  }
   clusterData = data[clusterAssignments[[clusterId]],]
   clusterFileDataValues = clusterData[clusterData[,"fileId"]==fileId,medianColumn]
-  if (length(clusterFileDataValues)<3){
-    return(0)
-  } else {
-    return(median(clusterFileDataValues))
-  }
+  return(median(clusterFileDataValues))
 }
 
 
