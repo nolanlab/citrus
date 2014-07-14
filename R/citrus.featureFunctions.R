@@ -186,6 +186,9 @@ citrus.calculateFileClusterMedian = function(clusterId,fileId,medianColumn,data,
     return(0)
   }
   clusterData = data[clusterAssignments[[clusterId]],]
+  if (sum(clusterData[,"fileId"]==fileId)<3){
+    return(0)
+  }
   clusterFileDataValues = clusterData[clusterData[,"fileId"]==fileId,medianColumn]
   return(median(clusterFileDataValues))
 }
