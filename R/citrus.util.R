@@ -24,6 +24,8 @@
 #' \item{fileNames}{The corresponding file names for each file, indexed by fileId.}
 #' \item{fileChannelNames}{Names of parameters in each read file.}
 #' \item{fileReagentNames}{Description of parameters in each read file.}
+#' \item{transformColumns}{List of columns that were transformed when read, if supplied.}
+#' \item{transformCofactor}{Cofactor used for \code{arcsinh} transformation, if applicable.}
 #' 
 #' @author Robert Bruggner
 #' @export
@@ -114,6 +116,12 @@ citrus.readFCSSet = function(dataDirectory,fileList,fileSampleSize=1000,transfor
   }
   
   results = list(data=data,fileIds=matrix(1:(fileCounter-1),ncol=length(conditions),dimnames=list(c(),conditions)),fileNames=fileNames,fileChannelNames=fileChannelNames,fileReagentNames=fileReagentNames)
+  
+  if (!is.null(transformColumns)){
+    results$transformColumns = transformColumns
+    results$transformCofactor = transformCofactor
+  }
+  
   class(results) = "citrus.combinedFCSSet"
   
   return(results);
@@ -372,6 +380,93 @@ citrus.readFCS = function(filePath,...){
   return(fcs)
 }
 
+
+#' Exports cluster events to file
+#' 
+#' Exports cluster events from each file
+#' 
+#' @param clusterId ID of cluster to be exported
+#' @param citrus.clustering \code{citrus.clustering} object to export clusters from.
+#' @param citrus.combinedFCSSet \code{citrus.combinedFCSSet} object that contains data to be exported.
+#' @param outputDirectory Where cluster data should be exported to.
+#' @param conditions If not \code{NULL}, only export data from the specified conditions.
+#'  
+#' @author Robert Bruggner
+#' @export
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Create list of files to be analyzed
+#' fileList = data.frame("unstim"=list.files(dataDirectory,pattern=".fcs"))
+#' 
+#' # Read the data 
+#' citrus.combinedFCSSet = citrus.readFCSSet(dataDirectory,fileList)
+#' 
+#' # List of columns to be used for clustering
+#' clusteringColumns = c("Red","Blue")
+#' 
+#' # Cluster data
+#' citrus.clustering = citrus.cluster(citrus.combinedFCSSet,clusteringColumns)
+#'
+#' # Export Cluster
+#' # citrus.exportCluster(clusterId=19500,citrus.clustering,citrus.combinedFCSSset,outputDirectory="/PATH/TO/DIRECTORY/")
+citrus.exportCluster = function(clusterId,citrus.clustering,citrus.combinedFCSSet,outputDirectory,conditions=NULL){
+  
+  # Get condition file ids for export
+  if (is.null(conditions)){
+    conditions = colnames(citrus.combinedFCSSet$fileIds)
+  }
+  fileIds = as.vector(citrus.combinedFCSSet$fileIds[,conditions])
+  
+  # Get data from all files within cluster
+  clusterData = citrus.combinedFCSSet$data[citrus.clustering$clusterMembership[[clusterId]],]
+  
+  # Data should be untransformed before export, if it was transformed at read time.
+  if (!is.null(citrus.combinedFCSSet$transformColumns)){
+    clusterData[,citrus.combinedFCSSet$transformColumns] = sinh(clusterData[,citrus.combinedFCSSet$transformColumns])*citrus.combinedFCSSet$transformCofactor
+  }
+  
+  # Export cluster data from each file at a time
+  for (fileId in fileIds){
+    # Get data from cluster in file
+    clusterFileData = clusterData[clusterData[,"fileId"]==fileId,,drop=F]
+    fileName = paste0(citrus.combinedFCSSet$fileNames[fileId],".cluster_",clusterId,".fcs")
+    
+    # TODO: Fix to include appropriate chanel names and descriptions instead of just one or the other
+    write.FCS(flowFrame(clusterFileData),filename=file.path(outputDirectory,fileName))
+  }
+  
+}
+
+#' UI for exporting file cluster events 
+#' 
+#' UI for exporting file cluster events. When run, a selection dialog will prompt the user to select
+#' a file. The user should select a "citrusClustering.rData" file from a citrusOutput directory.
+#' The user should then enter a comma-separated list of clusters IDs to be exported. A directory
+#' called 'clusterExportData' will be created in the same directory as the selected clustering file
+#' and exported clusters will be placed there. 
+#' 
+#' @author Robert Bruggner
+#' @export
+citrus.exportClusterUI = function(){
+  # Select the clustering to export
+  clusteringOutputPath = file.choose()
+  cat(paste0("Opening Clustering: ",clusteringOutputPath))
+  load(clusteringOutputPath);
+  
+  # Get cluster ids to export from 
+  clusterExportIdsString = readline("Enter comma-separated list of cluster ids for export:")
+  exportClusterIds = as.numeric(unlist(strsplit(clusterExportIdsString,",")))
+  
+  # Create directory to put output
+  exportDir = file.path(dirname(clusteringOutputPath),"clusterExportData")
+  dir.create(exportDir,showWarnings = F)
+  
+  # Export clusters
+  sapply(exportClusterIds,citrus.exportCluster,citrus.clustering=citrus.foldClustering$allClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,outputDirectory=exportDir)
+}
+
 #citrus.exportConditionClusters = function(conditionClusterIds,preclusterResult,outputDir,sampleIds=NULL){
 #  for (conditionName in names(conditionClusterIds)){
 #    for (clusterId in conditionClusterIds[[conditionName]]){
@@ -385,6 +480,8 @@ citrus.readFCS = function(filePath,...){
 #    }
 #  }
 #}
+
+
 
 #citrus.exportCluster = function(clusterId,data,clusterAssignments,outputFile,sampleIds=NULL){
 #  clusterData = data[clusterAssignments[[clusterId]],]

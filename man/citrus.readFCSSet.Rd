@@ -42,6 +42,8 @@ reports the event number in the original source file and the latter records the 
 \item{fileNames}{The corresponding file names for each file, indexed by fileId.}
 \item{fileChannelNames}{Names of parameters in each read file.}
 \item{fileReagentNames}{Description of parameters in each read file.}
+\item{transformColumns}{List of columns that were transformed when read, if supplied.}
+\item{transformCofactor}{Cofactor used for \code{arcsinh} transformation, if applicable.}
 }
 \description{
 Reads and combines data from many FCS files for use with Citrus.
