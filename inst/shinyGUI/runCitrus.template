@@ -27,6 +27,9 @@ cat(paste("medianColumns=c(",paste(sapply(templateData[["medianColumns"]],string
 transformColumns = c(<%cat(ifelse(length(templateData[["transformCols"]])>0,paste(sapply(templateData[["transformCols"]],stringQuote),collapse=","),"NULL"))%>)
 transformCofactor = <%cat(ifelse(length(templateData[["transformCols"]])>0,templateData[["transformCofactor"]],"NULL"))%>
 
+scaleColumns = c(<%cat(ifelse(length(templateData[["scaleCols"]])>0,paste(sapply(templateData[["scaleCols"]],stringQuote),collapse=","),"NULL"))%>)
+
+
 minimumClusterSizePercent = <%cat(templateData[["minimumClusterSizePercent"]])%>
 modelTypes = c(<% cat(paste(sapply(templateData[["classificationModels"]],stringQuote),collapse=",")) %>)
 fileSampleSize = <% cat(templateData[["fileSampleSize"]]) %>
@@ -77,7 +80,8 @@ results = citrus.full(
             featureType=featureType,
             minimumClusterSizePercent=minimumClusterSizePercent,
             transformColumns=transformColumns,
-            transformCofactor=transformCofactor
+            transformCofactor=transformCofactor,
+            scaleColumns=scaleColumns
             <% if ("medianColumns" %in% names(templateData)){cat(",medianColumns=medianColumns")} %>
 )
 

@@ -55,8 +55,6 @@ shinyUI(pageWithSidebar(
                tags$div(numericInput("minimumClusterSizePercent",label="Minimum Cluster Size: A percentage of aggregate data size",min=0.1,max=100,step=0.1,value=5),style="width:300px;"),
                uiOutput("estimatedClusterSize"),
                tags$hr(),
-               # Scale cols not attached to package yet. Uncomment when fixed.
-               #tags$table(tags$tr(tags$td(uiOutput("clusterCols")),tags$td(uiOutput("transformCols")),tags$td(uiOutput("scaleCols"))))
                tags$table(
                  tags$tr(
                    tags$td(
@@ -70,6 +68,12 @@ shinyUI(pageWithSidebar(
                         uiOutput("transformCols"),
                         actionButton("selectAllTransform",label="Select All/None")
                       )
+                    ),
+                    tags$td(
+                     tagList(
+                       uiOutput("scaleCols"),
+                       actionButton("selectAllScale",label="Select All/None")
+                     )
                     ),
                     tags$td(
                       uiOutput("transformCofactor")

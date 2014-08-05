@@ -108,6 +108,21 @@ shinyServer(function(input, output) {
     }
   })
   
+  output$scaleCols = renderUI({
+    choices = isolate(getParameterIntersections(input,fileList,fileCols))
+    #choices = isolate(currentClusterParameters())
+    if (is.null(choices)){
+      return(tagList(tags$b("Assign samples to groups to enable selection of scaling parameters.")))
+    } else {
+      if ((!is.null(input$selectAllScale))&&(input$selectAllScale%%2 == 0)){
+        checked = checkboxGroupInput("scaleCols",label="Scale Parameters",choices=choices,selected=choices)
+      } else {
+        checked = checkboxGroupInput("scaleCols",label="Scale Parameters",choices=choices)
+      }
+      return(checked)
+    }
+  })
+  
   
   output$calculatedFeatures = renderUI({
     return(tagList(
