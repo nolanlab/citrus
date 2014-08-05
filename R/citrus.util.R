@@ -110,13 +110,17 @@ citrus.readFCSSet = function(dataDirectory,fileList,fileSampleSize=1000,transfor
     gc();
   }
   data = do.call("rbind",data)
-    
+  
+  results = list(fileIds=matrix(1:(fileCounter-1),ncol=length(conditions),dimnames=list(c(),conditions)),fileNames=fileNames,fileChannelNames=fileChannelNames,fileReagentNames=fileReagentNames)
+  
   if (!is.null(scaleColumns)){
-      
+    results$scaleColumns = scaleColumns
+    results$scaleColumns.center = apply(data[,scaleColumns],2,mean)  
+    results$scaleColumns.scale = apply(data[,scaleColumns],2,sd)  
     data[,scaleColumns] = apply(data[,scaleColumns],2,scale)  
   }
   
-  results = list(data=data,fileIds=matrix(1:(fileCounter-1),ncol=length(conditions),dimnames=list(c(),conditions)),fileNames=fileNames,fileChannelNames=fileChannelNames,fileReagentNames=fileReagentNames)
+  results$data = data
   
   if (!is.null(transformColumns)){
     results$transformColumns = transformColumns
