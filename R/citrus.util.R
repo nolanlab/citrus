@@ -110,8 +110,9 @@ citrus.readFCSSet = function(dataDirectory,fileList,fileSampleSize=1000,transfor
     gc();
   }
   data = do.call("rbind",data)
-  
+    
   if (!is.null(scaleColumns)){
+      
     data[,scaleColumns] = apply(data[,scaleColumns],2,scale)  
   }
   
