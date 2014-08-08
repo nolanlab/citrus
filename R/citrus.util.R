@@ -80,24 +80,11 @@ citrus.readFCSSet = function(dataDirectory,fileList,fileSampleSize=1000,transfor
       fcsData = cbind(fcsData,fileEventNumber=1:nrow(fcsData),fileId=fileCounter);
       fileCounter=fileCounter+1;
       
-      if (!is.null(transformColumns)){
-        if (any(!is.numeric(transformColumns))){
-          containedCols = setdiff(transformColumns,colnames(fcsData))
-          if (length(containedCols)>0){
-            stop(paste("Transform cols",paste(containedCols,collapse=", "),"not found. Valid channel names:",paste(colnames(fcsData),collapse=", ")))
-          }  
-        }
-        fcsData[,transformColumns] = asinh(fcsData[,transformColumns]/transformCofactor);
-      }
-      
       if ((!is.null(fileSampleSize))&&(fileSampleSize<nrow(fcsData))){
         cat(paste("\tSampling",fileSampleSize,"events.\n"))
         fcsData = fcsData[sort(sample(1:nrow(fcsData),fileSampleSize)),] 
       }
       
-      #if ("scaleSampleCols" %in% names(addtlArgs)){
-      #  fcsData[,addtlArgs[["scaleSampleCols"]]] = apply(fcsData[,addtlArgs[["scaleSampleCols"]]],2,scale,center=F)  
-      #}
       conditionData[[fileName]] = fcsData
       
       if (useChannelDescriptions){
@@ -113,20 +100,34 @@ citrus.readFCSSet = function(dataDirectory,fileList,fileSampleSize=1000,transfor
   
   results = list(fileIds=matrix(1:(fileCounter-1),ncol=length(conditions),dimnames=list(c(),conditions)),fileNames=fileNames,fileChannelNames=fileChannelNames,fileReagentNames=fileReagentNames)
   
+  if (!is.null(transformColumns)){
+    if (any(!is.numeric(transformColumns))){
+      containedCols = setdiff(transformColumns,colnames(data))
+      if (length(containedCols)>0){
+        stop(paste("Transform cols",paste(containedCols,collapse=", "),"not found. Valid channel names:",paste(colnames(data),collapse=", ")))
+      }  
+    }
+    data[,transformColumns] = asinh(data[,transformColumns]/transformCofactor);
+    results$transformColumns = transformColumns
+    results$transformCofactor = transformCofactor
+  }
+  
   if (!is.null(scaleColumns)){
+    if (any(!is.numeric(scaleColumns))){
+      containedCols = setdiff(scaleColumns,colnames(data))
+      if (length(containedCols)>0){
+        stop(paste("Scale cols",paste(containedCols,collapse=", "),"not found. Valid channel names:",paste(colnames(data),collapse=", ")))
+      }  
+    }
     results$scaleColumns = scaleColumns
-    results$scaleColumns.center = apply(data[,scaleColumns],2,mean)  
-    results$scaleColumns.scale = apply(data[,scaleColumns],2,sd)  
+    results$scaleColumns.mean = apply(data[,scaleColumns],2,mean)  
+    results$scaleColumns.SD = apply(data[,scaleColumns],2,sd)  
     data[,scaleColumns] = apply(data[,scaleColumns],2,scale)  
   }
   
   results$data = data
   
-  if (!is.null(transformColumns)){
-    results$transformColumns = transformColumns
-    results$transformCofactor = transformCofactor
-  }
-  
+
   class(results) = "citrus.combinedFCSSet"
   
   return(results);
@@ -420,6 +421,11 @@ citrus.exportCluster = function(clusterId,citrus.clustering,citrus.combinedFCSSe
   
   # Get data from all files within cluster
   clusterData = citrus.combinedFCSSet$data[citrus.clustering$clusterMembership[[clusterId]],]
+  
+  # Data should be unscaled before export, if scaled at read time.
+  if (!is.null(citrus.combinedFCSSet$scaleColumns)){
+    clusterData[,citrus.combinedFCSSet$scaleColumns] = t((t(clusterData[,citrus.combinedFCSSet$scaleColumns])*citrus.combinedFCSSet$scaleColumns.SD)+citrus.combinedFCSSet$scaleColumns.mean)
+  }
   
   # Data should be untransformed before export, if it was transformed at read time.
   if (!is.null(citrus.combinedFCSSet$transformColumns)){
