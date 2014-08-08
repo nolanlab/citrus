@@ -59,7 +59,7 @@ if (!preload){
 } 
 
 cat("\nScanning parameters in FCS files\n")
-fileCols = lapply(fileList,citrus.getFileCols,dataDir=dataDir)
+fileCols = lapply(fileList,citrus.getFileParameters,dataDir=dataDir)
 fileColLength = sapply(fileCols,length)
 cat("\nNumber of parameters per file:\n")
 cat(paste0(fileList,": ",fileColLength,"\n"))

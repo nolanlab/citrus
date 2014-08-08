@@ -50,7 +50,7 @@ citrus.launchUI = function(dataDirectory=NULL){
 }
 
 #' @export
-citrus.getFileCols = function(fileName,dataDir,...){
+citrus.getFileParameters = function(fileName,dataDir,...){
   cat(paste0("Reading parameters in ",fileName,"\n"));
   fcsFile = citrus.readFCS(file.path(dataDir,fileName),which.lines=1)
   parameterNames = flowCore::colnames(fcsFile)
