@@ -173,19 +173,13 @@ citrus.maskCombinedFCSSet = function(citrus.combinedFCSSet,fileIds){
 
   # Keep any row that has an included file
   keepFileIds = citrus.combinedFCSSet$fileIds[unique(which(apply(citrus.combinedFCSSet$fileIds,2,"%in%",fileIds),arr.ind=T)[,1]),,drop=F]
+  citrus.combinedFCSSet$data = do.call("rbind",lapply(fileIds,subsetByFile,data=citrus.combinedFCSSet$data))
+  citrus.combinedFCSSet$fileIds = citrus.combinedFCSSet$fileIds[unique(which(apply(citrus.combinedFCSSet$fileIds,2,"%in%",fileIds),arr.ind=T)[,1]),,drop=F]
   
-  results = list(data=do.call("rbind",lapply(fileIds,.subsetByFile,data=citrus.combinedFCSSet$data)),
-             fileIds=citrus.combinedFCSSet$fileIds[unique(which(apply(citrus.combinedFCSSet$fileIds,2,"%in%",fileIds),arr.ind=T)[,1]),,drop=F],
-             fileNames=citrus.combinedFCSSet$fileNames,
-             fileChannelNames=citrus.combinedFCSSet$fileChannelNames,
-             fileReagentNames=citrus.combinedFCSSet$fileReagentNames,
-             call = match.call() 
-        )
-  class(results) = "citrus.combinedFCSSet"
-  return(results)
+  return(citrus.combinedFCSSet)
 }
 
-.subsetByFile = function(data,fileId){
+subsetByFile = function(data,fileId){
   subset(data,data[,"fileId"]==fileId)
 }
 
