@@ -2,6 +2,7 @@
 \name{citrus.generateRegularizationThresholds}
 \alias{citrus.generateRegularizationThresholds}
 \alias{citrus.generateRegularizationThresholds.classification}
+\alias{citrus.generateRegularizationThresholds.quantitative}
 \title{Generate model regularization thresholds}
 \usage{
 citrus.generateRegularizationThresholds.classification(features, labels,
@@ -9,6 +10,9 @@ citrus.generateRegularizationThresholds.classification(features, labels,
 
 citrus.generateRegularizationThresholds(features, labels, modelType, family,
   n = 100, ...)
+
+citrus.generateRegularizationThresholds.quantitative(features, labels,
+  modelType, n = 100, ...)
 }
 \arguments{
 \item{features}{Features used to construct model}
@@ -17,7 +21,7 @@ citrus.generateRegularizationThresholds(features, labels, modelType, family,
 
 \item{modelType}{Method used to construct endpoint model. Valid options are: \code{pamr} and \code{glmnet}.}
 
-\item{family}{Model family. Valid options are: \code{classification}.}
+\item{family}{Model family. Valid options are: \code{classification} and \code{quantitative}.}
 
 \item{n}{Number of regularization thresholds to generate}
 

@@ -15,7 +15,7 @@ citrus.buildFoldsEndpointModels(type, citrus.foldFeatureSet, labels,
 
 \item{regularizationThresholds}{Regularization thresholds for penalized models.}
 
-\item{family}{Family of model to be constructed. Valid options are \code{classification}. More to come.}
+\item{family}{Family of model to be constructed. Valid options are \code{classification} and \code{quantitative}.}
 
 \item{...}{Other arguments passed to model-fitting functions.}
 }

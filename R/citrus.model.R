@@ -207,8 +207,18 @@ citrus.thresholdCVs = function(modelType,foldFeatures,labels,regularizationThres
   if (modelType=="sam"){
     return(NULL)
   }
-  do.call(paste0("citrus.thresholdCVs.",family),args=list(modelType=modelType,foldFeatures=foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,folds=folds,foldModels=foldModels,leftoutFeatures=leftoutFeatures,...=...))
+  #do.call(paste0("citrus.thresholdCVs.",family),args=list(modelType=modelType,foldFeatures=foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,folds=folds,foldModels=foldModels,leftoutFeatures=leftoutFeatures,...=...))
+  leftoutPredictions = lapply(1:length(leftoutFeatures),paste0("foldPredict.",family),models=foldModels,features=leftoutFeatures)
+  predictionSuccess = lapply(1:length(leftoutPredictions),paste0("foldScore.",family),folds=folds,predictions=leftoutPredictions,labels=labels)
+  thresholdErrorRates = .calculatePredictionErrorRate(predictionSuccess=predictionSuccess,regularizationThresholds=regularizationThresholds)
+  thresholdFDRRates = .calculateTypeFDRRate(foldModels=foldModels,foldFeatures=foldFeatures,labels=labels,modelType=modelType)  
+  results = data.frame(threshold=regularizationThresholds,cvm=thresholdErrorRates$cvm,cvsd=thresholdErrorRates$cvsd);
+  if (!is.null(thresholdFDRRates)){
+    results$fdr = thresholdFDRRates
+  }
+  return(results)
 }
+
 
 #' @rdname citrus.thresholdCVs
 #' @export 

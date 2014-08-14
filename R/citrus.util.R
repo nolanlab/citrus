@@ -331,7 +331,7 @@ citrus.featureTypes = function(){
 #' @author Robert Bruggner
 #' @export
 citrus.familyList = function(){
-  return(c("classification","survival","quantiative"))
+  return(c("classification","quantiative"))
 }
 
 

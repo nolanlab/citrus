@@ -256,7 +256,12 @@ citrus.clusterAndMapFolds = function(citrus.combinedFCSSet,clusteringColumns,lab
     }
     
     # Define Folds
-    result$folds = pamr:::balanced.folds(y=labels,nfolds=nFolds)
+    if (is.numeric(labels)){
+      result$folds = pamr:::balanced.folds(nfolds=nFolds,y=sample(rep(1:nFolds,length.out=length(labels))))
+    } else {
+      result$folds = pamr:::balanced.folds(y=labels,nfolds=nFolds)  
+    }
+    
     
     # FOLDS MUST BE SORTED
     result$folds = lapply(result$folds,sort)

@@ -1,7 +1,7 @@
 #' @rdname citrus.buildEndpointModel
 #' @name citrus.buildEndpointModel
 #' @export
-citrus.buildModel.classification = function(features,labels,type,regularizationThresholds,...){
+citrus.buildModel.continuous = function(features,labels,type,regularizationThresholds,...){
   
   addtlArgs = list(...)
   alpha=1
@@ -19,25 +19,13 @@ citrus.buildModel.classification = function(features,labels,type,regularizationT
     }
   }
   
-  if (type=="pamr"){
-    pamrData = list(x=t(features),y=labels)
-    model = pamr.train(data=pamrData,threshold=regularizationThresholds,remove.zeros=F)
-  } else if (type=="glmnet") {
-    # NOTE THAT THIS IS BINOMIAL EXPLICITLY. DOES MULTINOMIAL WORK THE SAME, IF ONLY 2 CLASSES PROVIDED?
-    family="binomial"
-    if (length(unique(labels))>2){
-      family="multinomial"
-    }
-    model = glmnet(x=features,y=labels,family=family,lambda=regularizationThresholds,alpha=alpha,standardize=standardize)
+  if (type=="glmnet") {
+    model = glmnet(x=features,y=labels,family="gaussian",lambda=regularizationThresholds,alpha=alpha,standardize=standardize)
   } else if (type=="sam"){
-    family="Two class unpaired"
-    if (length(unique(labels))>2){
-      family="Multiclass"
-    }
     noVarianceFeatures = apply(features,2,var)==0
-    model = SAM(x=t(features[,!noVarianceFeatures]),y=labels,resp.type=family,genenames=colnames(features[,!noVarianceFeatures]),nperms=10000)
+    model = SAM(x=t(features[,!noVarianceFeatures]),y=labels,resp.type="Quantitative",genenames=colnames(features[,!noVarianceFeatures]),nperms=10000)
   } else {
-    stop(paste("Type:",type,"not yet implemented"));
+    stop(paste("Type:",type,"not implemented for continuous model"));
   }
   return(model)
 }
@@ -45,28 +33,12 @@ citrus.buildModel.classification = function(features,labels,type,regularizationT
 #' @rdname citrus.thresholdCVs
 #' @name citrus.thresholdCVs
 #' @export
-citrus.thresholdCVs.quick.classification = function(modelType,features,labels,regularizationThresholds,nCVFolds=10,...){
+citrus.thresholdCVs.quick.continuous = function(modelType,features,labels,regularizationThresholds,nCVFolds=10,...){
   
   errorRates = list()
   errorRates$threshold=regularizationThresholds
   
-  if (modelType=="pamr"){
-    pamrData = list(x=t(features),y=labels)
-    pamrModel = pamr.train(data=pamrData,threshold=regularizationThresholds,remove.zeros=F)
-    pamrCVModel = pamr.cv(fit=pamrModel,data=pamrData,nfold=nCVFolds)
-    errorRates$cvm = pamrCVModel$error
-    
-    cvmSD = as.vector(apply(sapply(pamrCVModel$folds,function(foldIndices,y,yhat){
-      apply(apply(yhat[foldIndices,],2,"==",y[foldIndices]),2,sum)/length(foldIndices)
-    },y=labels,yhat=pamrCVModel$yhat),1,sd))
-    
-    errorRates$cvsd = cvmSD / sqrt(length(pamrCVModel$folds))
-    errorRates$fdr =  citrus:::pamr.fdr.new(pamrModel,data=pamrData,nperms=1000)$results[,"Median FDR"]
-  } else if (modelType=="glmnet"){
-    glmnetFamily="binomial"
-    if (length(unique(labels))>2){
-      glmnetFamily="multinomial"
-    }
+  if (modelType=="glmnet"){
     addtlArgs = list(...)
     alpha=1
     if ("alpha" %in% names(addtlArgs)){
@@ -76,7 +48,7 @@ citrus.thresholdCVs.quick.classification = function(modelType,features,labels,re
     if ("standardize" %in% names(addtlArgs)){
       standardize=addtlArgs[["standardize"]]
     }
-    glmnetModel = cv.glmnet(x=features,y=labels,family=glmnetFamily,lambda=regularizationThresholds,type.measure="class",alpha=alpha,standardize=standardize)
+    glmnetModel = cv.glmnet(x=features,y=labels,family="gaussian",lambda=regularizationThresholds,type.measure="mse",alpha=alpha,standardize=standardize)
     errorRates$cvm = glmnetModel$cvm
     errorRates$cvsd = glmnetModel$cvsd
   } else if (modelType=="sam"){
@@ -89,13 +61,13 @@ citrus.thresholdCVs.quick.classification = function(modelType,features,labels,re
   return(data.frame(errorRates))
 }
 
-
-foldPredict.classification = function(index,models,features){
-  citrus.predict.classification(models[[index]],features[[index]])
+foldPredict.continuous = function(index,models,features){
+  citrus.predict.continuous(models[[index]],features[[index]])
 }
 
-foldScore.classification = function(index,folds,predictions,labels){
-  return(predictions[[index]]==labels[folds[[index]]])
+foldScore.continuous = function(index,folds,predictions,labels){
+  mse = sum((predictions[[index]]-labels[folds[[index]]])^2)/length(predictions[[index]])
+  return(mse)
 }
 
 #' @rdname citrus.predict
@@ -126,7 +98,7 @@ citrus.generateRegularizationThresholds.classification = function(features,label
   if ("standardize" %in% names(addtlArgs)){
     standardize=addtlArgs[["standardize"]]
   }
-
+  
   if (modelType=="pamr"){
     return(rev(pamr.train(data=list(x=t(features),y=labels),n.threshold=n)$threshold))
   }

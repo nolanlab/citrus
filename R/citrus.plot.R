@@ -52,6 +52,9 @@ citrus.plotTypeErrorRate = function(modelType,modelOutputDirectory,regularizatio
     thresholds=regularizationThresholds
     errorRates=thresholdCVRates[,"cvm"]
     ylim=c(0,1)
+    if (family=="quantitative"){
+      ylim=c(min(thresholdCVRates[,"cvm"]-thresholdCVRates[,"cvsd"])*.9,max(thresholdCVRates[,"cvm"]+thresholdCVRates[,"cvsd"])*1.1)
+    }
     ylab="Model Cross Validation Error Rate"
     if (modelType=="glmnet"){
       thresholds = log(thresholds)
@@ -124,58 +127,6 @@ citrus.plotTypeErrorRate = function(modelType,modelOutputDirectory,regularizatio
     dev.off()   
 }
 
-citrus.plotDifferentialFeatures = function(differentialFeatures,features,modelOutputDirectory,labels,family,...){
-  # Passing sam models makes things go crazy so this is a hack to avoid problems debugging. 
-#  if (family=="survival"){
-#    do.call(paste("citrus.plotModelDifferentialFeatures",family,sep="."),args=list(modelType=modelType,differentialFeatures=differentialFeatures,features=features,outputDir=outputDir,labels=labels,foldModels=foldModels,cvMinima=cvMinima,regularizationThresholds=regularizationThresholds))    
-#  } else {
-    do.call(paste("citrus.plotModelDifferentialFeatures",family,sep="."),args=list(differentialFeatures=differentialFeatures,features=features,modelOutputDirectory=modelOutputDirectory,labels=labels))
- # }
-}
-
-citrus.plotModelDifferentialFeatures.survival = function(modelType,differentialFeatures,features,outputDir,labels,foldModels,cvMinima,regularizationThresholds,...){
-  s = Surv(time=labels[,"time"],event=labels[,"event"])
-  for (cvPoint in names(differentialFeatures[[modelType]])){
-    modelTypeDir = file.path(outputDir,paste(modelType,"_results/",sep=""))
-    nonzeroFeatureNames = differentialFeatures[[modelType]][[cvPoint]][["features"]]
-    
-    # Write features to file for easy parsing
-    write.table(features[,nonzeroFeatureNames],file=file.path(modelTypeDir,paste("features_",cvPoint,".csv",sep="")),quote=F,sep=",")
-    
-    pchs = rep(13,nrow(s))
-    pchs[as.logical(s[,2])]=20
-    pdf(file.path(modelTypeDir,paste("features_",cvPoint,".pdf",sep="")))
-    for (nonzeroFeatureName in nonzeroFeatureNames){
-      f = features[,nonzeroFeatureName]
-      cutoff = median(f)
-      plot(x=f,y=s[,1],xlab=nonzeroFeatureName,ylab="time",pch=pchs,col="red",cex=2,main="Time vs Feature")   
-      #lines(c(cutoff,cutoff),c(min(s[,1]-10),max(s[,1]+10)),col="blue",lty=3)
-      legend("topright",legend=c("censored","uncensored","median"),pch=c(13,20,45),col=c("red","red","blue"))
-    }
-    dev.off();
-    pdf(file.path(modelTypeDir,paste("survivalCurves_singleFeatures_",cvPoint,".pdf",sep="")),height=6,width=6)
-    for (nonzeroFeatureName in nonzeroFeatureNames){
-      f = features[,nonzeroFeatureName]
-      cutoff = median(f)
-      sf=survfit(s~group,data=data.frame(f,group=as.numeric(f<cutoff)))
-      plot(sf,xlab="Time",ylab="Percent Survival",main=paste("Survival stratified on",nonzeroFeatureName))
-      sdf = survdiff(s~group,data=data.frame(f,group=as.numeric(f<cutoff)))
-      p.val = 1 - pchisq(sdf$chisq, length(sdf$n) - 1)
-      legend("topright",legend=c(paste("P-Value:",substr(p.val,1,5))),cex=1)
-    }
-    dev.off()
-    finalModel=foldModels[[modelType]][[length(foldModels[[modelType]])]]
-    pdf(file.path(modelTypeDir,paste("survivalCurves_allFeatures_",cvPoint,".pdf",sep="")))
-    f=citrus.predict.survival(finalModel,features,s=cvMinima[[modelType]][[cvPoint]])
-    cutoff = median(f)
-    sf=survfit(s~group,data=data.frame(f,group=as.numeric(f<cutoff)))
-    plot(sf,xlab="Time",ylab="Percent Survival",main=paste("Survival stratified on",cvPoint,"model"))
-    sdf = survdiff(s~group,data=data.frame(f,group=as.numeric(f<cutoff)))
-    legend("topright",legend=c(1 - pchisq(sdf$chisq, length(sdf$n) - 1)),cex=.7)
-    dev.off()
-  }
-}
-
 citrus.plotModelDifferentialFeatures.classification = function(differentialFeatures,features,modelOutputDirectory,labels,...){
   for (cvPoint in names(differentialFeatures)){
     nonzeroFeatureNames = differentialFeatures[[cvPoint]][["features"]]
@@ -191,6 +142,27 @@ citrus.plotModelDifferentialFeatures.classification = function(differentialFeatu
     p = p + facet_wrap(~variable,ncol=1) + geom_boxplot(outlier.colour=rgb(0,0,0,0),colour=rgb(0,0,0,.3)) + geom_point(aes(color=factor(labels)),alpha=I(0.25),shape=19,size=I(2)) + coord_flip() +  theme_bw() + ylab("") + xlab("") + theme(legend.position = "none")
     if (any(grepl(pattern="abundance",nonzeroFeatureNames))){
       p  = p+scale_y_log10() + ylab("Log10 scale")
+    }
+    print(p)
+    dev.off()
+  }
+  
+}
+
+citrus.plotModelDifferentialFeatures.quantitative = function(differentialFeatures,features,modelOutputDirectory,labels,...){
+  for (cvPoint in names(differentialFeatures)){
+    nonzeroFeatureNames = differentialFeatures[[cvPoint]][["features"]]
+    
+    # Write features to file for easy parsing
+    write.table(features[,nonzeroFeatureNames],file=file.path(modelOutputDirectory,paste("features_",cvPoint,".csv",sep="")),quote=F,sep=",")
+    
+    melted = melt(data.frame(features[,nonzeroFeatureNames,drop=F],labels=labels,check.names=F),id.vars="labels")
+    
+    pdf(file.path(modelOutputDirectory,paste("features-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=4,height=length(nonzeroFeatureNames)*1.5)
+    p <- ggplot(melted, aes(x=value, y=labels)) 
+    p = p + facet_wrap(~variable,ncol=1) + geom_point(size=I(2)) + theme_bw() + ylab("") + xlab("") + theme(legend.position = "none")
+    if (any(grepl(pattern="abundance",nonzeroFeatureNames))){
+      p  = p+scale_x_log10() + xlab("Log10 scale")
     }
     print(p)
     dev.off()
@@ -636,7 +608,7 @@ addtlArgs = list(...)
   
   if ("stratifyingFeatures" %in% plotTypes){
     cat("Plotting Stratifying Features\n")
-    citrus.plotDifferentialFeatures(differentialFeatures=citrus.regressionResult$differentialFeatures,features=citrus.foldFeatureSet$allFeatures,modelOutputDirectory=modelOutputDirectory,labels=citrus.regressionResult$labels,family=citrus.regressionResult$family)
+    do.call(paste("citrus.plotModelDifferentialFeatures",citrus.regressionResult$family,sep="."),args=list(differentialFeatures=citrus.regressionResult$differentialFeatures,features=citrus.foldFeatureSet$allFeatures,modelOutputDirectory=modelOutputDirectory,labels=citrus.regressionResult$labels))    
   }
   
   if ("stratifyingClusters" %in% plotTypes){

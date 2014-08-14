@@ -12,7 +12,7 @@ citrus.endpointRegress(modelType, citrus.foldFeatureSet, labels, family, ...)
 
 \item{labels}{Vector of endpoint values for analyzed samples.}
 
-\item{family}{Family of model to fit. Valid options are: \code{classification}.}
+\item{family}{Family of model to fit. Valid options are \code{classification} and \code{quantitative}.}
 
 \item{...}{Other parameters passed to model-fitting methods.}
 }
