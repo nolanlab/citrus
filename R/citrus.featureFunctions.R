@@ -18,7 +18,7 @@
 #' 
 #' @return Matrix of cluster features
 #' 
-#' @seealso \code{citrus.calculateFeature.type}
+#' @seealso \link{citrus.calculateFeature.type}
 #' @author Robert Bruggner
 #' @export 
 #' 
@@ -132,12 +132,12 @@ citrus.calculateFeatures = function(citrus.combinedFCSSet,clusterAssignments,clu
 #' @param medianColumns Vector of parameter names or numeric indicies of parameters for which to calculate cluster median values for. 
 #' @param ... Other arguments (ignored).
 #' 
-#' @details See \code{citrus.calculateFeatures} for examples.
+#' @details See \link{citrus.calculateFeatures} for examples.
 #' 
 #' @author Robert Bruggner
 #' @export 
 #' 
-#' @seealso \code{citrus.calculateFeatures}, \code{citrus.calculateFoldFeatureSet}
+#' @seealso \link{citrus.calculateFeatures}, \link{citrus.calculateFoldFeatureSet}
 citrus.calculateFeature.abundances = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,fileIds=NULL,...){
   eventFileIds = citrus.combinedFCSSet$data[,"fileId"]
   if (is.null(fileIds)){
@@ -191,6 +191,32 @@ citrus.calculateFileClusterMedian = function(clusterId,fileId,medianColumn,data,
   }
   clusterFileDataValues = clusterData[clusterData[,"fileId"]==fileId,medianColumn]
   return(median(clusterFileDataValues))
+}
+
+# Relative Abundance Features
+#' @rdname citrus.calculateFeature.type
+#' @name citrus.calculateFeature.type
+#' @export
+citrus.calculateFeature.relativeAbundances = function(clusterIds,clusterAssignments,citrus.combinedFCSSet,fileIds=NULL,...){
+  eventFileIds = citrus.combinedFCSSet$data[,"fileId"]
+  if (is.null(fileIds)){
+    fileIds = unique(eventFileIds)
+  }
+  res = mcmapply(citrus.calculateFileClusterRelativeAbundance,
+                 clusterId=rep(clusterIds,length(fileIds)),
+                 fileId=rep(fileIds,each=length(clusterIds)),
+                 MoreArgs=list(
+                   clusterAssignments=clusterAssignments,
+                   eventFileIds=eventFileIds))
+  
+  relativeAbundances = matrix(res,ncol=length(clusterIds),byrow=T,dimnames=list(citrus.combinedFCSSet$fileNames[fileIds],paste("cluster",clusterIds,"relative abundance")))
+  relativeAbundances = apply(relativeAbundances,2,function(x){x/max(x)})
+  return(relativeAbundances)
+}
+
+citrus.calculateFileClusterRelativeAbundance = function(clusterId,fileId,clusterAssignments,eventFileIds,...){
+  expectedNumberOfEvents = length(clusterAssignments[[clusterId]])/length(unique(fileId))
+  return(sum(which(eventFileIds==fileId) %in% clusterAssignments[[clusterId]])/expectedNumberOfEvents)
 }
 
 

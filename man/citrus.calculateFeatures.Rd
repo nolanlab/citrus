@@ -97,6 +97,6 @@ medianDifferenceFeatures = citrus.calculateFeatures(citrus.combinedFCSSet,
 Robert Bruggner
 }
 \seealso{
-\code{citrus.calculateFeature.type}
+\link{citrus.calculateFeature.type}
 }
 

@@ -319,7 +319,7 @@ citrus.fileEventCount = function(dataDirectory,...){
 #' @author Robert Bruggner
 #' @export
 citrus.featureTypes = function(){
-  return(c("abundances","medians"))
+  return(c("abundances","relativeAbundances","medians"))
 }
 
 #' List possible model families 

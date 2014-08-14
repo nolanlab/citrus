@@ -2,6 +2,7 @@
 \name{citrus.calculateFeature.type}
 \alias{citrus.calculateFeature.abundances}
 \alias{citrus.calculateFeature.medians}
+\alias{citrus.calculateFeature.relativeAbundances}
 \alias{citrus.calculateFeature.type}
 \title{Calculate descriptive cluster features}
 \usage{
@@ -10,6 +11,9 @@ citrus.calculateFeature.abundances(clusterIds, clusterAssignments,
 
 citrus.calculateFeature.medians(clusterIds, clusterAssignments,
   citrus.combinedFCSSet, medianColumns, fileIds = NULL, ...)
+
+citrus.calculateFeature.relativeAbundances(clusterIds, clusterAssignments,
+  citrus.combinedFCSSet, fileIds = NULL, ...)
 }
 \arguments{
 \item{clusterIds}{Cluster IDs that descriptive features should be calculated for.}
