@@ -95,7 +95,7 @@ foldPredict.classification = function(index,models,features){
 }
 
 foldScore.classification = function(index,folds,predictions,labels){
-  return(predictions[[index]]==labels[folds[[index]]])
+  return(predictions[[index]]!=labels[folds[[index]]])
 }
 
 #' @rdname citrus.predict
@@ -142,23 +142,6 @@ citrus.generateRegularizationThresholds.classification = function(features,label
   
 }
 
-
-.calculatePredictionErrorRate = function(predictionSuccess,regularizationThresholds){
-  nFolds=length(predictionSuccess)
-  counter=1;
-  tmp=list()
-  for (i in 1:nFolds){
-    for (j in 1:nrow(predictionSuccess[[i]])){
-      tmp[[counter]] = predictionSuccess[[i]][j,]
-      length(tmp[[counter]])=length(regularizationThresholds)
-      counter=counter+1;
-    }
-  }
-  bound = do.call("rbind",tmp)
-  thresholdMeans= 1-apply(bound,2,mean,na.rm=T)
-  thresholdSEMs = apply(bound,2,sd,na.rm=T)/sqrt(apply(!is.na(bound),2,sum))
-  return(list(cvm=thresholdMeans,cvsd=thresholdSEMs))
-} 
 
 .calculateTypeFDRRate = function(foldModels,foldFeatures,labels,modelType){
   if (modelType=="pamr"){

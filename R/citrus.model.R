@@ -4,8 +4,8 @@
 #' @name citrus.buildEndpointModel
 #' @param features A numeric matrix of predictive features. Rows are observations and column entries are features. 
 #' @param labels A vector of endpoint values (i.e. class labels) for each row of the feature matrix. 
-#' @param family Family of endpoint model to be constructed. Valid values are \code{classification}. More to come...
-#' @param type Statistical model to be used. For \code{family="classification"}, options are \code{pamr} (Nearest Shrunken Centroid), \code{glmnet} (Lasso-regularized logistic regression), and \code{sam} (Non-parametric test in differences of means). 
+#' @param family Family of endpoint model to be constructed. Valid values are \code{classification} and \code{quantitative}. 
+#' @param type Statistical model to be used. For \code{family="classification"}, options are \code{pamr} (Nearest Shrunken Centroid), \code{glmnet} (Lasso-regularized logistic regression), and \code{sam} (Non-parametric test in differences of means). For \code{family="quantitative"}, options are \code{glmnet} (L1-regularized linear regression), and \code{sam}. 
 #' @param regularizationThresholds Vector of regularization values for penalized model construction. If \code{NULL}, values are automatically generated. Not valid for \code{sam} models.
 #' @param ... Other parameters passed to model-fitting procedures. 
 #' 
@@ -68,7 +68,7 @@ print.citrus.endpointModel = function(citrus.endpointModel,...){
 #' @param features Features used to construct model
 #' @param labels Endpoint lables for samples and features
 #' @param modelType Method used to construct endpoint model. Valid options are: \code{pamr} and \code{glmnet}.
-#' @param family Model family. Valid options are: \code{classification}.
+#' @param family Model family. Valid options are: \code{classification} and \code{quantitative}.
 #' @param n Number of regularization thresholds to generate
 #' @param ... Other arguments passed to model-fitting methods
 #' 
@@ -118,7 +118,7 @@ citrus.generateRegularizationThresholds = function(features,labels,modelType,fam
 #' @param features Features calculated from a clustering of all samples.
 #' @param labels Endpoint labels of clustered samples.
 #' @param regularizationThresholds Thresholds for model regularization.
-#' @param family Model family. Valid options are: \code{classification}.
+#' @param family Model family. Valid options are \code{classification} and \code{quantitative}.
 #' @param folds List of fold indices
 #' @param foldModels Models constructed from each fold of features.
 #' @param leftoutFeatures Features calculated for leftout samples mapped to clustered data space.
@@ -209,8 +209,8 @@ citrus.thresholdCVs = function(modelType,foldFeatures,labels,regularizationThres
   }
   #do.call(paste0("citrus.thresholdCVs.",family),args=list(modelType=modelType,foldFeatures=foldFeatures,labels=labels,regularizationThresholds=regularizationThresholds,folds=folds,foldModels=foldModels,leftoutFeatures=leftoutFeatures,...=...))
   leftoutPredictions = lapply(1:length(leftoutFeatures),paste0("foldPredict.",family),models=foldModels,features=leftoutFeatures)
-  predictionSuccess = lapply(1:length(leftoutPredictions),paste0("foldScore.",family),folds=folds,predictions=leftoutPredictions,labels=labels)
-  thresholdErrorRates = .calculatePredictionErrorRate(predictionSuccess=predictionSuccess,regularizationThresholds=regularizationThresholds)
+  predictionScore = lapply(1:length(leftoutPredictions),paste0("foldScore.",family),folds=folds,predictions=leftoutPredictions,labels=labels)
+  thresholdErrorRates = calculatePredictionErrorRate(predictionScore,regularizationThresholds,family)
   thresholdFDRRates = .calculateTypeFDRRate(foldModels=foldModels,foldFeatures=foldFeatures,labels=labels,modelType=modelType)  
   results = data.frame(threshold=regularizationThresholds,cvm=thresholdErrorRates$cvm,cvsd=thresholdErrorRates$cvsd);
   if (!is.null(thresholdFDRRates)){
@@ -290,7 +290,7 @@ citrus.predict = function(citrus.endpointModel,newFeatures){
 #' @param citrus.foldFeatureSet. A \code{citrus.foldFeatureSet} object.
 #' @param labels Endpoint labels for samples. 
 #' @param regularizationThresholds Regularization thresholds for penalized models. 
-#' @param family Family of model to be constructed. Valid options are \code{classification}. More to come.
+#' @param family Family of model to be constructed. Valid options are \code{classification} and \code{quantitative}.
 #' @param ... Other arguments passed to model-fitting functions.
 #' 
 #' @return A list of models, one model fit on each fold's feature set. 
@@ -356,7 +356,7 @@ citrus.buildFoldEndpointModel = function(foldIndex,folds,foldFeatures,labels,fam
 #' @param modelType Method to be used for model-fitting. Valid options are: \code{glmnet},\code{pamr}, and \code{sam}.
 #' @param citrus.foldFeatureSet A \code{citrus.foldFeatureSet} object.
 #' @param labels Vector of endpoint values for analyzed samples.
-#' @param family Family of model to fit. Valid options are: \code{classification}.
+#' @param family Family of model to fit. Valid options are \code{classification} and \code{quantitative}.
 #' @param ... Other parameters passed to model-fitting methods.
 #' 
 #' @details If independent clusterings are run (i.e. \code{citrus.clusterAndMapFolds} is run with \code{nFolds > 1}), model are fit on each 
@@ -640,3 +640,21 @@ citrus.extractModelFeatures = function(cvMinima,finalModel,finalFeatures){
   }
   return(res)
 }
+
+calculatePredictionErrorRate = function(predictionScore,regularizationThresholds,family){
+  nFolds=length(predictionScore)
+  counter=1;
+  tmp=list()
+  for (i in 1:nFolds){
+    for (j in 1:nrow(predictionScore[[i]])){
+      tmp[[counter]] = predictionScore[[i]][j,]
+      length(tmp[[counter]])=length(regularizationThresholds)
+      counter=counter+1;
+    }
+  }
+  bound = do.call("rbind",tmp)
+  thresholdMeans = apply(bound,2,mean,na.rm=T)
+  
+  thresholdSEMs = apply(bound,2,sd,na.rm=T)/sqrt(apply(!is.na(bound),2,sum))
+  return(list(cvm=thresholdMeans,cvsd=thresholdSEMs))
+} 
