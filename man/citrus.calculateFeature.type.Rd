@@ -33,12 +33,12 @@ features for all samples in \code{citrus.combinedFCSSet}.}
 Calculate descriptive cluster features.
 }
 \details{
-See \code{citrus.calculateFeatures} for examples.
+See \link{citrus.calculateFeatures} for examples.
 }
 \author{
 Robert Bruggner
 }
 \seealso{
-\code{citrus.calculateFeatures}, \code{citrus.calculateFoldFeatureSet}
+\link{citrus.calculateFeatures}, \link{citrus.calculateFoldFeatureSet}
 }
 
