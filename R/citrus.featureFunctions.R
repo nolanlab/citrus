@@ -210,12 +210,12 @@ citrus.calculateFeature.relativeAbundances = function(clusterIds,clusterAssignme
                    eventFileIds=eventFileIds))
   
   relativeAbundances = matrix(res,ncol=length(clusterIds),byrow=T,dimnames=list(citrus.combinedFCSSet$fileNames[fileIds],paste("cluster",clusterIds,"relative abundance")))
-  relativeAbundances = apply(relativeAbundances,2,function(x){x/max(x)})
+  #relativeAbundances = apply(relativeAbundances,2,function(x){x/max(x)})
   return(relativeAbundances)
 }
 
 citrus.calculateFileClusterRelativeAbundance = function(clusterId,fileId,clusterAssignments,eventFileIds,...){
-  expectedNumberOfEvents = length(clusterAssignments[[clusterId]])/length(unique(fileId))
+  expectedNumberOfEvents = length(clusterAssignments[[clusterId]])/length(unique(eventFileIds))
   return(sum(which(eventFileIds==fileId) %in% clusterAssignments[[clusterId]])/expectedNumberOfEvents)
 }
 
