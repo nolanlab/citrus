@@ -5,7 +5,7 @@
 \usage{
 citrus.plotClusteringHierarchy(outputFile, clusterColors, graph, layout,
   theme = "black", plotSize = 15, singlePDF = F, ncol = 3, scale = 1,
-  plotClusterIDs = T)
+  plotClusterIDs = T, legendScale = "local", ...)
 }
 \arguments{
 \item{outputFile}{Full path to output file (should have '.pdf' extension)}
@@ -27,6 +27,10 @@ citrus.plotClusteringHierarchy(outputFile, clusterColors, graph, layout,
 \item{scale}{Scale up the size of the single PDF plot.}
 
 \item{plotClusterIDs}{Plot cluster IDs on vertices?}
+
+\item{legendScale}{Should plot legend be scaled to all features or just the feature being plotted. Options are \code{local} (Default) and \code{global}.}
+
+\item{...}{Other undocumented features.}
 }
 \description{
 Plots clustering hierarchy in graph form

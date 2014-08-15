@@ -54,7 +54,7 @@ citrus.foldFeatureSet = citrus.calculateFoldFeatureSet(citrus.foldClustering,cit
 citrus.regressionResult = citrus.endpointRegress(modelType="pamr",citrus.foldFeatureSet,labels,family="classification")
 
 # Plot results
-# plot(citrus.regressionResult,outputDirectory,"/path/to/output/directory/",citrus.foldClustering,citrus.foldFeatureSet,citrus.combinedFCSSet)
+# plot(citrus.regressionResult,outputDirectory="/path/to/output/directory/",citrus.foldClustering,citrus.foldFeatureSet,citrus.combinedFCSSet)
 }
 \author{
 Robert Bruggner
