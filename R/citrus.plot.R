@@ -344,8 +344,10 @@ citrus.createHierarchyGraph = function(citrus.clustering,selectedClusters){
 #' @param singlePDF Plot graphs for all variables in \code{clusterColors} in a single PDF?
 #' @param ncol Number of columns if plotting all graphs in single PDF.
 #' @param scale Scale up the size of the single PDF plot. 
-#' @param plotClusterIDs Plot cluster IDs on vertices? 
-#' 
+#' @param plotClusterIDs Plot cluster IDs on vertices?
+#' @param legendScale Should plot legend be scaled to all features or just the feature being plotted. Options are \code{local} (Default) and \code{global}.
+#' @param ... Other undocumented features.
+#'  
 #' @author Robert Bruggner
 #' @export
 #' 
@@ -386,7 +388,9 @@ citrus.createHierarchyGraph = function(citrus.clustering,selectedClusters){
 #' 
 #' # Plot Clustering Hierarchy - Uncomment and Specify an output file
 #' # citrus.plotClusteringHierarchy(outputFile="/path/to/output.pdf",clusterColors=clusterMedians,graph=hierarchyGraph$graph,layout=hierarchyGraph$layout,plotSize=hierarchyGraph$plotSize)
-citrus.plotClusteringHierarchy = function(outputFile,clusterColors,graph,layout,theme="black",plotSize=15,singlePDF=F,ncol=3,scale=1,plotClusterIDs=T){
+citrus.plotClusteringHierarchy = function(outputFile,clusterColors,graph,layout,theme="black",plotSize=15,singlePDF=F,ncol=3,scale=1,plotClusterIDs=T,legendScale="local",...){
+  addtlArgs = list(...)
+  
   if (theme=="black"){
     bg="black"
     stroke="white"
@@ -398,6 +402,12 @@ citrus.plotClusteringHierarchy = function(outputFile,clusterColors,graph,layout,
   } else {
     stop("Unrecognized theme option. Choices are 'white' or 'black'")
   }
+  
+  colorPaletteFunction = .graphColorPalette
+  if ("colorPaletteFunction" %in% names(addtlArgs)){
+    colorPaletteFunction = addtlArgs[["colorPaletteFunction"]]
+  }
+  
   if (plotClusterIDs){
     vc="white"
   } else {
@@ -413,14 +423,23 @@ citrus.plotClusteringHierarchy = function(outputFile,clusterColors,graph,layout,
     
   }
   
+  if ("legendRange" %in% names(addtlArgs)){
+    legendRange = addtlArgs[["legendRange"]]
+  } else if (legendScale=="global"){
+    legendRange = c((min(clusterColors)-0.01),(max(clusterColors)+0.01))  
+  }
+
   for (target in 1:ncol(clusterColors)){
-    ct = seq(from=(min(clusterColors[,target])-0.01),to=(max(clusterColors[,target])+0.01),length.out=20)
-    cols = .graphColorPalette(20)[sapply(clusterColors[,target],findInterval,vec=ct)]
+    if (legendScale=="local"){
+      legendRange = c((min(clusterColors[,target])-0.01),(max(clusterColors[,target])+0.01))  
+    }
+    ct = seq(from=legendRange[1],to=legendRange[2],length.out=20)
+    cols = colorPaletteFunction(20)[sapply(clusterColors[,target],findInterval,vec=ct)]
     par(col.main=stroke)  
     plot.igraph(graph,layout=layout,vertex.color=cols,main=colnames(clusterColors)[target],edge.color=stroke,vertex.label.color=vc,edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica")
         
     # Legend
-    legend_image <- as.raster(matrix(rev(.graphColorPalette(20)), ncol=1))
+    legend_image <- as.raster(matrix(rev(colorPaletteFunction(20)), ncol=1))
     rasterImage(legend_image, 1.1, -.5, 1.15,.5)
     text(x=1.15, y = seq(-.5,.5,l=5), labels = .decimalFormat(ct[c(1,floor((length(ct)/4)*1:4))]) ,pos=4,col=stroke)
   }
