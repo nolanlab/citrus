@@ -472,30 +472,69 @@ citrus.exportClusterUI = function(){
   sapply(exportClusterIds,citrus.exportCluster,citrus.clustering=citrus.foldClustering$allClustering,citrus.combinedFCSSet=citrus.combinedFCSSet,outputDirectory=exportDir)
 }
 
-#citrus.exportConditionClusters = function(conditionClusterIds,preclusterResult,outputDir,sampleIds=NULL){
-#  for (conditionName in names(conditionClusterIds)){
-#    for (clusterId in conditionClusterIds[[conditionName]]){
-#      nFolds = length(preclusterResult[[conditionName]]$foldsCluster)
-#      outputFile = file.path(outputDir,paste0(conditionName,"-cluster_",clusterId,".fcs"))
-#      citrus.exportCluster(clusterId,
-#                           data=preclusterResult[[conditionName]]$citrus.dataArray$data,
-#                           clusterAssignments=preclusterResult[[conditionName]]$foldsClusterAssignments[[nFolds]],
-#                           outputFile=outputFile,
-#                           sampleIds=sampleIds)
-#    }
-#  }
-#}
+#' Graphical Interface to checking file parameter consistency.
+#' 
+#' Graphical Interface to checking file parameter consistency.
+#' 
+#' @details When running \code{citrus.checkFileParameterConsistencyUI()}, the user will first be prompted to select a file.
+#' The user should then select a single FCS file from the directory where all FCS files reside. Citrus will then check the 
+#' consistency of parameter names and counts for all FCS files in that directory.
+#' 
+#' @author Robert Bruggner
+#' @export
+citrus.checkFileParameterConsistencyUI = function(){
+  fcsFilePath = file.choose()  
+  dataDirectory = dirname(fcsFilePath)
+  citrus.checkFileParameterConsistency(dataDirectory)
+}
 
-
-
-#citrus.exportCluster = function(clusterId,data,clusterAssignments,outputFile,sampleIds=NULL){
-#  clusterData = data[clusterAssignments[[clusterId]],]
-#  if (!is.null(sampleIds)){
-#    clusterData = clusterData[clusterData[,"fileId"]%in%sampleIds,]
-#  }
-#  if (nrow(clusterData)==0){
-#    warning(paste("No data for cluster ",clusterId,"in selected files. Not writing to disk."))
-#  } else {
-#    write.FCS(x=flowFrame(exprs=clusterData),filename=outputFile)  
-# } 
-#}
+#' Checks consistency of FCS File parameters.
+#' 
+#' Checks consistency of FCS File parameter names. Will report if FCS files have differing numbers of
+#' parameters or parameters have different names.
+#' 
+#' @param dataDirectory Full path to directory where FCS files are. 
+#' 
+#' @return Returns \code{0} if file parameters are consistent, \code{-1} otherwise.
+#' @author Robert Bruggner
+#' @export
+#' 
+#' @examples
+#' # Where the data lives
+#' dataDirectory = file.path(system.file(package = "citrus"),"extdata","example1")
+#' 
+#' # Check parameter consistency. 
+#'  citrus.checkFileParameterConsistency(dataDirectory)
+citrus.checkFileParameterConsistency = function(dataDirectory){
+  
+  #Get list of files in data directory
+  fcsFiles = list.files(dataDirectory,pattern=".FCS",ignore.case = T)
+  fileParameters = lapply(fcsFiles,citrus.getFileParameters,dataDirectory)
+  names(fileParameters)=fcsFiles
+  fileParameters 
+  
+  # Check for unequal numbers of parameters in files 
+  if (length(unique(sapply(fileParameters,length)))>1){
+    print("One or more FCS files has a different number of channels. Please fix before proceeding.")
+    print("Number of parameters per file:")
+    print(sapply(fileParameters,length))
+    return(-1)
+  }
+  
+  # Check for unlike names in fcs parameters names
+  if (any(sapply(apply(do.call("rbind",fileParameters),2,unique),length)>1)){
+    print("One or more FCS files has different channel names. Please fix before proceeding.")
+    
+    problemChannels = which(sapply(apply(do.call("rbind",fileParameters),2,unique),length)>1)
+    for (problemChannel in names(problemChannels)){
+      print(paste0("Channel Name: ",problemChannel))
+      print( 
+        paste0("Unique Names: ",paste(apply(do.call("rbind",fileParameters),2,unique)[[problemChannel]],collapse=", "))
+      )
+    }
+    return(-1)
+  }
+  
+  print("FCS File parameters consistent.")
+  return(0)
+}
