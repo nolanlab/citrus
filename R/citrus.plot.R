@@ -364,7 +364,7 @@ citrus.createHierarchyGraph = function(citrus.clustering,selectedClusters){
 #' Plots clustering hierarchy in graph form
 #' 
 #' @param outputFile Full path to output file (should have '.pdf' extension)
-#' @param clusterColors Numeric matrix of values to colors clusters by. See \code{details}.
+#' @param clusterColors Numeric or Character matrix of values to colors clusters by. See \code{details}.
 #' @param graph Graph object to be plotted
 #' @param layout Layout for graph
 #' @param theme General color theme for plot. Options are \code{'black'} and \code{'white'}.
@@ -382,7 +382,9 @@ citrus.createHierarchyGraph = function(citrus.clustering,selectedClusters){
 #' @details The \code{clusterCols} argument enables multiple plots of the clustering hierarchy to be made, each colored 
 #' by a different variable. \code{clusterCols} should be a numeric matrix with each cluster being plotted represented 
 #' in a different row and each variable to be plotted represented in a different column. Row and column names should be 
-#' cluster IDs and variable names respectively. 
+#' cluster IDs and variable names respectively. If \code{clusterCols} is numeric, a color scale is generated across the
+#' range of matrix values. Alternatively \code{clusterCols} can be a matrix of color names that are directly used to color
+#' vertices.  
 #' 
 #' @examples
 #' ############
@@ -442,15 +444,21 @@ citrus.plotClusteringHierarchy = function(outputFile,clusterColors,graph,layout,
   }
   
   for (target in 1:ncol(clusterColors)){
-    ct = seq(from=(min(clusterColors[,target])-0.01),to=(max(clusterColors[,target])+0.01),length.out=20)
-    cols = .graphColorPalette(20)[sapply(clusterColors[,target],findInterval,vec=ct)]
+    if (is.numeric(clusterColors)){
+      ct = seq(from=(min(clusterColors[,target])-0.01),to=(max(clusterColors[,target])+0.01),length.out=20)
+      cols = .graphColorPalette(20)[sapply(clusterColors[,target],findInterval,vec=ct)]  
+    } else {
+      cols = clusterColors[,target]
+    }
     par(col.main=stroke)  
     plot.igraph(graph,layout=layout,vertex.color=cols,main=colnames(clusterColors)[target],edge.color=stroke,vertex.label.color=vc,edge.arrow.size=.2,vertex.frame.color=strokea,vertex.label.cex=.7,vertex.label.family="Helvetica")
         
     # Legend
-    legend_image <- as.raster(matrix(rev(.graphColorPalette(20)), ncol=1))
-    rasterImage(legend_image, 1.1, -.5, 1.15,.5)
-    text(x=1.15, y = seq(-.5,.5,l=5), labels = .decimalFormat(ct[c(1,floor((length(ct)/4)*1:4))]) ,pos=4,col=stroke)
+    if(is.numeric(clusterColors)){
+      legend_image <- as.raster(matrix(rev(.graphColorPalette(20)), ncol=1))
+      rasterImage(legend_image, 1.1, -.5, 1.15,.5)
+      text(x=1.15, y = seq(-.5,.5,l=5), labels = .decimalFormat(ct[c(1,floor((length(ct)/4)*1:4))]) ,pos=4,col=stroke)  
+    }
   }
   dev.off()  
 }

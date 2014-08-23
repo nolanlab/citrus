@@ -10,7 +10,7 @@ citrus.plotClusteringHierarchy(outputFile, clusterColors, graph, layout,
 \arguments{
 \item{outputFile}{Full path to output file (should have '.pdf' extension)}
 
-\item{clusterColors}{Numeric matrix of values to colors clusters by. See \code{details}.}
+\item{clusterColors}{Numeric or Character matrix of values to colors clusters by. See \code{details}.}
 
 \item{graph}{Graph object to be plotted}
 
@@ -35,7 +35,9 @@ Plots clustering hierarchy in graph form
 The \code{clusterCols} argument enables multiple plots of the clustering hierarchy to be made, each colored
 by a different variable. \code{clusterCols} should be a numeric matrix with each cluster being plotted represented
 in a different row and each variable to be plotted represented in a different column. Row and column names should be
-cluster IDs and variable names respectively.
+cluster IDs and variable names respectively. If \code{clusterCols} is numeric, a color scale is generated across the
+range of matrix values. Alternatively \code{clusterCols} can be a matrix of color names that are directly used to color
+vertices.
 }
 \examples{
 ############
