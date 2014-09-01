@@ -111,7 +111,7 @@ plot(results,outputDirectory)
 # Build cluster features
 # citrus.foldFeatureSet = citrus.calculateFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet,
 #                                                         featureType=featureType,
-#                                                         minmumClusterSizePercent=minimumClusterSizePercent,
+#                                                         minimumClusterSizePercent=minimumClusterSizePercent,
 #                                                         conditions=conditions<% if ("medianColumns" %in% names(templateData)){cat(",\n#                                                         medianColumns=medianColumns")} %>
 #                                                         )
 
