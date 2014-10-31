@@ -155,6 +155,7 @@ shinyServer(function(input, output) {
     if ((length(names(selectedFiles))<2)||(!all(unlist(lapply(selectedFiles,length))>1))){
       return(tagList(tags$b("Assign samples to groups to enable specification of cross-validation folds")))
     } else {
+      print(paste("FILES:",nFiles))
       return(tagList(numericInput(inputId="crossValidationFolds",label="Cross Validation Folds",value=1,min=1,max=nFiles)))
     }
   })
