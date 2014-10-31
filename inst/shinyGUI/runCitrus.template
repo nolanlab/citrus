@@ -11,7 +11,7 @@ library("citrus",lib.loc=<% if (is.null(templateData[["library"]])){
 
 # Use this line to limit the number of threads used by clustering
 <%if (!templateData[["coreLimit"]]){cat("# ")}%>Rclusterpp.setThreads(<%cat(templateData[["analysisCores"]])%>);
-<%if (!templateData[["coreLimit"]]){cat("# ")}%>options("mc.cores"=<%cat(templateData[["analysisCores"]])%>);
+options("mc.cores"=1);
 
 family = "classification"
 
@@ -111,7 +111,7 @@ plot(results,outputDirectory)
 # Build cluster features
 # citrus.foldFeatureSet = citrus.calculateFoldFeatureSet(citrus.foldClustering,citrus.combinedFCSSet,
 #                                                         featureType=featureType,
-#                                                         minmumClusterSizePercent=minimumClusterSizePercent,
+#                                                         minimumClusterSizePercent=minimumClusterSizePercent,
 #                                                         conditions=conditions<% if ("medianColumns" %in% names(templateData)){cat(",\n#                                                         medianColumns=medianColumns")} %>
 #                                                         )
 
