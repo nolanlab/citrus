@@ -9,7 +9,7 @@
 #' @param clusteringColumns A vector containing the names or indices of parameters to be used for clustering.
 #' @param dataDirectory The full path to the directory containing FCS files.
 #' @param outputDirectory The full path to directory analysis output should be placed in. If not \code{NULL}, clustering is saved.
-#' @param family Type of association model to be calculated. Valid values are currently \code{classification}.
+#' @param family Type of association model to be calculated. Valid values are currently \code{classification} and \code{continuous}.
 #' @param modelTypes Vector of model types to be used to detect associations with experimental endpoint. Valid values are \code{glmnet}, \code{pamr}, and \code{sam}.
 #' @param nFolds Number of independent clustering folds to be used for model fitting. Should only be >1 if using \code{glmnet} or \code{pamr} models. Default value is 1 and all samples are clustered together.
 #' @param conditionComparaMatrix matrix of condition data to compare. See details.

@@ -1,7 +1,7 @@
 #' @rdname citrus.buildEndpointModel
 #' @name citrus.buildEndpointModel
 #' @export
-citrus.buildModel.quantitative = function(features,labels,type,regularizationThresholds,...){
+citrus.buildModel.continuous = function(features,labels,type,regularizationThresholds,...){
   
   addtlArgs = list(...)
   alpha=1
@@ -25,7 +25,7 @@ citrus.buildModel.quantitative = function(features,labels,type,regularizationThr
     noVarianceFeatures = apply(features,2,var)==0
     model = SAM(x=t(features[,!noVarianceFeatures]),y=labels,resp.type="Quantitative",genenames=colnames(features[,!noVarianceFeatures]),nperms=10000)
   } else {
-    stop(paste("Type:",type,"not implemented for quantitative model"));
+    stop(paste("Type:",type,"not implemented for continuous model"));
   }
   return(model)
 }
@@ -33,7 +33,7 @@ citrus.buildModel.quantitative = function(features,labels,type,regularizationThr
 #' @rdname citrus.thresholdCVs
 #' @name citrus.thresholdCVs
 #' @export
-citrus.thresholdCVs.quick.quantitative = function(modelType,features,labels,regularizationThresholds,nCVFolds=10,...){
+citrus.thresholdCVs.quick.continuous = function(modelType,features,labels,regularizationThresholds,nCVFolds=10,...){
   
   errorRates = list()
   errorRates$threshold=regularizationThresholds
@@ -61,11 +61,11 @@ citrus.thresholdCVs.quick.quantitative = function(modelType,features,labels,regu
   return(data.frame(errorRates))
 }
 
-foldPredict.quantitative = function(index,models,features){
-  citrus.predict.quantitative(models[[index]],features[[index]])
+foldPredict.continuous = function(index,models,features){
+  citrus.predict.continuous(models[[index]],features[[index]])
 }
 
-foldScore.quantitative = function(index,folds,predictions,labels){
+foldScore.continuous = function(index,folds,predictions,labels){
   squaredDifference = (predictions[[index]]-labels[folds[[index]]])^2
   return(squaredDifference)
 }
@@ -73,7 +73,7 @@ foldScore.quantitative = function(index,folds,predictions,labels){
 #' @rdname citrus.predict
 #' @name citrus.predict
 #' @export
-citrus.predict.quantitative = function(citrus.endpointModel,newFeatures){
+citrus.predict.continuous = function(citrus.endpointModel,newFeatures){
   if (citrus.endpointModel$type=="glmnet"){
     predictions = predict(citrus.endpointModel$model,newx=newFeatures,type="response")
   } else {
@@ -86,7 +86,7 @@ citrus.predict.quantitative = function(citrus.endpointModel,newFeatures){
 #' @rdname citrus.generateRegularizationThresholds
 #' @name citrus.generateRegularizationThresholds
 #' @export
-citrus.generateRegularizationThresholds.quantitative = function(features,labels,modelType,n=100,...){
+citrus.generateRegularizationThresholds.continuous = function(features,labels,modelType,n=100,...){
   addtlArgs = list(...)
   alpha=1
   if ("alpha" %in% names(addtlArgs)){

@@ -2,33 +2,33 @@
 \name{citrus.buildEndpointModel}
 \alias{citrus.buildEndpointModel}
 \alias{citrus.buildModel.classification}
-\alias{citrus.buildModel.quantitative}
+\alias{citrus.buildModel.continuous}
 \alias{print.citrus.endpointModel}
 \title{Build an endpoint model}
 \usage{
 citrus.buildModel.classification(features, labels, type,
   regularizationThresholds, ...)
 
+citrus.buildModel.continuous(features, labels, type, regularizationThresholds,
+  ...)
+
 citrus.buildEndpointModel(features, labels, family = "classification",
   type = "pamr", regularizationThresholds = NULL, ...)
 
 print.citrus.endpointModel(citrus.endpointModel, ...)
-
-citrus.buildModel.quantitative(features, labels, type, regularizationThresholds,
-  ...)
 }
 \arguments{
 \item{features}{A numeric matrix of predictive features. Rows are observations and column entries are features.}
 
 \item{labels}{A vector of endpoint values (i.e. class labels) for each row of the feature matrix.}
 
-\item{type}{Statistical model to be used. For \code{family="classification"}, options are \code{pamr} (Nearest Shrunken Centroid), \code{glmnet} (Lasso-regularized logistic regression), and \code{sam} (Non-parametric test in differences of means). For \code{family="quantitative"}, options are \code{glmnet} (L1-regularized linear regression), and \code{sam}.}
+\item{type}{Statistical model to be used. For \code{family="classification"}, options are \code{pamr} (Nearest Shrunken Centroid), \code{glmnet} (Lasso-regularized logistic regression), and \code{sam} (Non-parametric test in differences of means). For \code{family="continuous"}, options are \code{glmnet} (L1-regularized linear regression), and \code{sam}.}
 
 \item{regularizationThresholds}{Vector of regularization values for penalized model construction. If \code{NULL}, values are automatically generated. Not valid for \code{sam} models.}
 
 \item{...}{Other parameters passed to model-fitting procedures.}
 
-\item{family}{Family of endpoint model to be constructed. Valid values are \code{classification} and \code{quantitative}.}
+\item{family}{Family of endpoint model to be constructed. Valid values are \code{classification} and \code{continuous}.}
 }
 \value{
 An object of class \code{citrus.endpointModel} with properties:

@@ -2,17 +2,17 @@
 \name{citrus.generateRegularizationThresholds}
 \alias{citrus.generateRegularizationThresholds}
 \alias{citrus.generateRegularizationThresholds.classification}
-\alias{citrus.generateRegularizationThresholds.quantitative}
+\alias{citrus.generateRegularizationThresholds.continuous}
 \title{Generate model regularization thresholds}
 \usage{
 citrus.generateRegularizationThresholds.classification(features, labels,
   modelType, n = 100, ...)
 
-citrus.generateRegularizationThresholds(features, labels, modelType, family,
+citrus.generateRegularizationThresholds.continuous(features, labels, modelType,
   n = 100, ...)
 
-citrus.generateRegularizationThresholds.quantitative(features, labels,
-  modelType, n = 100, ...)
+citrus.generateRegularizationThresholds(features, labels, modelType, family,
+  n = 100, ...)
 }
 \arguments{
 \item{features}{Features used to construct model}
@@ -25,7 +25,7 @@ citrus.generateRegularizationThresholds.quantitative(features, labels,
 
 \item{...}{Other arguments passed to model-fitting methods}
 
-\item{family}{Model family. Valid options are: \code{classification} and \code{quantitative}.}
+\item{family}{Model family. Valid options are: \code{classification} and \code{continuous}.}
 }
 \value{
 A vector of regularization threshold values.

@@ -52,7 +52,7 @@ citrus.plotTypeErrorRate = function(modelType,modelOutputDirectory,regularizatio
     thresholds=regularizationThresholds
     errorRates=thresholdCVRates[,"cvm"]
     ylim=c(0,1)
-    if (family=="quantitative"){
+    if (family=="continuous"){
       ylim=c(min(thresholdCVRates[,"cvm"]-thresholdCVRates[,"cvsd"])*.9,max(thresholdCVRates[,"cvm"]+thresholdCVRates[,"cvsd"])*1.1)
     }
     ylab="Model Cross Validation Error Rate"
@@ -149,7 +149,7 @@ citrus.plotModelDifferentialFeatures.classification = function(differentialFeatu
   
 }
 
-citrus.plotModelDifferentialFeatures.quantitative = function(differentialFeatures,features,modelOutputDirectory,labels,...){
+citrus.plotModelDifferentialFeatures.continuous = function(differentialFeatures,features,modelOutputDirectory,labels,...){
   for (cvPoint in names(differentialFeatures)){
     nonzeroFeatureNames = differentialFeatures[[cvPoint]][["features"]]
     

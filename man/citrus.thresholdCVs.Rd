@@ -3,10 +3,13 @@
 \alias{citrus.thresholdCVs}
 \alias{citrus.thresholdCVs.quick}
 \alias{citrus.thresholdCVs.quick.classification}
-\alias{citrus.thresholdCVs.quick.quantitative}
+\alias{citrus.thresholdCVs.quick.continuous}
 \title{Calculate model error rates}
 \usage{
 citrus.thresholdCVs.quick.classification(modelType, features, labels,
+  regularizationThresholds, nCVFolds = 10, ...)
+
+citrus.thresholdCVs.quick.continuous(modelType, features, labels,
   regularizationThresholds, nCVFolds = 10, ...)
 
 citrus.thresholdCVs(modelType, foldFeatures, labels, regularizationThresholds,
@@ -14,9 +17,6 @@ citrus.thresholdCVs(modelType, foldFeatures, labels, regularizationThresholds,
 
 citrus.thresholdCVs.quick(modelType, features, labels, regularizationThresholds,
   family, nCVFolds = 10, ...)
-
-citrus.thresholdCVs.quick.quantitative(modelType, features, labels,
-  regularizationThresholds, nCVFolds = 10, ...)
 }
 \arguments{
 \item{modelType}{Type of model to be constructed. Valid options are: \code{pamr} and \code{glmnet}.}
@@ -33,7 +33,7 @@ citrus.thresholdCVs.quick.quantitative(modelType, features, labels,
 
 \item{foldFeatures}{List of features with each entry containing features from an independent clustering.}
 
-\item{family}{Model family. Valid options are \code{classification} and \code{quantitative}.}
+\item{family}{Model family. Valid options are \code{classification} and \code{continuous}.}
 
 \item{folds}{List of fold indices}
 

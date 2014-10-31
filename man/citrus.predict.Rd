@@ -2,14 +2,14 @@
 \name{citrus.predict}
 \alias{citrus.predict}
 \alias{citrus.predict.classification}
-\alias{citrus.predict.quantitative}
+\alias{citrus.predict.continuous}
 \title{Predict labels of new feature set}
 \usage{
 citrus.predict.classification(citrus.endpointModel, newFeatures)
 
-citrus.predict(citrus.endpointModel, newFeatures)
+citrus.predict.continuous(citrus.endpointModel, newFeatures)
 
-citrus.predict.quantitative(citrus.endpointModel, newFeatures)
+citrus.predict(citrus.endpointModel, newFeatures)
 }
 \arguments{
 \item{citrus.endpointModel}{A \code{citrus.endpointModel} object.}

@@ -22,7 +22,7 @@ print.citrus.full.result(citrus.full.result, ...)
 
 \item{outputDirectory}{The full path to directory analysis output should be placed in. If not \code{NULL}, clustering is saved.}
 
-\item{family}{Type of association model to be calculated. Valid values are currently \code{classification}.}
+\item{family}{Type of association model to be calculated. Valid values are currently \code{classification} and \code{continuous}.}
 
 \item{modelTypes}{Vector of model types to be used to detect associations with experimental endpoint. Valid values are \code{glmnet}, \code{pamr}, and \code{sam}.}
 
