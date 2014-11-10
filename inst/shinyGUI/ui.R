@@ -87,7 +87,7 @@ shinyUI(pageWithSidebar(
                 uiOutput("medianCols")
                ),
       
-      tabPanel("Regression Model Configuration",
+      tabPanel("Association Model Configuration",
                uiOutput("crossValidationRange"),
                tags$hr(),
                uiOutput("classificationModels")
