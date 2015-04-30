@@ -154,8 +154,11 @@ citrus.calculateFeature.abundances = function(clusterIds,clusterAssignments,citr
   )
 }
 
+
 citrus.calculateFileClusterAbundance = function(clusterId,fileId,clusterAssignments,eventFileIds,...){
-  sum(which(eventFileIds==fileId) %in% clusterAssignments[[clusterId]])/sum((eventFileIds==fileId))
+  res = sum(which(eventFileIds==fileId) %in% clusterAssignments[[clusterId]])/sum((eventFileIds==fileId))
+  # Multiply by 100 so on a scale from 0-100 instead of 0-1.
+  res*100
 }
 
 # Median Features
