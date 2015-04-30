@@ -160,9 +160,9 @@ citrus.plotModelDifferentialFeatures.continuous = function(differentialFeatures,
     
     pdf(file.path(modelOutputDirectory,paste("features-",sub(pattern="\\.",replacement="_",x=cvPoint),".pdf",sep="")),width=4,height=length(nonzeroFeatureNames)*1.5)
     p <- ggplot(melted, aes(x=value, y=labels)) 
-    p = p + facet_wrap(~variable,ncol=1) + geom_point(size=I(2)) + theme_bw() + ylab("") + xlab("") + theme(legend.position = "none")
+    p = p + facet_wrap(~variable,ncol=1) + geom_point(size=I(2)) + theme_bw() + ylab("Endpoint") + xlab("") + theme(legend.position = "none")
     if (any(grepl(pattern="abundance",nonzeroFeatureNames))){
-      p  = p+scale_x_log10() + xlab("Log10 scale")
+      p  = p+scale_x_log10() + xlab("Percent Abundance, Log10 scale")
     }
     print(p)
     dev.off()
