@@ -594,7 +594,8 @@ citrus.plotHierarchicalClusterFeatureGroups = function(outputFile,featureCluster
 #' # Plot results
 #' # plot(citrus.regressionResult,outputDirectory,"/path/to/output/directory/",citrus.foldClustering,citrus.foldFeatureSet,citrus.combinedFCSSet)
 plot.citrus.regressionResult = function(citrus.regressionResult,outputDirectory,citrus.foldClustering,citrus.foldFeatureSet,citrus.combinedFCSSet,plotTypes=c("errorRate","stratifyingFeatures","stratifyingClusters","clusterGraph"),hierarchyGraph=NULL,...){
-addtlArgs = list(...)
+  
+  addtlArgs = list(...)
   
   theme="black"
   if ("theme" %in% names(addtlArgs)){
@@ -637,7 +638,7 @@ addtlArgs = list(...)
     # Plot median of clusters
     clusterMedians = t(sapply(citrus.foldFeatureSet$allLargeEnoughClusters,.getClusterMedians,clusterAssignments=citrus.foldClustering$allClustering$clusterMembership,data=citrus.combinedFCSSet$data,clusterCols=citrus.foldClustering$allClustering$clusteringColumns))
     rownames(clusterMedians) = citrus.foldFeatureSet$allLargeEnoughClusters
-    colnames(clusterMedians) = .getDisplayNames(citrus.combinedFCSSet,clusteringColumns)
+    colnames(clusterMedians) = .getDisplayNames(citrus.combinedFCSSet,citrus.foldClustering$allClustering$clusteringColumns)
     
     citrus.plotClusteringHierarchy(outputFile=file.path(outputDirectory,"markerPlots.pdf"),clusterColors=clusterMedians,graph=hierarchyGraph$graph,layout=hierarchyGraph$layout,plotSize=hierarchyGraph$plotSize,theme=theme)
     citrus.plotClusteringHierarchy(outputFile=file.path(outputDirectory,"markerPlotsAll.pdf"),clusterColors=clusterMedians,graph=hierarchyGraph$graph,layout=hierarchyGraph$layout,plotSize=hierarchyGraph$plotSize,theme=theme,singlePDF=T,plotClusterIDs=F)
