@@ -18,7 +18,7 @@ if (!exists("dataDir")){
 
 if (basename(dataDirFile)=="citruskey.csv"){
   tryCatch({
-    keyFile = read.csv(dataDirFile,header=T)
+    keyFile = read.csv(dataDirFile,header=T,stringsAsFactors=F)
   }, warning = function(w) {
     stop(simpleWarning(paste("Error Reading input file:",w)))
   }, error = function(e) {
@@ -27,11 +27,11 @@ if (basename(dataDirFile)=="citruskey.csv"){
     if ("class" %in% colnames(keyFile)){
       labelCol = which(colnames(keyFile)=="class")
       family="classification"
-    } else if ("value" %in% colnames(keyFile)){
-      labelCol = which(colnames(keyFile)=="value")
+    } else if ("endpoint_value" %in% colnames(keyFile)){
+      labelCol = which(colnames(keyFile)=="endpoint_value")
       family="continuous"
     } else {
-      stop("Error reading citrus key: endpoint column 'class' or 'value' not found");
+      stop("Error reading citrus key: endpoint column 'class' or 'endpoint_value' not found");
     }
     preload=T
     dataDir = dirname(dataDirFile)
@@ -59,7 +59,7 @@ if (!preload){
   # Pre-read list of columns measured in each file
 } else {
   fileList = as.vector(unlist(keyFile[,-labelCol]))
-  conditionFiles = keyFile[,-labelCol]
+  conditionFiles = keyFile[,-labelCol,drop=F]
   if (family=="classification"){
     fileGroupAssignments = as.vector(rep(keyFile[,labelCol],ncol(keyFile[,-labelCol])))  
   } else if (family=="continuous") {

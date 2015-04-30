@@ -298,6 +298,10 @@ shinyServer(function(input, output) {
     conditionFiles
   })
   
+  output$sampleContinuousEndpointTable = renderTable({
+    keyFile
+  })
+  
   output$run = renderUI({
     errors = errorCheckInput(input)
     if ((!is.null(input$runCitrus))&&(input$runCitrus)){

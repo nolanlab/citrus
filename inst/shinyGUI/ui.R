@@ -66,23 +66,26 @@ shinyUI(pageWithSidebar(
                ),
       
       tabPanel("Sample Endpoint Specification",
-               if (preload){
-                 disableInput(numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=length(unique(keyFile[,labelCol]))))
-               } else {
-                 numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2,min=2)
-                 #disableInput(numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2))
-               },
-               tags$table(class="sampleGroupTable",
-                          tagList(
-                            tags$tr(uiOutput("groupNameInput")),
-                            tags$tr(uiOutput("sampleGroupSelector"))
-                          )),
-               if (preload){
-                 tagList(tags$hr(),tags$label("Condition Comparisons"),uiOutput("conditionComparaMatrixInput"))
-               } else {
-                 tags$br()
-               }
-               
+          if (family=="classification"){
+            if (preload){
+              groupInput = disableInput(numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=length(unique(keyFile[,labelCol]))))
+            } else {
+              groupInput = numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2,min=2)
+            }
+            groupSelectorTable = tags$table(class="sampleGroupTable",
+                       tagList(
+                         tags$tr(uiOutput("groupNameInput")),
+                         tags$tr(uiOutput("sampleGroupSelector"))
+                       ))
+            if (preload){
+              ccm = tagList(tags$hr(),tags$label("Condition Comparisons"),uiOutput("conditionComparaMatrixInput"))
+            } else {
+              ccm = tags$br()
+            }
+            tagList(groupInput,groupSelectorTable,ccm)
+          } else if (family=="continuous") {
+            tableOutput("sampleContinuousEndpointTable")
+          }
       ),
       
       tabPanel("Association Model Configuration",
