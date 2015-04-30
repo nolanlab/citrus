@@ -10,44 +10,22 @@ shinyUI(pageWithSidebar(
     tags$hr(),
     tags$em("Working Directory:"),
     uiOutput("workingDirectorySummary"),
-    tags$em("Groups Summary:"),
-    uiOutput("groupSummary"),
-    tags$em("Condition Summary:"),
-    uiOutput("conditionSummary"),
+    tags$em("Input Summary:"),
+    uiOutput("inputSummary"),
     tags$em("Clustering Summary:"),
     uiOutput("clusteringSummary"),
     tags$em("Cluster Characterization Summary:"),
     uiOutput("featureSummary"),
-    tags$em("Class Summary:"),
-    uiOutput("classificationSummary"),
-    tags$hr(),
-    tags$em("Sample Summary:"),
-    tableOutput("sampleGroupsTable")
+    tags$em("Endpoint Summary:"),
+    uiOutput("endpointSummary"),
+    tags$em("Model Summary:"),
+    uiOutput("modelSummary")
+    
   ),
   
   mainPanel(
     tabsetPanel(
-      
-        tabPanel("Sample Group Setup",
-                 if (preload){
-                    disableInput(numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=length(unique(keyFile[,labelCol]))))
-                 } else {
-                   numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2,min=2)
-                   #disableInput(numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2))
-                 },
-                 tags$table(class="sampleGroupTable",
-                            tagList(
-                              tags$tr(uiOutput("groupNameInput")),
-                              tags$tr(uiOutput("sampleGroupSelector"))
-                            )),
-                 if (preload){
-                   tagList(tags$hr(),tags$label("Condition Comparisons"),uiOutput("conditionComparaMatrixInput"))
-                 } else {
-                   tags$br()
-                 }
-                 
-        ),
-               
+      tabPanel("Input Files",tableOutput("inputFiles")),      
       tabPanel("Clustering Setup",
                numericInput(inputId="fileSampleSize","Events Sampled Per File:",min=1,value=1000),
                uiOutput("estimatedClusteredEvents"),
@@ -86,6 +64,26 @@ shinyUI(pageWithSidebar(
                 radioButtons(inputId="featureType",label="Feature Types:",choices=citrus.featureTypes(),selected="abundances"),
                 uiOutput("medianCols")
                ),
+      
+      tabPanel("Sample Endpoint Specification",
+               if (preload){
+                 disableInput(numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=length(unique(keyFile[,labelCol]))))
+               } else {
+                 numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2,min=2)
+                 #disableInput(numericInput(inputId="numberOfGroups",label="Number Of Sample Groups",value=2))
+               },
+               tags$table(class="sampleGroupTable",
+                          tagList(
+                            tags$tr(uiOutput("groupNameInput")),
+                            tags$tr(uiOutput("sampleGroupSelector"))
+                          )),
+               if (preload){
+                 tagList(tags$hr(),tags$label("Condition Comparisons"),uiOutput("conditionComparaMatrixInput"))
+               } else {
+                 tags$br()
+               }
+               
+      ),
       
       tabPanel("Association Model Configuration",
                uiOutput("crossValidationRange"),

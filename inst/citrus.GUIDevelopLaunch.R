@@ -4,8 +4,8 @@ library("citrus")
 library("shiny")
 library("brew")
 
-dataDir="~/Desktop/work/citrus/inst/extdata/example1/"
+dataDir="~/Documents/dev/R/citrus/inst/extdata/example1/"
 
 debugTemplate=T
 
-runApp("inst/shinyGUI")
+runApp("~/Documents/dev/R/citrus/inst/shinyGUI")

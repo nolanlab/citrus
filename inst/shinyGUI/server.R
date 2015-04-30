@@ -1,24 +1,20 @@
 shinyServer(function(input, output) {
   
   
-  #currentGroupNames = reactive({})
-  #currentClusterParameters = reactive({getParameterIntersections(input,fileList,fileCols)})
-  #currentSelectedFiles = reactive({getSelectedFiles(input)})
-  
   output$groupNameInput = renderUI({
     return(tagList(lapply(1:input$numberOfGroups,serialGroupNameInput)))
   })
   
   output$sampleGroupSelector = renderUI({
-    return(tagList(lapply(getGroupNames(input),serialGroupSelectors,fileList=fileList)))
-  })
-  
-  output$sampleGroupsTable = renderTable({
-    if (preload){
-      return(keyFile)
+    if (family=="classification"){
+      return(tagList(lapply(getGroupNames(input),serialGroupSelectors,fileList=fileList)))  
+    } else if (family=="continuous"){
+      
     } else {
-      return(getAssignmentsTable(input,fileList))  
+      stop(paste("Unknown family:",family)) 
     }
+     
+    
   })
   
   # Estimates the number of events to be clustered. May be
@@ -160,27 +156,65 @@ shinyServer(function(input, output) {
     }
   })
   
-  output$groupSummary = renderUI({
-    #selectedFiles=currentSelectedFiles()
-    selectedFiles = getSelectedFiles(input)
-    groupNames = getGroupNames(input)
-    #groupNames = currentGroupNames()
-    return(
-      tagList(
-        tags$ul(lapply(groupNames,serialGroupSummary,selectedFiles=selectedFiles))
-      )
-    )
+  output$endpointSummary = renderUI({
+    if (family=="classification"){
+      selectedFiles = getSelectedFiles(input)
+      groupNames = getGroupNames(input)
+      
+      if ("EmptyGroup" %in% groupNames){
+        return(tags$ul(tags$li(tags$span("Assign Samples to Groups in Sample Endpoint Specification Tab",class="red-error"))))
+      } 
+      
+      unselectedFileCount = getUnassignedSampleCount(fileList,selectedFiles)
+      if (unselectedFileCount!=0){
+        unselectedFileCount = tags$span(unselectedFileCount,class="red-error")
+      }
+      return(
+        tagList(
+          tags$em("Sample Classes"),
+          tags$ul(
+            tagList(
+                lapply(groupNames,serialGroupSummary,selectedFiles=selectedFiles),
+                tags$li(tagList(tags$span("Unassigned Samples:"),unselectedFileCount))
+              )
+            )
+        )
+      )  
+    }
   })
   
-  output$conditionSummary = renderUI({
+  output$inputSummary = renderUI({
+    nFiles = length(fileList)
     if (preload){
       comparaConditions = getComparaConditions(input,conditions=colnames(keyFile[,-labelCol]))
       if (length(comparaConditions)==0){
-        return(tags$ul(tags$li(tags$span("None Conditions Selected",class="red-error"))))
+        return(
+          tags$ul(
+            tagList(
+                tags$li(paste("Number Of Files:",nFiles)),
+                tags$li(tags$span("No Conditions Selected",class="red-error"))
+              )
+            )
+        )
       }
-      return(tags$ul(lapply(comparaConditions,tags$li)))
+      return(
+        tags$ul(
+            tagList(
+              tags$li(paste("Number Of Files:",nFiles)),
+              tags$li(tagList("Conditions",
+                tags$ul(lapply(comparaConditions,tags$li))))
+            )
+        )
+      )
     } else {
-      return(tags$ul(tags$li("Default Condition")))
+      return(
+        tags$ul(
+            tagList(
+              tags$li(paste("Number Of Files:",nFiles)),
+              tags$li("Default Condition")
+            )
+        )
+      )
     }
   })
   
@@ -229,19 +263,26 @@ shinyServer(function(input, output) {
     )
   })
   
-  output$classificationSummary = renderUI({
+  output$modelSummary = renderUI({
+  
+    if (sum(getSelectedModels(input))==0){
+      mTag = tagList(tags$span("Association Model(s):"),tags$span("None",class="red-error"))
+    } else {
+      mTag = tags$span(paste("Association Model(s):",paste(citrus.modelTypes()[getSelectedModels(input)],collapse=", ")))
+    }  
+    
     if (is.null(input$crossValidationFolds)){
       cvTag = tagList(tags$span("Cross Validation Folds:"),tags$span("None",class="red-error"))
     } else {
       cvTag = tagList(tags$span("Cross Validation Folds:"),tags$span(input$crossValidationFolds))
     }
-    if (sum(getSelectedModels(input))==0){
-      mTag = tagList(tags$span("Two-Class Models:"),tags$span("None",class="red-error"))
-    } else {
-      mTag = tags$span(paste("Two-Class Models:",paste(citrus.modelTypes()[getSelectedModels(input)],collapse=", ")))
-    }
-    return(tags$ul(tagList(tags$li(cvTag),tags$li(mTag))))
     
+    return(tags$ul(
+            tagList(
+              tags$li(paste("Family:",family)),
+              tags$li(mTag),
+              tags$li(cvTag)
+            )))
   })
   
   output$classificationModels = renderUI({
@@ -251,6 +292,10 @@ shinyServer(function(input, output) {
       modelTypes = modelTypes[modelTypes!="glmnet"]
     }
     tagList(tags$span("Two-Class Models:"),lapply(modelTypes,serialClassificationModel))  
+  })
+  
+  output$inputFiles = renderTable({
+    conditionFiles
   })
   
   output$run = renderUI({
@@ -288,6 +333,10 @@ shinyServer(function(input, output) {
 ##############################
 serialClassificationModel = function(modelName){
   checkboxInput(modelName,modelName,value=F)
+}
+
+getUnassignedSampleCount = function(fileList,selectedFiles){
+  sum(!(fileList %in% unlist(selectedFiles)))
 }
 
 serialGroupSummary = function(groupName,selectedFiles){
@@ -338,8 +387,10 @@ writeRunCitrusFile = function(input,templateFile=NULL){
   templateData = reactiveValuesToList(input)
   templateData[["minimumClusterSizePercent"]] = templateData[["minimumClusterSizePercent"]]/100;
   templateData[["citrusVersion"]] = citrus.version();
+  templateData[["timeOfCreation"]] = as.character(Sys.time())
   templateData[["preload"]]=preload
   templateData[["dataDir"]]=dataDir
+  templateData[["family"]]=family
   templateData[["computedFeatures"]] = names(getComputedFeatures(input))[unlist(getComputedFeatures(input))]
   templateData[["classificationModels"]] = citrus.modelTypes()[getSelectedModels(input)]
   if (preload){
@@ -374,13 +425,6 @@ convertColToDefinition = function(colname,df){
   paste(colname,"=c(",paste(sapply(df[,colname],stringQuote),collapse=","),")",sep="")
 }
 
-getAssignmentsTable = function(input,fileList){
-  fileGroupAssignments = rep("",length(fileList))
-  for (groupName in getGroupNames(input)){
-    fileGroupAssignments[fileList %in% reactiveValuesToList(input)[[paste(groupName,"files",sep="")]]]=groupName
-  }
-  return(data.frame("File"=fileList,"Group"=fileGroupAssignments));
-}
 
 getGroupNames = function(input){
   
@@ -411,9 +455,11 @@ getSelectedFiles = function(input){
 }
 
 getParameterIntersections = function(input,fileList,fileCols){
-  selectedFiles = unlist(getSelectedFiles(input))
-  params = Reduce(intersect,fileCols[which(fileList %in% selectedFiles)])
-  names(params) = names(fileCols[[which(fileList %in% selectedFiles)[1]]])
+  #selectedFiles = unlist(getSelectedFiles(input))
+  #params = Reduce(intersect,fileCols[which(fileList %in% selectedFiles)])
+  #names(params) = names(fileCols[[which(fileList %in% selectedFiles)[1]]])
+  params = Reduce(intersect,fileCols)
+  names(params) = Reduce(intersect,lapply(fileCols,names))
   return(params)
 }
 
@@ -474,7 +520,12 @@ errorCheckInput = function(input){
     errors = c(errors,"2 or more samples must be assigned to each group")
   }
   if (!any(getSelectedModels(input))){
-    errors = c(errors,"At least one differential model must be selected")
+    errors = c(errors,"At least one associative model must be selected")
+  }
+  
+  # FIX THIS
+  if (length(unlist(selectedFiles))!=length(fileList)){
+    errors = c(errors,"All input files must have an associated endpoint")
   }
   
   

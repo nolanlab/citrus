@@ -24,10 +24,14 @@ if (basename(dataDirFile)=="citruskey.csv"){
   }, error = function(e) {
     stop(simpleError(paste("Error Reading input file:",e)))
   }, finally = {
-    if (!("labels" %in% colnames(keyFile))){
-      stop("Error reading citrus key: 'labels' column not found");
+    if ("class" %in% colnames(keyFile)){
+      labelCol = which(colnames(keyFile)=="class")
+      family="classification"
+    } else if ("value" %in% colnames(keyFile)){
+      labelCol = which(colnames(keyFile)=="value")
+      family="continuous"
     } else {
-      labelCol = which(colnames(keyFile)=="labels")
+      stop("Error reading citrus key: endpoint column 'class' or 'value' not found");
     }
     preload=T
     dataDir = dirname(dataDirFile)
@@ -41,10 +45,10 @@ cat(paste("Launching citrus interface with target directory:",dataDir,"\n"));
 options(shiny.trace=F)
 
 # Get directory 
-
 if (!preload){
   # Get list of sample files
   fileList = list.files(file.path(dataDir),pattern=".fcs",ignore.case=T)
+  conditionFiles = data.frame(defaultCondition=fileList)
   
   if (length(fileList)==0){
     stop(paste0("\nNo FCS files found in  ",dataDir,". Please ensure files have a '.fcs' or '.FCS' extension."))
@@ -55,7 +59,15 @@ if (!preload){
   # Pre-read list of columns measured in each file
 } else {
   fileList = as.vector(unlist(keyFile[,-labelCol]))
-  fileGroupAssignments = as.vector(rep(keyFile[,labelCol],ncol(keyFile[,-labelCol])))
+  conditionFiles = keyFile[,-labelCol]
+  if (family=="classification"){
+    fileGroupAssignments = as.vector(rep(keyFile[,labelCol],ncol(keyFile[,-labelCol])))  
+  } else if (family=="continuous") {
+    sampleEndpointValues = keyFile[,labelCol]
+  } else {
+    stop(paste("Unknown family:",family))
+  }
+  
 } 
 
 cat("\nScanning parameters in FCS files\n")
