@@ -21,14 +21,15 @@ shinyServer(function(input, output) {
   # less if files have fewer events than specified sample size
   output$estimatedClusteredEvents = renderUI({
     #selectedFiles = currentSelectedFiles()
-    selectedFiles = getSelectedFiles(input)
-    eventEstimate = format(input$fileSampleSize*length(unlist(selectedFiles)),big.mark=",",scientific=F)
+    #selectedFiles = getSelectedFiles(input)
+    eventEstimate = format(input$fileSampleSize*length(unlist(fileList)),big.mark=",",scientific=F)
     return(tags$div(paste0("Estimated maximum number of events to be clustered: ",eventEstimate)))
   })
   
   output$estimatedClusterSize = renderUI({
-    numFiles = length(unlist(getSelectedFiles(input)))
+    #numFiles = length(unlist(getSelectedFiles(input)))
     #numFiles = length(unlist(currentSelectedFiles()))
+    numFiles = length(unlist(fileList))
     eventEstimate = input$fileSampleSize*numFiles
     minClusterSize = format(floor(eventEstimate*(input$minimumClusterSizePercent/100)),big.mark=",",scientific=F)
     return(tags$div(paste0("Estimated minimum cluster size: ",minClusterSize," cells")))
@@ -144,16 +145,16 @@ shinyServer(function(input, output) {
   
   
   output$crossValidationRange = renderUI({
-    selectedFiles = getSelectedFiles(input)
+    #selectedFiles = getSelectedFiles(input)
     #selectedFiles = currentSelectedFiles()
-    nFiles = length(unlist(selectedFiles))
-    
-    if ((length(names(selectedFiles))<2)||(!all(unlist(lapply(selectedFiles,length))>1))){
-      return(tagList(tags$b("Assign samples to groups to enable specification of cross-validation folds")))
-    } else {
-      print(paste("FILES:",nFiles))
-      return(tagList(numericInput(inputId="crossValidationFolds",label="Cross Validation Folds",value=1,min=1,max=nFiles)))
-    }
+    nFiles = length(unlist(fileList))
+    return(tagList(numericInput(inputId="crossValidationFolds",label="Cross Validation Folds",value=1,min=1,max=nFiles)))
+    #if ((length(names(selectedFiles))<2)||(!all(unlist(lapply(selectedFiles,length))>1))){
+    #  return(tagList(tags$b("Assign samples to groups to enable specification of cross-validation folds")))
+    #} else {
+    #  print(paste("FILES:",nFiles))
+    #  
+    #}
   })
   
   output$endpointSummary = renderUI({
@@ -186,7 +187,7 @@ shinyServer(function(input, output) {
   output$inputSummary = renderUI({
     nFiles = length(fileList)
     if (preload){
-      comparaConditions = getComparaConditions(input,conditions=colnames(keyFile[,-labelCol]))
+      comparaConditions = getComparaConditions(input,conditions=colnames(keyFile[,-labelCol,drop=F]))
       if (length(comparaConditions)==0){
         return(
           tags$ul(
@@ -285,13 +286,13 @@ shinyServer(function(input, output) {
             )))
   })
   
-  output$classificationModels = renderUI({
+  output$associationModels = renderUI({
     # This is a hack to disable glmnet until lasso multinomial regression is supported. 
-    modelTypes = citrus.modelTypes()
-    if (input$numberOfGroups>2){
+    modelTypes = citrus.modelTypes(family)
+    if (family=="classification" && input$numberOfGroups>2){
       modelTypes = modelTypes[modelTypes!="glmnet"]
     }
-    tagList(tags$span("Two-Class Models:"),lapply(modelTypes,serialClassificationModel))  
+    tagList(tags$span(paste(family,"models:")),lapply(modelTypes,serialAssociationModel))  
   })
   
   output$inputFiles = renderTable({
@@ -335,7 +336,7 @@ shinyServer(function(input, output) {
 ##############################
 # UI OUTPUT CONTROLS 
 ##############################
-serialClassificationModel = function(modelName){
+serialAssociationModel = function(modelName){
   checkboxInput(modelName,modelName,value=F)
 }
 
@@ -518,21 +519,22 @@ errorCheckInput = function(input){
       errors = c(errors,"No cluster median parameters selected")
     }
   }
-  selectedFiles = getSelectedFiles(input)
-  counts = unlist(lapply(selectedFiles,length))
-  if ((length(counts)<2)||any(counts<2)){
-    errors = c(errors,"2 or more samples must be assigned to each group")
+  
+  if (family=="classification"){
+    selectedFiles = getSelectedFiles(input)
+    counts = unlist(lapply(selectedFiles,length))
+    if ((length(counts)<2)||any(counts<2)){
+      errors = c(errors,"2 or more samples must be assigned to each group")
+    }  
+    # FIX THIS
+    if (length(unlist(selectedFiles))!=length(fileList)){
+      errors = c(errors,"All input files must have an associated endpoint")
+    }
   }
+  
   if (!any(getSelectedModels(input))){
     errors = c(errors,"At least one associative model must be selected")
   }
-  
-  # FIX THIS
-  if (length(unlist(selectedFiles))!=length(fileList)){
-    errors = c(errors,"All input files must have an associated endpoint")
-  }
-  
-  
   
   return(errors);
 }

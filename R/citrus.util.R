@@ -343,8 +343,13 @@ citrus.familyList = function(){
 #' 
 #' @author Robert Bruggner
 #' @export
-citrus.modelTypes = function(){
-  return(c("pamr","glmnet","sam"))
+citrus.modelTypes = function(family="classification"){
+  if (family=="classification"){
+    return(c("pamr","glmnet","sam"))  
+  } else if (family=="continuous"){
+    return(c("glmnet","sam"))
+  }
+  
 }
 
 #' Read an FCS file 

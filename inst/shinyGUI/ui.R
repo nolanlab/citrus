@@ -91,7 +91,7 @@ shinyUI(pageWithSidebar(
       tabPanel("Association Model Configuration",
                uiOutput("crossValidationRange"),
                tags$hr(),
-               uiOutput("classificationModels")
+               uiOutput("associationModels")
                ),
       
       tabPanel("Run!",
