@@ -36,13 +36,24 @@ modelTypes = c(<% cat(paste(sapply(templateData[["modelTypes"]],stringQuote),col
 fileSampleSize = <% cat(templateData[["fileSampleSize"]]) %>
 nFolds = <%cat(templateData[["crossValidationFolds"]]) %>
 featureType = c(<%cat(stringQuote(templateData[["featureType"]]))%>)
-names = <% cat(sapply(colnames(templateData[["conditionFileList"]]),stringQuote)) %>
-fileList = data.frame(<%
-                        cat(paste(sapply(colnames(templateData[["conditionFileList"]]),convertColToDefinition,df=templateData[["conditionFileList"]]),))
+
+fileList = data.frame(<% cat(
+                          paste(
+                            sapply(
+                              colnames(templateData[["conditionFileList"]]),
+                              convertColToDefinition,
+                              df=templateData[["conditionFileList"]]),
+                            collapse=",\n")
+                          )
                       %>)
                       
                     
-labels = as.factor(c(<%cat(paste(sapply(labels,stringQuote),collapse=","))%>))
+labels = <% cat(
+              ifelse(family=="classification",
+                paste0("as.factor(c(",paste(sapply(templateData[["labels"]],stringQuote),collapse=", "),"))"),
+                paste0("as.numeric(c(",paste(templateData[["labels"]],collapse=", "),"))")
+              )
+            ) %>
 
 <% if (length(templateData[["conditions"]])>1){
   cat(

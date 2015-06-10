@@ -66,7 +66,9 @@ shinyServer(function(input, output) {
   })
   
   output$clusterCols = renderUI({
+    
     choices = isolate(getParameterIntersections(input,fileList,fileCols))
+    
     if (is.null(choices)){
       return(tagList(tags$b("Assign files to groups to enable selection of clustering parameters.")))
     } else {

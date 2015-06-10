@@ -80,6 +80,7 @@ cat(paste("Launching citrus interface with target directory:",dataDir,"\n"));
 
 # Perform basic parameter checks
 cat("\nScanning parameters in FCS files\n")
+fileCols = lapply(fileList,citrus.getFileParameters,dataDir=dataDir)
 fileCheckResult = citrus.checkFileParameterConsistency(dataDir,fileList)
 if (fileCheckResult!=0){
   stop("\nInconsistent parameters in FCS files.\n")
