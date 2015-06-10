@@ -53,7 +53,8 @@ if (basename(dataDirFile)=="citruskey.csv"){
   conditionFiles = keyFile[,-labelCol,drop=F]
   
 } else {
-  # NO preload
+  # No preload. Assume family classification until new dynamic interface
+  family="classification"
   
   # List of all files, regardless of condition
   fileList = list.files(file.path(dataDir),pattern=".fcs",ignore.case=T)
