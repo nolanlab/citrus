@@ -167,7 +167,18 @@ shinyServer(function(input, output) {
   })
   
   output$inputSummary = renderUI({
-    
+    fileTag = tags$li(paste("Number Of Files:",length(fileList)))
+    if (length(conditions)>1){
+      comparaConditions = getComparaConditions(input,conditions)
+      if (length(comparaConditions)==0){
+        conditionTags = tags$li(tags$span("No Conditions Selected",class="red-error"))
+      } else {
+        conditionTags = tags$li(tagList("Conditions",tags$ul(lapply(comparaConditions,tags$li))))
+      }
+    } else {
+      conditionTags = tags$li("Default Condition")
+    }
+    return(tags$ul(tagList(fileTag,conditionTags)))
   })
   
   output$clusteringSummary = renderUI({
