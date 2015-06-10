@@ -77,7 +77,7 @@ shinyUI(pageWithSidebar(
                          tags$tr(uiOutput("groupNameInput")),
                          tags$tr(uiOutput("sampleGroupSelector"))
                        ))
-            if (length(conditions)){
+            if (length(conditions)>1){
               ccm = tagList(tags$hr(),tags$label("Condition Comparisons"),uiOutput("conditionComparaMatrixInput"))
             } else {
               ccm = tags$br()
