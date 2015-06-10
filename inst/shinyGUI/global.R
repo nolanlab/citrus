@@ -87,3 +87,16 @@ if (fileCheckResult!=0){
   stop("\nInconsistent parameters in FCS files.\n")
 }
   
+
+disableInput <- function(x) {
+  if (inherits(x, 'shiny.tag')) {
+    if (x$name %in% c('input', 'select'))
+      x$attribs$disabled <- 'disabled'
+    x$children <- disableInput(x$children)
+  }
+  else if (is.list(x) && length(x) > 0) {
+    for (i in 1:length(x))
+      x[[i]] <- disableInput(x[[i]])
+  }
+  x
+}
