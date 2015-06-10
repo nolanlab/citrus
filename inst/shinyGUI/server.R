@@ -326,7 +326,6 @@ serialGroupNameInput = function(x){
 
 
 serialGroupSelectors = function(groupName,fileList){
-  
   if (preload){
     inputTag = selectInput(paste(groupName,"files",sep=""),label=paste(groupName,"samples"),selected=fileList[fileGroupAssignments==groupName],choices=fileList,multiple=T,selectize=F)
     inputTag = disableInput(inputTag)
@@ -419,7 +418,7 @@ getFileLabels = function(input){
   fileGroups = getSelectedFiles(input)
   sapply(names(fileGroups),function(groupName,fileGroups){
     rep(groupName,length(fileGroups[[groupName]]))
-  })
+  },fileGroups=fileGroups)
 }
 
 getParameterIntersections = function(input,fileList,fileCols){
