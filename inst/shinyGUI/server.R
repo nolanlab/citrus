@@ -13,22 +13,16 @@ shinyServer(function(input, output) {
     } else {
       stop(paste("Unknown family:",family)) 
     }
-     
-    
   })
   
   # Estimates the number of events to be clustered. May be
   # less if files have fewer events than specified sample size
   output$estimatedClusteredEvents = renderUI({
-    #selectedFiles = currentSelectedFiles()
-    #selectedFiles = getSelectedFiles(input)
     eventEstimate = format(input$fileSampleSize*length(unlist(fileList)),big.mark=",",scientific=F)
     return(tags$div(paste0("Estimated maximum number of events to be clustered: ",eventEstimate)))
   })
   
   output$estimatedClusterSize = renderUI({
-    #numFiles = length(unlist(getSelectedFiles(input)))
-    #numFiles = length(unlist(currentSelectedFiles()))
     numFiles = length(unlist(fileList))
     eventEstimate = input$fileSampleSize*numFiles
     minClusterSize = format(floor(eventEstimate*(input$minimumClusterSizePercent/100)),big.mark=",",scientific=F)
@@ -76,7 +70,6 @@ shinyServer(function(input, output) {
   
   output$clusterCols = renderUI({
     choices = isolate(getParameterIntersections(input,fileList,fileCols))
-    #choices = isolate(currentClusterParameters())
     if (is.null(choices)){
       return(tagList(tags$b("Assign files to groups to enable selection of clustering parameters.")))
     } else {
@@ -91,7 +84,6 @@ shinyServer(function(input, output) {
   
   output$transformCols = renderUI({
     choices = isolate(getParameterIntersections(input,fileList,fileCols))
-    #choices = isolate(currentClusterParameters())
     if (is.null(choices)){
       return(tagList(tags$b("Assign samples to groups to enable selection of transform parameters.")))
     } else {
@@ -132,7 +124,6 @@ shinyServer(function(input, output) {
   output$medianCols = renderUI({
     if ((!is.null(input$featureType))&&(input$featureType=="medians")){
       choices = isolate(getParameterIntersections(input,fileList,fileCols))
-      #choices = isolate(currentClusterParameters())
       if (is.null(choices)){
         return(tagList(tags$b("Assign samples to groups to enable selection of median parameters.")))
       } else {
@@ -145,16 +136,8 @@ shinyServer(function(input, output) {
   
   
   output$crossValidationRange = renderUI({
-    #selectedFiles = getSelectedFiles(input)
-    #selectedFiles = currentSelectedFiles()
     nFiles = length(unlist(fileList))
     return(tagList(numericInput(inputId="crossValidationFolds",label="Cross Validation Folds",value=1,min=1,max=nFiles)))
-    #if ((length(names(selectedFiles))<2)||(!all(unlist(lapply(selectedFiles,length))>1))){
-    #  return(tagList(tags$b("Assign samples to groups to enable specification of cross-validation folds")))
-    #} else {
-    #  print(paste("FILES:",nFiles))
-    #  
-    #}
   })
   
   output$endpointSummary = renderUI({
@@ -502,12 +485,12 @@ getSelectedModels = function(input){
 errorCheckInput = function(input){
   errors = c();
   if (preload){
-    if (length(getComparaConditions(input,conditions=colnames(keyFile[,-labelCol])))==0){
+    if (length(getComparaConditions(input,conditions=colnames(keyFile[,-labelCol,drop=F])))==0){
       errors = c(errors,"No conditions selected for analysis")
     }
   }
   if (is.null(input$clusterCols)){
-    errors = c(errors,"No clustering parameters selected");
+    errors = c(errors,"No clustering parameters selected")
   }
   if (is.null(input$crossValidationFolds)){
     errors = c(errors,"Number of cross validation folds not specified");
@@ -541,6 +524,9 @@ errorCheckInput = function(input){
 
 getComparaConditions = function(input,conditions){
   input = reactiveValuesToList(input)
+  if (length(conditions)==1){
+    return(conditions)
+  }
   comparaConditions = c()
   for (condition1 in conditions){
     for (condition2 in conditions){
