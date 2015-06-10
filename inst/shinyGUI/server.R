@@ -272,8 +272,10 @@ shinyServer(function(input, output) {
   output$associationModels = renderUI({
     # This is a hack to disable glmnet until lasso multinomial regression is supported. 
     modelTypes = citrus.modelTypes(family)
-    if (family=="classification" && input$numberOfGroups>2){
-      modelTypes = modelTypes[modelTypes!="glmnet"]
+    if (family=="classification"){
+      if (input$numberOfGroups>2){
+        modelTypes = modelTypes[modelTypes!="glmnet"]  
+      }
     }
     tagList(tags$span(paste(family,"models:")),lapply(modelTypes,serialAssociationModel))  
   })
@@ -392,9 +394,6 @@ writeRunCitrusFile = function(input,templateFile=NULL){
   }
   
   runCitrusTemplateFilePath = file.path(system.file(package="citrus"),"shinyGUI","runCitrus.template")
-  if (exists("debugTemplate")&&(debugTemplate)){
-    runCitrusTemplateFilePath = "/Users/rbruggner/Desktop/work/citrus/inst/shinyGUI/runCitrus.template" 
-  }
   
   brew(file=runCitrusTemplateFilePath,output=file.path(outputDir,"runCitrus.R"))
   
@@ -443,9 +442,6 @@ getSelectedFiles = function(input){
 }
 
 getParameterIntersections = function(input,fileList,fileCols){
-  #selectedFiles = unlist(getSelectedFiles(input))
-  #params = Reduce(intersect,fileCols[which(fileList %in% selectedFiles)])
-  #names(params) = names(fileCols[[which(fileList %in% selectedFiles)[1]]])
   params = Reduce(intersect,fileCols)
   names(params) = Reduce(intersect,lapply(fileCols,names))
   return(params)
@@ -454,8 +450,6 @@ getParameterIntersections = function(input,fileList,fileCols){
 stringQuote = function(x){
   return(paste("\"",x,"\"",sep=""));  
 }
-
-
 
 getComputedFeatures = function(input){
   features = list();

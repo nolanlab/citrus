@@ -17,27 +17,28 @@ if (!exists("dataDir")){
 }
 
 if (basename(dataDirFile)=="citruskey.csv"){
-  tryCatch({
-    keyFile = read.csv(dataDirFile,header=T,stringsAsFactors=F)
+  keyFile = tryCatch({
+    read.csv(dataDirFile,header=T,stringsAsFactors=F)
   }, warning = function(w) {
     stop(simpleWarning(paste("Error Reading input file:",w)))
   }, error = function(e) {
     stop(simpleError(paste("Error Reading input file:",e)))
-  }, finally = {
-    if ("class" %in% colnames(keyFile)){
-      labelCol = which(colnames(keyFile)=="class")
-      family="classification"
-    } else if ("endpoint_value" %in% colnames(keyFile)){
-      labelCol = which(colnames(keyFile)=="endpoint_value")
-      family="continuous"
-    } else {
-      stop("Error reading citrus key: endpoint column 'class' or 'endpoint_value' not found");
-    }
-    preload=T
-    dataDir = dirname(dataDirFile)
   });
+  
+  if ("class" %in% colnames(keyFile)){
+    labelCol = which(colnames(keyFile)=="class")
+    family="classification"
+  } else if ("endpoint_value" %in% colnames(keyFile)){
+    labelCol = which(colnames(keyFile)=="endpoint_value")
+    family="continuous"
+  } else {
+    stop("Error reading citrus key: endpoint column 'class' or 'endpoint_value' not found");
+  }
+  preload=T
+  dataDir = dirname(dataDirFile)
 }
-    
+
+cat(paste("Regression family:",family,"\n"))
 cat(paste("Launching citrus interface with target directory:",dataDir,"\n"));
 
 
