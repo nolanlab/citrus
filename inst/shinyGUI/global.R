@@ -1,8 +1,7 @@
 runCitrus = FALSE;
-
 preload=F
-# Choose any file from the appropriate directory
 
+# Choose any file from the appropriate directory
 if (!exists("dataDir")){
   dataDirFile = file.choose()
   if (is.null(dataDirFile)){
@@ -13,10 +12,11 @@ if (!exists("dataDir")){
   if (!file.exists(dataDir)){
     stop(paste("Directory",dataDir,"not found. Exiting."))
   }
-  dataDirFile = dataDir;
 }
 
 if (basename(dataDirFile)=="citruskey.csv"){
+  # Preload file data and labels
+  preload=T
   keyFile = tryCatch({
     read.csv(dataDirFile,header=T,stringsAsFactors=F)
   }, warning = function(w) {
@@ -28,67 +28,60 @@ if (basename(dataDirFile)=="citruskey.csv"){
   if ("class" %in% colnames(keyFile)){
     labelCol = which(colnames(keyFile)=="class")
     family="classification"
+    fileGroupAssignments = as.vector(rep(keyFile[,labelCol],ncol(keyFile[,-labelCol])))  
   } else if ("endpoint_value" %in% colnames(keyFile)){
     labelCol = which(colnames(keyFile)=="endpoint_value")
     family="continuous"
   } else {
     stop("Error reading citrus key: endpoint column 'class' or 'endpoint_value' not found");
   }
-  preload=T
-  dataDir = dirname(dataDirFile)
-}
-
-cat(paste("Regression family:",family,"\n"))
-cat(paste("Launching citrus interface with target directory:",dataDir,"\n"));
-
-
-# Comment to True to debug
-options(shiny.trace=F)
-
-# Get directory 
-if (!preload){
-  # Get list of sample files
-  fileList = list.files(file.path(dataDir),pattern=".fcs",ignore.case=T)
-  conditionFiles = data.frame(defaultCondition=fileList)
   
+  
+  # Set directory where data live
+  dataDir = dirname(dataDirFile)
+  
+  # Set labels 
+  labels = keyFile[,labelCol]
+  
+  # Get list of initial conditions that are available in file
+  conditions = colnames(keyFile[,-labelCol])
+  
+  # List of all files, regardless of condition
+  fileList = as.vector(unlist(keyFile[,-labelCol]))
+  
+  # Files by condition
+  conditionFiles = keyFile[,-labelCol,drop=F]
+  
+} else {
+  # NO preload
+  
+  # List of all files, regardless of condition
+  fileList = list.files(file.path(dataDir),pattern=".fcs",ignore.case=T)
   if (length(fileList)==0){
     stop(paste0("\nNo FCS files found in  ",dataDir,". Please ensure files have a '.fcs' or '.FCS' extension."))
   }
   
+  # Assign all files to default condition
+  conditionFiles = data.frame(defaultCondition=fileList)
+  conditions = "defaultCondition"
+  
+  # Ugly hack.
+  # Assign all files to the "" group until assigned to a specific group name
   # This should get fixed...
   fileGroupAssignments = rep("",length(fileList))
-  # Pre-read list of columns measured in each file
-} else {
-  fileList = as.vector(unlist(keyFile[,-labelCol]))
-  conditionFiles = keyFile[,-labelCol,drop=F]
-  if (family=="classification"){
-    fileGroupAssignments = as.vector(rep(keyFile[,labelCol],ncol(keyFile[,-labelCol])))  
-  } else if (family=="continuous") {
-    sampleEndpointValues = keyFile[,labelCol]
-  } else {
-    stop(paste("Unknown family:",family))
-  }
-  
-} 
+}
 
+
+# Begin launch sequence
+# Emit basic info and run consistency checks
+options(shiny.trace=F)
+cat(paste("Regression family:",family,"\n"))
+cat(paste("Launching citrus interface with target directory:",dataDir,"\n"));
+
+# Perform basic parameter checks
 cat("\nScanning parameters in FCS files\n")
-fileCols = lapply(fileList,citrus.getFileParameters,dataDir=dataDir)
-fileColLength = sapply(fileCols,length)
-cat("\nNumber of parameters per file:\n")
-cat(paste0(fileList,": ",fileColLength,"\n"))
-if (length(unique(fileColLength))>1){
-  stop("\nAll FCS files must have the same number of channels.\n")
+fileCheckResult = citrus.checkFileParameterConsistency(dataDir,fileList)
+if (fileCheckResult!=0){
+  stop("\nInconsistent parameters in FCS files.\n")
 }
   
-disableInput <- function(x) {
-  if (inherits(x, 'shiny.tag')) {
-    if (x$name %in% c('input', 'select'))
-      x$attribs$disabled <- 'disabled'
-    x$children <- disableInput(x$children)
-  }
-  else if (is.list(x) && length(x) > 0) {
-    for (i in 1:length(x))
-      x[[i]] <- disableInput(x[[i]])
-  }
-  x
-}

@@ -32,25 +32,19 @@ scaleColumns = c(<%cat(ifelse(length(templateData[["scaleCols"]])>0,paste(sapply
 
 
 minimumClusterSizePercent = <%cat(templateData[["minimumClusterSizePercent"]])%>
-modelTypes = c(<% cat(paste(sapply(templateData[["classificationModels"]],stringQuote),collapse=",")) %>)
+modelTypes = c(<% cat(paste(sapply(templateData[["modelTypes"]],stringQuote),collapse=",")) %>)
 fileSampleSize = <% cat(templateData[["fileSampleSize"]]) %>
 nFolds = <%cat(templateData[["crossValidationFolds"]]) %>
 featureType = c(<%cat(stringQuote(templateData[["featureType"]]))%>)
+names = <% cat(sapply(colnames(templateData[["conditionFileList"]]),stringQuote)) %>
 fileList = data.frame(<%
-                        if (templateData[["preload"]]){
-                          labelAssignments=templateData[["keyFile"]]
-                        } else {
-                          selectedFiles = getSelectedFiles(input)
-                          labelAssignments = convertToLabeledFileList(selectedFiles)
-                          labelCol = which(colnames(labelAssignments)=="labels")
-                        }
-                        labels = labelAssignments[,labelCol]
-                        labelAssignments = labelAssignments[,-labelCol,drop=F]
-                        cat(paste(sapply(colnames(labelAssignments),convertColToDefinition,df=labelAssignments),collapse=",\n"))
+                        cat(paste(sapply(colnames(templateData[["conditionFileList"]]),convertColToDefinition,df=templateData[["conditionFileList"]]),))
                       %>)
+                      
+                    
 labels = as.factor(c(<%cat(paste(sapply(labels,stringQuote),collapse=","))%>))
 
-<% if (templateData[["preload"]]){
+<% if (length(templateData[["conditions"]])>1){
   cat(
     paste(
       "conditionComparaMatrix = matrix(c(",

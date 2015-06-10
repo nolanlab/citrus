@@ -510,10 +510,14 @@ citrus.checkFileParameterConsistencyUI = function(){
 #' 
 #' # Check parameter consistency. 
 #'  citrus.checkFileParameterConsistency(dataDirectory)
-citrus.checkFileParameterConsistency = function(dataDirectory){
+citrus.checkFileParameterConsistency = function(dataDirectory,fcsFiles=NULL){
   
-  #Get list of files in data directory
-  fcsFiles = list.files(dataDirectory,pattern=".FCS",ignore.case = T)
+  
+  if (is.null(fcsFiles)){
+    #Get list of files in data directory
+    fcsFiles = list.files(dataDirectory,pattern=".FCS",ignore.case = T)  
+  }
+  
   fileParameters = lapply(fcsFiles,citrus.getFileParameters,dataDirectory)
   names(fileParameters)=fcsFiles
   fileParameters 

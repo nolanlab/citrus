@@ -1,6 +1,5 @@
 shinyServer(function(input, output) {
   
-  
   output$groupNameInput = renderUI({
     return(tagList(lapply(1:input$numberOfGroups,serialGroupNameInput)))
   })
@@ -39,12 +38,12 @@ shinyServer(function(input, output) {
   })
   
   output$conditionComparaMatrixInput = renderUI({
-    if (preload){
-      conditions = c("index",colnames(keyFile[,-labelCol]))
+  
+      tableConditions = c("index",conditions)
       rowList = list()
-      for (row in conditions){
+      for (row in tableConditions){
         colList = list()
-        for (col in conditions){
+        for (col in tableConditions){
           if ((col=="index")&&(row=="index")){
             colList[[col]] = tags$td(tags$b("Condition",class="blank"))  
           } else if (col=="index"){
@@ -64,8 +63,6 @@ shinyServer(function(input, output) {
       }
       tagList(rowList)
       return(tags$table(tagList(rowList),class="comparaTable"))  
-    }
-    return("SHOULD NOT BE USED");
   })
   
   output$clusterCols = renderUI({
@@ -168,38 +165,7 @@ shinyServer(function(input, output) {
   })
   
   output$inputSummary = renderUI({
-    nFiles = length(fileList)
-    if (preload){
-      comparaConditions = getComparaConditions(input,conditions=colnames(keyFile[,-labelCol,drop=F]))
-      if (length(comparaConditions)==0){
-        return(
-          tags$ul(
-            tagList(
-                tags$li(paste("Number Of Files:",nFiles)),
-                tags$li(tags$span("No Conditions Selected",class="red-error"))
-              )
-            )
-        )
-      }
-      return(
-        tags$ul(
-            tagList(
-              tags$li(paste("Number Of Files:",nFiles)),
-              tags$li(tagList("Conditions",
-                tags$ul(lapply(comparaConditions,tags$li))))
-            )
-        )
-      )
-    } else {
-      return(
-        tags$ul(
-            tagList(
-              tags$li(paste("Number Of Files:",nFiles)),
-              tags$li("Default Condition")
-            )
-        )
-      )
-    }
+    
   })
   
   output$clusteringSummary = renderUI({
@@ -378,23 +344,29 @@ writeRunCitrusFile = function(input,templateFile=NULL){
   templateData[["minimumClusterSizePercent"]] = templateData[["minimumClusterSizePercent"]]/100;
   templateData[["citrusVersion"]] = citrus.version();
   templateData[["timeOfCreation"]] = as.character(Sys.time())
-  templateData[["preload"]]=preload
-  templateData[["dataDir"]]=dataDir
-  templateData[["family"]]=family
+  templateData[["dataDir"]] = dataDir
+  templateData[["family"]] = family
+  templateData[["conditionFileList"]] = conditionFiles
   templateData[["computedFeatures"]] = names(getComputedFeatures(input))[unlist(getComputedFeatures(input))]
-  templateData[["classificationModels"]] = citrus.modelTypes()[getSelectedModels(input)]
+  templateData[["modelTypes"]] = citrus.modelTypes()[getSelectedModels(input)]
+  templateData[["conditions"]]  = conditions
+
   if (preload){
-    templateData[["keyFile"]]=keyFile
-    templateData[["conditionComparaMatrix"]]=getConditionComparaMatrix(input,conditions=colnames(keyFile[,-labelCol]))
-    templateData[["conditions"]]=colnames(keyFile[,-labelCol])
+    templateData[["labels"]] = labels
+  } else {
+    templateData[["labels"]] = getFileLabels(input) 
   }
+  
+  if (length(conditions)>1){
+    templateData[["conditionComparaMatrix"]]=getConditionComparaMatrix(input,conditions=conditions)  
+  }
+
   outputDir = file.path(dataDir,"citrusOutput")
   if (!file.exists(outputDir)){
     dir.create(file.path(dataDir,"citrusOutput"),showWarnings=F)
   }
   
   runCitrusTemplateFilePath = file.path(system.file(package="citrus"),"shinyGUI","runCitrus.template")
-  
   brew(file=runCitrusTemplateFilePath,output=file.path(outputDir,"runCitrus.R"))
   
 }
@@ -439,6 +411,13 @@ getSelectedFiles = function(input){
     sf[[groupName]] = reactiveValuesToList(input)[[paste(groupName,"files",sep="")]]
   }
   return(sf)
+}
+
+getFileLabels = function(input){
+  fileGroups = getSelectedFiles(input)
+  sapply(names(fileGroups),function(groupName,fileGroups){
+    rep(groupName,length(fileGroups[[groupName]]))
+  })
 }
 
 getParameterIntersections = function(input,fileList,fileCols){
