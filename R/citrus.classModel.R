@@ -145,10 +145,15 @@ citrus.generateRegularizationThresholds.classification = function(features,label
 
 .calculateTypeFDRRate = function(foldModels,foldFeatures,labels,modelType){
   if (modelType=="pamr"){
-    # FIX THIS
-    # Should be average FDR across all models, not just all model 
-    # return(pamr.fdr.new(foldModels[[modelType]][[length(foldModels[[modelType]])]],data=list(x=t(foldFeatures[[length(foldModels)]]),y=labels),nperms=1000)$results[,"Median FDR"])
-    return(NULL)
+    # calculate FDR Rates for each individual fold model
+    foldFDRRates = mcmapply(FUN = function(foldModel,foldFeatures){
+      pamr.fdr.new(foldModel$model,data=list(x=t(foldFeatures),y=foldModel$model$y),nperms=1000)$results[,"Median FDR"]
+    },foldModel=foldModels,foldFeatures=foldFeatures)
+    
+    # Average FDR Rates across all folds for each regularization threshold
+    averageFDRRate = apply(foldFDRRates,1,mean)
+  
+    return(averageFDRRate)
   } else {
     return(NULL)
   }  
