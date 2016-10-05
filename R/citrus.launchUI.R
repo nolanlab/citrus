@@ -54,9 +54,18 @@ citrus.getFileParameters = function(fileName,dataDir,...){
   cat(paste0("Reading parameters in ",fileName,"\n"));
   fcsFile = citrus.readFCS(file.path(dataDir,fileName),which.lines=1)
   parameterNames = flowCore::colnames(fcsFile)
-  pnames = as.vector(pData(flowCore::parameters(fcsFile))$desc)
-  pnames[sapply(pnames,nchar)<3] = parameterNames[sapply(pnames,nchar)<3]
-  names(parameterNames)=pnames
+  
+  # This really should be done as part of citrus.readFCS
+  # Same in citrus.readFCSSet
+  parameterDescriptions = as.vector(pData(flowCore::parameters(fcsFile))$desc)
+  invalidDescriptions = unname(which(sapply(parameterDescriptions,nchar)<3 | is.na(parameterDescriptions)))
+  parameterDescriptions[invalidDescriptions] = parameterNames[invalidDescriptions]
+  names(parameterNames)=parameterDescriptions
+  
+  #pnames = as.vector(pData(flowCore::parameters(fcsFile))$desc)
+  #pnames[sapply(pnames,nchar)<3] = parameterNames[sapply(pnames,nchar)<3]
+  #names(parameterNames)=pnames
+  
   return(parameterNames)
 }
 

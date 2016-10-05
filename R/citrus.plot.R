@@ -11,14 +11,29 @@
 }
 
 .getDisplayNames=function(citrus.combinedFCSSet,clusteringColumns){
-  colLabels = citrus.combinedFCSSet$fileChannelNames[[1]][[1]]
-  reagentNames = citrus.combinedFCSSet$fileReagentNames[[1]][[1]]
-  displayNames = colLabels
-  displayNames[nchar(reagentNames)>2] = reagentNames[nchar(reagentNames)>2]
+  
+  # Get channel names
+  #colLabels = citrus.combinedFCSSet$fileChannelNames[[1]][[1]]
+  
+  # Get reagent names
+  #reagentNames = citrus.combinedFCSSet$fileReagentNames[[1]][[1]]
+  
+  # Set display names to channel names
+  #displayNames = colLabels
+  
+  # update display names to equal reagent names where reagent names > 2
+  #displayNames[nchar(reagentNames)>2] = reagentNames[nchar(reagentNames)>2]
+  
+  displayNames = citrus.combinedFCSSet$fileReagentNames[[1]][[1]]
+  
   if (all(is.numeric(clusteringColumns))){
+    # If clustering columns is numeric, pass back the indices
     return(displayNames[clusteringColumns])
   } else {
-    names(displayNames) = colLabels
+    # Otherwise, set the names of display names to be the channel names
+    #names(displayNames) = colLabels
+    names(displayNames) = citrus.combinedFCSSet$fileChannelNames[[1]][[1]]
+    # and return the display names from the corresponding clustering columns
     return(as.vector(displayNames[clusteringColumns]))
   }
   
