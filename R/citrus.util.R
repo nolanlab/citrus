@@ -66,17 +66,24 @@ citrus.readFCSSet = function(dataDirectory,fileList,fileSampleSize=1000,transfor
       
       fcsData=exprs(fcsFile)
       
+      # Note - this should be done as part of citrus.readFCS. See citrus.getFileParameters too.
+      parameterDescriptions = as.vector(pData(flowCore::parameters(fcsFile))$desc)
+      parameterNames = flowCore::colnames(fcsFile)
+      invalidDescriptions = unname(which(sapply(parameterDescriptions,nchar)<3 | is.na(parameterDescriptions)))
+      parameterDescriptions[invalidDescriptions] = parameterNames[invalidDescriptions]
+      
       if (useChannelDescriptions){
-       channelDescriptions = as.vector(pData(parameters(fcsFile))$desc)
-       colnames(fcsData)[nchar(channelDescriptions)>2] = channelDescriptions[nchar(channelDescriptions)>2]
+        #channelDescriptions = as.vector(pData(parameters(fcsFile))$desc)
+        #colnames(fcsData)[nchar(channelDescriptions)>2] = channelDescriptions[nchar(channelDescriptions)>2]
+        colnames(fcsData)=parameterDescriptions
       }
       
       if (!is.null(readParameters)){
         fcsData = fcsData[,readParameters]
       }
       
-      fileChannelNames[[conditions[i]]][[fileName]]=as.vector(pData(parameters(fcsFile))$name)
-      fileReagentNames[[conditions[i]]][[fileName]]=as.vector(pData(parameters(fcsFile))$desc)
+      fileChannelNames[[conditions[i]]][[fileName]]=parameterNames
+      fileReagentNames[[conditions[i]]][[fileName]]=parameterDescriptions
       fcsData = cbind(fcsData,fileEventNumber=1:nrow(fcsData),fileId=fileCounter);
       fileCounter=fileCounter+1;
       
