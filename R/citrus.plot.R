@@ -676,7 +676,6 @@ addtlArgs = list(...)
 #' 
 #' @details See \code{\link{citrus.full}} for examples.
 plot.citrus.full.result = function(citrus.full.result,outputDirectory){
-  
   if (!file.exists(outputDirectory)){
     stop(paste0("Output directory '",outputDirectory,"' does not exist."))
   }
@@ -685,7 +684,7 @@ plot.citrus.full.result = function(citrus.full.result,outputDirectory){
     cat(paste0("\nPlotting Results for ",conditionName,"\n"))
     conditionOutputDir = file.path(outputDirectory,conditionName)
     dir.create(conditionOutputDir,showWarnings=F)
-    mclapply(citrus.full.result$conditionRegressionResults[[conditionName]],plot,outputDirectory=conditionOutputDir,citrus.foldClustering=citrus.full.result$citrus.foldClustering,citrus.foldFeatureSet=citrus.full.result$conditionFoldFeatures[[conditionName]],citrus.combinedFCSSet=citrus.full.result$citrus.combinedFCSSet,family=citrus.full.result$family,labels=citrus.full.result$labels,conditions=citrus.full.result$conditions[[conditionName]])
+    mclapply(citrus.full.result$conditionRegressionResults[[conditionName]],plot.citrus.regressionResult,outputDirectory=conditionOutputDir,citrus.foldClustering=citrus.full.result$citrus.foldClustering,citrus.foldFeatureSet=citrus.full.result$conditionFoldFeatures[[conditionName]],citrus.combinedFCSSet=citrus.full.result$citrus.combinedFCSSet,family=citrus.full.result$family,labels=citrus.full.result$labels,conditions=citrus.full.result$conditions[[conditionName]])
     cat("\n")
   }
 }

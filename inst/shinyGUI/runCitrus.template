@@ -86,7 +86,7 @@ results = citrus.full(
 )
 
 # plot results
-plot(results,outputDirectory)
+plot.citrus.full.result(results,outputDirectory)
 
 # ==================================================================================================
 # The following lines perform the same analysis as the citrus.full() function but broken down
@@ -119,4 +119,4 @@ plot(results,outputDirectory)
 # citrus.regressionResults = mclapply(modelTypes,citrus.endpointRegress,citrus.foldFeatureSet=citrus.foldFeatureSet,labels=labels,family=family)
 
 # Plot Results for each model
-# lapply(citrus.regressionResults,plot,outputDirectory=outputDirectory,citrus.foldClustering=citrus.foldClustering,citrus.foldFeatureSet=citrus.foldFeatureSet,citrus.combinedFCSSet=citrus.combinedFCSSet)
+# lapply(citrus.regressionResults,plot.citrus.regressionResult,outputDirectory=outputDirectory,citrus.foldClustering=citrus.foldClustering,citrus.foldFeatureSet=citrus.foldFeatureSet,citrus.combinedFCSSet=citrus.combinedFCSSet)
