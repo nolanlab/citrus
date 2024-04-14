@@ -1,5 +1,5 @@
 ==Citrus Readme==
-Citrus is a package for identifying clusters of cells in multidimensional flow cytometry data associated with an experimental or clincal endpoint of interest.
+Citrus is a package for identifying clusters of cells in multidimensional flow cytometry data associated with an experimental or clincal endpoint of interest. Methods are described in the paper [[https://doi.org/10.1073/pnas.1408792111|Automated identification of stratifying signatures in cellular subpopulations]] by Bruggner et al. 
 
 ===Getting Started===
 * Installation instructions available on the [[https://github.com/nolanlab/citrus/wiki/Installing-Citrus|Installing Citrus Page]].
